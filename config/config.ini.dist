@@ -1,0 +1,61 @@
+;
+; This file is part of Thallium.
+;
+; Thallium, a PHP-based framework for web applications.
+; Copyright (C) <2015> <Andreas Unterkircher>
+;
+; This program is free software: you can redistribute it and/or modify
+; it under the terms of the GNU Affero General Public License as
+; published by the Free Software Foundation, either version 3 of the
+; License, or (at your option) any later version.
+
+; This program is distributed in the hope that it will be useful,
+; but WITHOUT ANY WARRANTY; without even the implied warranty of
+; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+; GNU Affero General Public License for more details.
+;
+
+[app]
+
+;
+; The URL path your applications is reachable at.
+; For example /thallium, or / if you installed directly
+; into the document root.
+base_web_path = /thallium/
+
+;
+; Page Title
+;
+page_title = "Thallium"
+
+[database]
+
+;
+; Type, use 'mysql' or 'mariadb'
+;
+type = mysql
+
+;
+; Host
+;
+host = localhost
+
+;
+; Database name
+;
+db_name = database-name
+
+;
+; Connect user
+;
+db_user = username
+
+;
+; Connect password
+;
+db_pass = password
+
+;
+; Table prefix
+;
+table_prefix = "thallium_"
