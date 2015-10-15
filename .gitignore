@@ -2,3 +2,4 @@
 /logs/*
 /tmp/*
 /config/config\.ini
+/public/\.htaccess
