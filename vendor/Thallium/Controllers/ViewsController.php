@@ -73,6 +73,8 @@ class ViewsController extends DefaultController
 
     public function load($view, $skeleton = true)
     {
+        global $tmpl;
+
         $view = '\\Thallium\\Views\\'.$view;
 
         try {
@@ -95,8 +97,7 @@ class ViewsController extends DefaultController
             return true;
         }
 
-        $this->page_skeleton->assign('page_content', $content);
-
+        $tmpl->assign('page_content', $content);
         return $this->page_skeleton->show();
     }
 }
