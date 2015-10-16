@@ -23,7 +23,7 @@ use \Thallium\Views;
 
 class ViewsController extends DefaultController
 {
-    private $page_map = array(
+    public $page_map = array(
         '/^$/' => 'MainView',
         '/^main$/' => 'MainView',
         '/^about$/' => 'AboutView',
