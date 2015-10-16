@@ -19,9 +19,22 @@
 
 namespace Thallium\Views;
 
+use \Thallium\Controllers;
+
 class MainView extends DefaultView
 {
+    public $default_mode = 'show';
     public $class_name = 'main';
+
+    public function show()
+    {
+        global $db, $tmpl;
+
+        $tmpl->assign("software_version", Controllers\MainController::VERSION);
+        $tmpl->assign("schema_version", $db->getDatabaseSchemaVersion());
+
+        return $tmpl->fetch("main.tpl");
+    }
 }
 
 // vim: set filetype=php expandtab softtabstop=4 tabstop=4 shiftwidth=4:
