@@ -82,6 +82,7 @@ class DatabaseController extends DefaultController
 
         switch ($this->db_cfg['type']) {
             default:
+            case 'mariadb':
             case 'mysql':
                 $dsn = "mysql:dbname=". $this->db_cfg['db_name'] .";host=". $this->db_cfg['host'];
                 $user = $this->db_cfg['db_user'];
