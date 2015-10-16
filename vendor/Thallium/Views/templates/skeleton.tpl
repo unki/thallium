@@ -20,11 +20,9 @@
 {include "header.tpl"}
 </head>
 <body>
-{include "menu.tpl"}
   <div class="ui main container">
 {$page_content}
   </div>
 {include "footer.tpl"}
-{include "modal.tpl"}
  </body>
 </html>
