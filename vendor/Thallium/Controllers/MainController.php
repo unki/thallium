@@ -724,6 +724,7 @@ class MainController extends DefaultController
         }
 
         $this->override_namespace_prefix = $prefix;
+        return true;
     }
 }
 
