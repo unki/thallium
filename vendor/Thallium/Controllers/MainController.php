@@ -28,6 +28,14 @@ class MainController extends DefaultController
 
     private $verbosity_level = LOG_WARNING;
     private $override_namespace_prefix;
+    private $registerModels = array(
+        'AuditEntryModel',
+        'AuditLogModel',
+        'JobModel',
+        'JobsModel',
+        'MessageBusModel',
+        'MessageModel',
+    );
 
     public function __construct($mode = null)
     {
@@ -227,14 +235,19 @@ class MainController extends DefaultController
 
     public function isValidModel($model)
     {
-        $valid_models = array(
-            'queue',
-            'queueitem',
-            'document',
-            'keyword',
-        );
+        if (!isset($model) ||
+            empty($model) ||
+            !is_string($model)
+        ) {
+            $this->raiseError(__METHOD__ .'(), \$model parameter is invalid!');
+            return false;
+        }
 
-        if (in_array($model, $valid_models)) {
+        if (!preg_match('/model$/', $model)) {
+            $model.= 'Model';
+        }
+
+        if ($this->isRegisteredModel($model)) {
             return true;
         }
 
@@ -725,6 +738,64 @@ class MainController extends DefaultController
 
         $this->override_namespace_prefix = $prefix;
         return true;
+    }
+
+    final public function getRegisteredModels()
+    {
+        if (!isset($this->registerModels) ||
+            empty($this->registerModels) ||
+            !is_array($this->registerModels)
+        ) {
+            $this->raiseError(__METHOD__ .'(), registerModels property is invalid!');
+            return false;
+        }
+
+        return $this->registerModels;
+    }
+
+    final public function registerModel($model)
+    {
+        if (!isset($this->registerModels) ||
+            empty($this->registerModels) ||
+            !is_array($this->registerModels)
+        ) {
+            $this->raiseError(__METHOD__ .'(), registerModels property is invalid!');
+            return false;
+        }
+
+        if (!isset($model) || empty($model) || !is_string($model)) {
+            $this->raiseError(__METHOD__ .'(), \$model parameter is invalid!');
+            return false;
+        }
+
+        if (in_array($models, $this->registerModels)) {
+            return true;
+        }
+
+        array_push($this->registerModels, $models);
+        return true;
+    }
+
+    final public function isRegisteredModel($model)
+    {
+        if (!isset($this->registerModels) ||
+            empty($this->registerModels) ||
+            !is_array($this->registerModels)
+        ) {
+            $this->raiseError(__METHOD__ .'(), registerModels property is invalid!');
+            return false;
+        }
+
+        if (!isset($model) || empty($model) || !is_string($model)) {
+            $this->raiseError(__METHOD__ .'(), \$model parameter is invalid!');
+            return false;
+        }
+
+        if (in_array($models, $this->registerModels)) {
+            return true;
+        }
+
+        return false;
     }
 }
 
