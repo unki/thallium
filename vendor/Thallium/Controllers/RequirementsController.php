@@ -88,6 +88,7 @@ class RequirementsController extends DefaultController
         }
 
         switch ($dbtype) {
+            case 'mariadb':
             case 'mysql':
                 $db_class_name = "mysqli";
                 $db_pdo_name = "mysql";
