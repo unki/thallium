@@ -171,8 +171,8 @@ class RequirementsController extends DefaultController
         }
 
         $directories = array(
-            $this::CONFIG_DIRECTORY => 'r',
-            $this::CACHE_DIRECTORY => 'w',
+            self::CONFIG_DIRECTORY => 'r',
+            self::CACHE_DIRECTORY => 'w',
         );
 
         foreach ($directories as $dir => $perm) {
