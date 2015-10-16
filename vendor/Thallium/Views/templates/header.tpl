@@ -19,9 +19,6 @@
   <title>{$page_title}</title>
   <!-- jQuery -->
   <script type="text/javascript" src="{$web_path}/resources/jQuery/jquery-2.1.4.min.js"></script>
-  <!-- Semantic-UI -->
-  <link rel="stylesheet" type="text/css" href="{$web_path}/resources/Semantic-UI/semantic.min.css" />
-  <script type="text/javascript" src="{$web_path}/resources/Semantic-UI/semantic.min.js"></script>
   <!-- Thallium JavaScript -->
   <script type="text/javascript" src="{$web_path}/resources/thallium.js"></script>
   <script type="text/javascript" src="{$web_path}/resources/thallium_rpc.js"></script>
