@@ -80,7 +80,7 @@ class ViewsController extends DefaultController
 
     public function load($view, $skeleton = true)
     {
-        global $tmpl;
+        global $thallium, $tmpl;
 
         if (!($prefix = $thallium->getNamespacePrefix())) {
             $this->raiseError(get_class($thallium) .'::getNamespacePrefix() returned false!');
