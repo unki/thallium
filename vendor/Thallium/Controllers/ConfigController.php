@@ -27,16 +27,16 @@ class ConfigController extends DefaultController
 
     public function __construct()
     {
-        if (!file_exists($this::CONFIG_DIRECTORY)) {
+        if (!file_exists(self::CONFIG_DIRECTORY)) {
             $this->raiseError(
-                "Error - configuration directory ". $this::CONFIG_DIRECTORY ." does not exist!"
+                "Error - configuration directory ". self::CONFIG_DIRECTORY ." does not exist!"
             );
             return false;
         }
 
-        if (!is_executable($this::CONFIG_DIRECTORY)) {
+        if (!is_executable(self::CONFIG_DIRECTORY)) {
             $this->raiseError(
-                "Error - unable to enter config directory ". $this::CONFIG_DIRECTORY ." - please check permissions!"
+                "Error - unable to enter config directory ". self::CONFIG_DIRECTORY ." - please check permissions!"
             );
             return false;
         }
@@ -82,7 +82,7 @@ class ConfigController extends DefaultController
     private function readConfig($config_target)
     {
         $config_file = "config_file_{$config_target}";
-        $config_fqpn = $this::CONFIG_DIRECTORY ."/". $this->$config_file;
+        $config_fqpn = self::CONFIG_DIRECTORY ."/". $this->$config_file;
 
         // missing config.ini is ok
         if ($config_target == 'local' && !file_exists($config_fqpn)) {
