@@ -19,7 +19,7 @@
 
 namespace Thallium\Views ;
 
-abstract class DefaultView extends Templates
+abstract class DefaultView
 {
     public $supported_modes = array (
             'list',
@@ -36,7 +36,6 @@ abstract class DefaultView extends Templates
     public function __construct()
     {
         global $thallium, $config;
-        parent::__construct();
 
         if (!isset($this->class_name)) {
             $thallium->raiseError("Class has not defined property 'class_name'. Something is wrong with it");
@@ -45,7 +44,7 @@ abstract class DefaultView extends Templates
 
     public function show()
     {
-        global $thallium, $query, $router;
+        global $thallium, $query, $router, $tmpl;
 
         if (isset($query->params)) {
             $params = $query->params;
@@ -68,9 +67,9 @@ abstract class DefaultView extends Templates
             return false;
         }
 
-        if ($mode == "list" && $this->templateExists($this->class_name ."_list.tpl")) {
+        if ($mode == "list" && $tmpl->templateExists($this->class_name ."_list.tpl")) {
             return $this->showList();
-        } elseif ($mode == "edit" && $this->templateExists($this->class_name ."_edit.tpl")) {
+        } elseif ($mode == "edit" && $tmpl->templateExists($this->class_name ."_edit.tpl")) {
             if (!$item = $router->parseQueryParams()) {
                 $thallium->raiseError("HttpRouterController::parseQueryParams() returned false!");
                 return false;
@@ -89,7 +88,7 @@ abstract class DefaultView extends Templates
             }
             return $this->showEdit($item['id'], $item['hash']);
 
-        } elseif ($mode == "show" && $this->templateExists($this->class_name ."_show.tpl")) {
+        } elseif ($mode == "show" && $tmpl->templateExists($this->class_name ."_show.tpl")) {
             if (!$item = $router->parseQueryParams()) {
                 $thallium->raiseError("HttpRouterController::parseQueryParams() returned false!");
             }
@@ -107,8 +106,8 @@ abstract class DefaultView extends Templates
             }
             return $this->showItem($item['id'], $item['hash']);
 
-        } elseif ($this->templateExists($this->class_name .".tpl")) {
-            return $this->fetch($this->class_name .".tpl");
+        } elseif ($tmpl->templateExists($this->class_name .".tpl")) {
+            return $tmpl->fetch($this->class_name .".tpl");
         }
 
         $thallium->raiseError("All methods utilized but still don't know what to show!");
@@ -117,19 +116,22 @@ abstract class DefaultView extends Templates
 
     public function showList()
     {
-        $this->registerPlugin("block", $this->class_name ."_list", array(&$this, $this->class_name ."List"));
-        return $this->fetch($this->class_name ."_list.tpl");
+        global $tmpl;
+        $tmpl->registerPlugin("block", $this->class_name ."_list", array(&$this, $this->class_name ."List"));
+        return $tmpl->fetch($this->class_name ."_list.tpl");
     }
 
     public function showEdit($id)
     {
-        $this->assign('item', $id);
-        return $this->fetch($this->class_name ."_edit.tpl");
+        global $tmpl;
+        $tmpl->assign('item', $id);
+        return $tmpl->fetch($this->class_name ."_edit.tpl");
     }
 
     public function showItem($id, $hash)
     {
-        return $this->fetch($this->class_name ."_show.tpl");
+        global $tmpl;
+        return $tmpl->fetch($this->class_name ."_show.tpl");
     }
 
     private function isKnownMode($mode)
