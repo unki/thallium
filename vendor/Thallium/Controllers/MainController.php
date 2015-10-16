@@ -290,23 +290,21 @@ class MainController extends DefaultController
         return $guid;
     }
 
-    public function loadModel($object_name, $id = null, $guid = null)
+    public function loadModel($model_name, $id = null, $guid = null)
     {
+        if (!($prefix = $this->getNamespacePrefix())) {
+            $this->raiseError(__METHOD__ .'(), failed to fetch namespace prefix!');
+            return false;
+        }
+
+        switch ($model_name) {
+            case 'queue':
+                $model = $prefix .'\\Models\\QueueModel';
+                break;
+        }
+
         try {
-            switch ($object_name) {
-                case 'queue':
-                    $obj = new Models\QueueModel;
-                    break;
-                case 'queueitem':
-                    $obj = new Models\QueueItemModel($id, $guid);
-                    break;
-                case 'document':
-                    $obj = new Models\DocumentModel($id, $guid);
-                    break;
-                case 'keyword':
-                    $obj = new Models\KeywordModel($id, $guid);
-                    break;
-            }
+            $obj = new $model;
         } catch (\Exception $e) {
             $this->raiseError("Failed to load model {$object_name}! ". $e->getMessage());
             return false;
@@ -367,7 +365,12 @@ class MainController extends DefaultController
             return true;
         }
 
-        $controller = '\Thallium\\Controllers\\'.$controller.'Controller';
+        if (!($prefix = $this->getNamespacePrefix())) {
+            $this->raiseError(__METHOD__ .'(), failed to fetch namespace prefix!');
+            return false;
+        }
+
+        $controller = '\\'. $prefix .'\\Controllers\\'.$controller.'Controller';
 
         if (!class_exists($controller, true)) {
             $this->raiseError("{$controller} class is not available!", true);
