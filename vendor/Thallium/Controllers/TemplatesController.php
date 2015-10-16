@@ -55,7 +55,6 @@ class TemplatesController extends DefaultController
         $this->smarty->setCaching(Smarty::CACHING_OFF);
         $this->smarty->force_compile = true;
         $this->smarty->caching = false;
-        parent::__construct();
 
         $this->config_template_dir = APP_BASE .'/views/templates';
         $this->config_compile_dir  = self::CACHE_DIRECTORY .'/templates_c';
@@ -144,62 +143,8 @@ class TemplatesController extends DefaultController
         $this->assign('icon_process', $base_web_path .'/resources/icons/task.png');
         $this->assign('web_path', $base_web_path);
 
-        $this->registerPlugin("function", "start_table", array(&$this, "smartyStartTable"), false);
-        $this->registerPlugin("function", "page_end", array(&$this, "smartyPageEnd"), false);
-        $this->registerPlugin("function", "year_select", array(&$this, "smartyYearSelect"), false);
-        $this->registerPlugin("function", "month_select", array(&$this, "smartyMonthSelect"), false);
-        $this->registerPlugin("function", "day_select", array(&$this, "smartyDaySelect"), false);
-        $this->registerPlugin("function", "hour_select", array(&$this, "smartyHourSelect"), false);
-        $this->registerPlugin("function", "minute_select", array(&$this, "smartyMinuteSelect"), false);
-        $this->registerPlugin("function", "chain_select_list", array(&$this, "smartyChainSelectList"), false);
-        $this->registerPlugin("function", "pipe_select_list", array(&$this, "smartyPipeSelectList"), false);
-        $this->registerPlugin("function", "target_select_list", array(&$this, "smartyTargetSelectList"), false);
-        $this->registerPlugin(
-            "function",
-            "service_level_select_list",
-            array(&$this, "smartyServiceLevelSelectList"),
-            false
-        );
-        $this->registerPlugin(
-            "function",
-            "network_path_select_list",
-            array(&$this, "smartyNetworkPathSelectList"),
-            false
-        );
-        $this->registerPlugin(
-            "function",
-            "host_profile_select_list",
-            array(&$this, "smartyHostProfileSelectList"),
-            false
-        );
-        $this->registerPlugin("function", "get_item_name", array(&$this, "smartyGetItemName"), false);
-        $this->registerPlugin("function", "get_menu_state", array(&$this, "getMenuState"), false);
-        $this->registerPlugin(
-            "function",
-            "get_humanreadable_filesize",
-            array(&$this, "getHumanReadableFilesize"),
-            false
-        );
         $this->registerPlugin('function', 'get_page_url', array(&$this, 'getPageUrl'), false);
-
         return true;
-    }
-
-    public function smartyStartTable($params, &$smarty)
-    {
-        $this->assign('title', $params['title']);
-        $this->assign('icon', $params['icon']);
-        $this->assign('alt', $params['alt']);
-        $this->fetch('start_table.tpl');
-    }
-
-    public function smartyPageEnd($params, &$smarty)
-    {
-        if (isset($params['focus_to'])) {
-            $this->assign('focus_to', $params['focus_to']);
-        }
-
-        return $this->fetch('page_end.tpl');
     }
 
     public function getuid()
@@ -211,50 +156,6 @@ class TemplatesController extends DefaultController
         }
 
         return 'n/a';
-
-    }
-
-    public function getUrl($params, &$smarty)
-    {
-        global $config;
-
-        if (!array_key_exists('page', $params)) {
-            $this->raiseError("getUrl: missing 'page' parameter", E_USER_WARNING);
-            $repeat = false;
-            return false;
-        }
-
-        if (array_key_exists('mode', $params) && !in_array($params['mode'], $this->supported_modes)) {
-            $this->raiseError("getUrl: value of parameter 'mode' ({$params['mode']}) isn't supported", E_USER_WARNING);
-            $repeat = false;
-            return false;
-        }
-
-        if (!($url = $config->getWebPath())) {
-            $this->raiseError("Web path is missing!");
-            return false;
-        }
-
-        if ($url == '/') {
-            $url = "";
-        }
-
-        $url.= "/";
-        $url.= $params['page'] ."/";
-
-        if (isset($params['mode']) && !empty($params['mode'])) {
-            $url.= $params['mode'] ."/";
-        }
-
-        if (array_key_exists('id', $params) && !empty($params['id'])) {
-            $url.= $params['id'];
-        }
-
-        if (array_key_exists('file', $params) && !empty($params['file'])) {
-            $url.= '/'. $params['file'];
-        }
-
-        return $url;
 
     }
 
@@ -398,6 +299,15 @@ class TemplatesController extends DefaultController
         $db->freeStatement($sth);
         $url = $config->getWebPath() .'/'. $row->page_uri;
         return $url;
+    }
+
+    public function templateExists($tmpl)
+    {
+        if (!$this->smarty->templateExists($tmpl)) {
+            return false;
+        }
+
+        return true;
     }
 }
 
