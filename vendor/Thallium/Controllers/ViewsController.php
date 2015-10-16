@@ -52,6 +52,8 @@ class ViewsController extends DefaultController
 
     public function getViewName($view)
     {
+        global $thallium;
+
         foreach (array_keys($this->page_map) as $entry) {
             if (($result = preg_match($entry, $view)) === false) {
                 $this->raiseError(__METHOD__ ."(), unable to match ${entry} in ${view}");
@@ -62,7 +64,12 @@ class ViewsController extends DefaultController
                 continue;
             }
 
-            if (!class_exists('\\Thallium\\Views\\'.$this->page_map[$entry])) {
+            if (!($prefix = $thallium->getNamespacePrefix())) {
+                $this->raiseError(get_class($thallium) .'::getNamespacePrefix() returned false!');
+                return false;
+            }
+
+            if (!class_exists('\\'. $prefix .'\\Views\\'.$this->page_map[$entry])) {
                 $this->raiseError(__METHOD__ ."(), view class ". $this->page_map[$entry] ." does not exist!");
                 return false;
             }
@@ -75,7 +82,12 @@ class ViewsController extends DefaultController
     {
         global $tmpl;
 
-        $view = '\\Thallium\\Views\\'.$view;
+        if (!($prefix = $thallium->getNamespacePrefix())) {
+            $this->raiseError(get_class($thallium) .'::getNamespacePrefix() returned false!');
+            return false;
+        }
+
+        $view = '\\'. $prefix .'\\Views\\'.$view;
 
         try {
             $page = new $view;
