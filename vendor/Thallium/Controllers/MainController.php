@@ -24,7 +24,7 @@ use \Thallium\Models;
 
 class MainController extends DefaultController
 {
-    const VERSION = "0.3";
+    const VERSION = "1.0";
 
     private $verbosity_level = LOG_WARNING;
 
