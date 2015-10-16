@@ -132,6 +132,28 @@ abstract class DefaultController
         return self::LOG_LEVEL;
 
     } // getVerbosity()
+
+    public function requireModel($object, $model)
+    {
+        if (!isset($object) || empty($object) || !is_object($object) ||
+            !isset($model) || empty($model) || is_string($model)) {
+            $this->raiseError(__METHOD__ .'(), parameters are invalid!');
+            return false;
+        }
+
+        if (!($prefix = $thallium->getNamespacePrefix())) {
+            $this->raiseError(get_class($thallium) .'::getNamespacePrefix() returned false!');
+            return false;
+        }
+
+        $model_full = '\\'. $prefix .'\\Models\\'. $model;
+
+        if (get_class($object) != $model_full) {
+            return false;
+        }
+
+        return true;
+    }
 }
 
 // vim: set filetype=php expandtab softtabstop=4 tabstop=4 shiftwidth=4:
