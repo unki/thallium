@@ -842,6 +842,36 @@ class MainController extends DefaultController
 
         return true;
     }
+
+    final public function getNamespacePrefix()
+    {
+        if (isset($override_namespace_prefix) &&
+            !empty($override_namespace_prefix)
+        ) {
+            return $override_namespace_prefix;
+        }
+
+        $namespace = __NAMESPACE__;
+
+        if (!strstr($namespace, '\\')) {
+            return $namespace;
+        }
+
+        $namespace_parts = explode('\\', $namespace);
+
+        if (!isset($namespace_parts) ||
+            empty($namespace_parts) ||
+            !is_array($namespace_parts) ||
+            !isset($namespace_parts[0]) ||
+            empty($namespace_parts[0]) ||
+            !is_string($namespace_parts[0])
+        ) {
+            $this->raiseError('Failed to extract prefix from NAMESPACE constant!');
+            return false;
+        }
+
+        return $namespace_parts[0];
+    }
 }
 
 // vim: set filetype=php expandtab softtabstop=4 tabstop=4 shiftwidth=4:
