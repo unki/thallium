@@ -32,13 +32,12 @@ class ViewsController extends DefaultController
 
     public function __construct()
     {
-        try {
-            $tmpl = new TemplatesController;
-        } catch (\Exception $e) {
-            $this->raiseError(__CLASS__ .', unable to load TemplatesController!', true, $e);
+        global $thallium;
+
+        if (!$thallium->loadController('Templates', 'tmpl')) {
+            $this->raiseError(get_class($thallium) .'::loadController() returned false!', true);
             return false;
         }
-        $GLOBALS['tmpl'] =& $tmpl;
 
         try {
             $this->page_skeleton = new Views\SkeletonView;
