@@ -339,14 +339,14 @@ class DatabaseController extends DefaultController
                 meta_key LIKE 'schema_version'"
         );
 
-        if (isset($result->meta_value) &&
-            !empty($result->meta_value) &&
-            is_numeric($result->meta_value)
-        ) {
+        if (isset($result->meta_value) && is_numeric($result->meta_value)) {
             return $result->meta_value;
+        } elseif (isset($result->meta_value) && !is_numeric($result->meta_value)) {
+            return false;
         }
 
-        return false;
+        // in doubt we claim it's version 0
+        return 0;
     }
 
     public function setDatabaseSchemaVersion($version = null)
