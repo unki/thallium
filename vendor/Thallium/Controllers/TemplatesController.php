@@ -110,7 +110,7 @@ class TemplatesController extends DefaultController
 
         $this->smarty->assign('app_web_path', $app_web_path);
         $this->smarty->assign('page_title', $page_title);
-        $this->smarty->registerPlugin('function', 'get_page_url', array(&$this, 'getPageUrl'), false);
+        $this->registerPlugin("function", "get_url", array(&$this, "getUrl"), false);
         return true;
     }
 
@@ -216,58 +216,6 @@ class TemplatesController extends DefaultController
         return true;
     }
 
-    /**
-     * return requested page
-     *
-     * @param string
-     */
-    public function getPageUrl($params, &$smarty)
-    {
-        global $db, $config;
-
-        if (!array_key_exists('page', $params)) {
-            $this->raiseError("getUrl: missing 'page' parameter", E_USER_WARNING);
-            $repeat = false;
-            return false;
-        }
-
-        $sth = $db->prepare(
-            "SELECT
-                page_uri
-            FROM
-                TABLEPREFIXpages
-            WHERE
-                page_name LIKE ?"
-        );
-
-        $db->execute($sth, array(
-            $params['page']
-        ));
-
-        if ($sth->rowCount() <= 0) {
-            $db->freeStatement($sth);
-            return false;
-        }
-
-        if (($row = $sth->fetch()) === false) {
-            $db->freeStatement($sth);
-            return false;
-        }
-
-        if (!isset($row->page_uri)) {
-            $db->freeStatement($sth);
-            return false;
-        }
-
-        if (isset($params['id']) && !empty($params['id'])) {
-            $row->page_uri = str_replace("[id]", (int) $params['id'], $row->page_uri);
-        }
-
-        $db->freeStatement($sth);
-        $url = $config->getWebPath() .'/'. $row->page_uri;
-        return $url;
-    }
-
     public function templateExists($tmpl)
     {
         if (!$this->smarty->templateExists($tmpl)) {
@@ -276,6 +224,49 @@ class TemplatesController extends DefaultController
 
         return true;
     }
+
+    public function getUrl($params, &$smarty)
+    {
+        global $mtlda, $config;
+
+        if (!array_key_exists('page', $params)) {
+            $mtlda->raiseError("getUrl: missing 'page' parameter", E_USER_WARNING);
+            $repeat = false;
+            return false;
+        }
+
+        if (array_key_exists('mode', $params) && !in_array($params['mode'], $this->supported_modes)) {
+            $mtlda->raiseError("getUrl: value of parameter 'mode' ({$params['mode']}) isn't supported", E_USER_WARNING);
+            $repeat = false;
+            return false;
+        }
+
+        if (!($url = $config->getWebPath())) {
+            $mtlda->raiseError("Web path is missing!");
+            return false;
+        }
+
+        if ($url == '/') {
+            $url = "";
+        }
+
+        $url.= "/";
+        $url.= $params['page'] ."/";
+
+        if (isset($params['mode']) && !empty($params['mode'])) {
+            $url.= $params['mode'] ."/";
+        }
+
+        if (array_key_exists('id', $params) && !empty($params['id'])) {
+            $url.= $params['id'];
+        }
+        if (array_key_exists('file', $params) && !empty($params['file'])) {
+            $url.= '/'. $params['file'];
+        }
+
+        return $url;
+
+    } // getUrl()
 }
 
 // vim: set filetype=php expandtab softtabstop=4 tabstop=4 shiftwidth=4:
