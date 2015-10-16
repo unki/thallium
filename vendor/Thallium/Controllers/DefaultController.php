@@ -51,7 +51,7 @@ abstract class DefaultController
         return true;
     }
 
-    public function raiseError($string, $stop = false)
+    public function raiseError($string, $stop_execution = false, $exception = null)
     {
         if (defined('DB_NOERROR')) {
             $this->last_error = $string;
@@ -65,9 +65,13 @@ abstract class DefaultController
         } catch (ExceptionController $e) {
             print "<br /><br />\n";
             $this->write($e, LOG_WARNING);
+            if (isset($exception) && !empty($exception) && method_exists($exception, 'getMessage')) {
+                print "<br /><br />\n";
+                $this->write($exception->getMessage());
+            }
         }
 
-        if ($stop) {
+        if ($stop_execution) {
             die;
         }
 
