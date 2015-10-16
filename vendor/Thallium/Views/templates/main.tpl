@@ -15,47 +15,21 @@
  * GNU Affero General Public License for more details.
 *}
 <h1 class="ui header"><i class="database icon"></i>Welcome to Thallium!</h1>
-<div class="ui two column grid">
-
- <!-- left column -->
- <div class="column">
-<i class="archive icon"></i>Recently archived documents
-  <div class="ui very relaxed divided selection list">
-{top10 type=archive}
-   <div class="item">
-    <i class="file text icon"></i>
-    <div class="content">
-     <div class="header">
-      <a href="{get_url page=archive mode=show id=$item_safe_link}">{$item->document_title}</a>&nbsp;
-      <a href="{get_url page=document mode=show id="document-$item_safe_link" file=$item->document_file_name}"><i class="search icon"></i></a>
-     </div>
-     <div class="description">added {$item->document_time|date_format:"%Y.%m.%d %H:%M"}.</div>
-    </div>
-   </div>
-{/top10}
-  </div>
- </div>
-
- <!-- right column -->
- <div class="column">
-  <i class="wait icon"></i>Recently enqueued documents
-  <div class="ui very relaxed divided selection list">
-{if isset($pending_queue_items)}
-{top10 type=queue}
-   <div class="item">
-    <i class="file text icon"></i>
-    <div class="content">
-     <a class="header" href="{get_url page=queue mode=show id=$item_safe_link file=$item->queue_file_name}">{$item->queue_file_name}</a>
-     <div class="description">added {$item->queue_time|date_format:"%Y.%m.%d %H:%M"}.</div>
-    </div>
-   </div>
-{/top10}
-{else}
-   <div class="item">
-    <div class="content">No items pending in queue.</div>
-   </div>
-{/if}
-  </div>
- </div>
-
+<h2 class="ui header"><i class="info icon"></i>About</h1>
+<div class="ui segment">
+<h4 class="ui header">Thallium - PHP framework.</h4>
+&copy; 2015 Andreas Unterkircher &lt;unki@netshadow.net&gt;
+<br />
+<a href="https://oss.netshadow.net/redmine/projects/thallium" target="_blank">https://oss.netshadow.net/redmine/projects/thallium</a>
+<br /><br />
+Thallium Version: {$software_version}
+<br />
+Thallium Database Schema: {$schema_version}
+</div>
+<div class="ui segment">
+<h4 class="ui header">Appreciation</h4>
+Your Thallium installation bundles further software and libraries:<br />
+<div class="ui bulleted list">
+<div class="item">jQuery,&nbsp;<a href="http://www.jquery.com" target="_blank">http://www.jquery.com</a></div>
+<div class="item">Semantic UI,&nbsp;<a href="http://semantic-ui.com" target="_blank">http://semantic-ui.com</a></div>
 </div>
