@@ -69,15 +69,6 @@ class RpcController extends DefaultController
             case 'get-content':
                 $this->rpcGetContent();
                 break;
-            case 'get-keywords':
-                $this->rpcGetKeywords();
-                break;
-            case 'save-keywords':
-                $this->rpcSaveKeywords();
-                break;
-            case 'save-description':
-                $this->rpcSaveDescription();
-                break;
             case 'submit-messages':
                 $this->rpcSubmitToMessageBus();
                 break;
@@ -386,15 +377,15 @@ class RpcController extends DefaultController
 
         foreach ($input_fields as $field) {
             if (!isset($_POST[$field])) {
-                $this->raiseError(__METHOD__ ."'{$field}' isn't set in POST request!");
+                $this->raiseError(__METHOD__ ."(), '{$field}' isn't set in POST request!");
                 return false;
             }
             if (empty($_POST[$field])) {
-                $this->raiseError(__METHOD__ ."'{$field}' is empty!");
+                $this->raiseError(__METHOD__ ."(), '{$field}' is empty!");
                 return false;
             }
             if (!is_string($_POST[$field]) && !is_numeric($_POST[$field])) {
-                $this->raiseError(__METHOD__ ."'{$field}' is not from a valid type!");
+                $this->raiseError(__METHOD__ ."(), '{$field}' is not from a valid type!");
                 return false;
             }
         }
@@ -405,17 +396,17 @@ class RpcController extends DefaultController
         $model = $_POST['model'];
 
         if (!(preg_match("/^([a-z]+)_([a-z_]+)$/", $key, $parts))) {
-            $this->raiseError(__METHOD__ ."key looks invalid!");
+            $this->raiseError(__METHOD__ ."() , key looks invalid!");
             return false;
         }
 
         if ($id != 'new' && !is_numeric($id)) {
-            $this->raiseError(__METHOD__ ."id is invalid!");
+            $this->raiseError(__METHOD__ ."(), id is invalid!");
             return false;
         }
 
         if (!$thallium->isValidModel($model)) {
-            $this->raiseError(__METHOD__ ."scope contains an invalid model ({$model})!");
+            $this->raiseError(__METHOD__ ."(), scope contains an invalid model ({$model})!");
             return false;
         }
 
@@ -424,18 +415,18 @@ class RpcController extends DefaultController
         }
 
         if (!($obj = $thallium->loadModel($model, $id))) {
-            $this->raiseError(__METHOD__ ."Failed to load {$model}!");
+            $this->raiseError(__METHOD__ ."(), failed to load {$model}!");
             return false;
         }
 
         // check if model permits RPC updates
         if (!$obj->permitsRpcUpdates()) {
-            $this->raiseError(__METHOD__ ."Model {$model} denys RPC updates!");
+            $this->raiseError(__METHOD__ ."(), model {$model} denys RPC updates!");
             return false;
         }
 
         if (!$obj->permitsRpcUpdateToField($key)) {
-            $this->raiseError(__METHOD__ ."Model {$model} denys RPC updates to field {$key}!");
+            $this->raiseError(__METHOD__ ."(), model {$model} denys RPC updates to field {$key}!");
             return false;
         }
 
@@ -452,141 +443,6 @@ class RpcController extends DefaultController
         return true;
     }
 
-    private function rpcGetKeywords()
-    {
-        try {
-            $keywords = new Models\KeywordsModel;
-        } catch (Exception $e) {
-            $this->raiseError("Failed to load KeywordsModel!");
-            return false;
-        }
-
-        $result = array();
-        foreach ($keywords->avail_items as $keyword) {
-            $item = $keywords->items[$keyword];
-            array_push($result, array(
-                'name' => $item->keyword_name,
-                'value' => $item->keyword_idx
-            ));
-        }
-
-        $output = json_encode(array(
-            'success' => 'true',
-            'results' => $result
-        ));
-
-        if ($output === false) {
-            $this->raiseError("json_encode() returned false!");
-            return false;
-        }
-
-        print $output;
-        return true;
-    }
-
-    private function rpcSaveKeywords()
-    {
-        global $thallium;
-
-        if (!isset($_POST['id']) || empty($_POST['id'])) {
-            $this->raiseError("No id provided!");
-            return false;
-        }
-
-        if (!isset($_POST['guid']) || empty($_POST['guid'])) {
-            $this->raiseError("No guid provided!");
-            return false;
-        }
-
-        if (!$thallium->isValidGuidSyntax($_POST['guid'])) {
-            $this->raiseError("guid is invalid!");
-            return false;
-        }
-
-        /* if no values are provided this usually means
-           all keywords have been removed from this document.
-        */
-        if (!isset($_POST['values']) ||
-            empty($_POST['values'])
-        ) {
-            $_POST['values'] = array();
-        }
-
-        if (!is_array($_POST['values']) && preg_match('/^([0-9]+)$/', $_POST['values'])) {
-            $_POST['values'] = array($_POST['values']);
-        } elseif (!is_array($_POST['values']) && preg_match('/^([0-9]+),([0-9]+)/', $_POST['values'])) {
-            $_POST['values'] = explode(',', $_POST['values']);
-        }
-
-        $id = $_POST['id'];
-        $guid = $_POST['guid'];
-        $values = $_POST['values'];
-
-        try {
-            $document = new Models\DocumentModel($id, $guid);
-        } catch (Exception $e) {
-            $this->raiseError("Failed to load DocumentModel!");
-            return false;
-        }
-
-        if (!$document->setKeywords($values)) {
-            $this->raiseError("DocumentModel::setKeywords() returned false!");
-            return false;
-        }
-
-        print "ok";
-        return true;
-    }
-
-    private function rpcSaveDescription()
-    {
-        global $thallium;
-
-        if (!isset($_POST['id']) || empty($_POST['id'])) {
-            $this->raiseError("No id provided!");
-            return false;
-        }
-
-        if (!isset($_POST['guid']) || empty($_POST['guid'])) {
-            $this->raiseError("No guid provided!");
-            return false;
-        }
-
-        if (!$thallium->isValidGuidSyntax($_POST['guid'])) {
-            $this->raiseError("guid is invalid!");
-            return false;
-        }
-
-        /* if no values are provided this usually means
-           all keywords have been removed from this document.
-        */
-        if (!isset($_POST['description']) ||
-            empty($_POST['description']) ||
-            !is_string($_POST['description'])
-        ) {
-            $_POST['description'] = '';
-        }
-
-        $id = $_POST['id'];
-        $guid = $_POST['guid'];
-        $description = $_POST['description'];
-
-        try {
-            $document = new Models\DocumentModel($id, $guid);
-        } catch (Exception $e) {
-            $this->raiseError("Failed to load DocumentModel!");
-            return false;
-        }
-
-        if (!$document->setDescription($description)) {
-            $this->raiseError("DocumentModel::setDescription() returned false!");
-            return false;
-        }
-
-        print "ok";
-        return true;
-    }
-
     protected function rpcDeleteDocument()
     {
         global $thallium;
@@ -595,15 +451,15 @@ class RpcController extends DefaultController
 
         foreach ($input_fields as $field) {
             if (!isset($_POST[$field])) {
-                $this->raiseError(__METHOD__ ."'{$field}' isn't set in POST request!");
+                $this->raiseError(__METHOD__ ."(), '{$field}' isn't set in POST request!");
                 return false;
             }
             if (empty($_POST[$field])) {
-                $this->raiseError(__METHOD__ ."'{$field}' is empty!");
+                $this->raiseError(__METHOD__ ."(), '{$field}' is empty!");
                 return false;
             }
             if (!is_string($_POST[$field]) && !is_numeric($_POST[$field])) {
-                $this->raiseError(__METHOD__ ."'{$field}' is not from a valid type!");
+                $this->raiseError(__METHOD__ ."(), '{$field}' is not from a valid type!");
                 return false;
             }
         }
@@ -612,19 +468,19 @@ class RpcController extends DefaultController
         $guid = $_POST['guid'];
 
         if (!$thallium->isValidId($id)) {
-            $this->raiseError(__METHOD__ .', \$id is invalid!');
+            $this->raiseError(__METHOD__ .'(), \$id is invalid!');
             return false;
         }
 
         if (!$thallium->isValidGuidSyntax($guid)) {
-            $this->raiseError(__METHOD__ .', \$guid is invalid!');
+            $this->raiseError(__METHOD__ .'(), \$guid is invalid!');
             return false;
         }
 
         try {
             $document = new Models\DocumentModel($id, $guid);
         } catch (\Exception $e) {
-            $this->raiseError(__METHOD__ .", unable to load DocumentModel!");
+            $this->raiseError(__METHOD__ ."(), unable to load DocumentModel!");
             return false;
         }
 
@@ -650,7 +506,7 @@ class RpcController extends DefaultController
             empty($_POST['messages']) ||
             !is_string($_POST['messages'])
         ) {
-            $this->raiseError(__METHOD__ .', no message submited!');
+            $this->raiseError(__METHOD__ .'(), no message submited!');
             return false;
         }
 
