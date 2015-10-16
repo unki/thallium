@@ -104,7 +104,12 @@ class TemplatesController extends DefaultController
             $app_web_path = '';
         }
 
+        if (!($page_title = $config->getPageTitle())) {
+            $page_title = 'Thallium v'. MainController::VERSION;
+        }
+
         $this->smarty->assign('app_web_path', $app_web_path);
+        $this->smarty->assign('page_title', $page_title);
         $this->smarty->registerPlugin('function', 'get_page_url', array(&$this, 'getPageUrl'), false);
         return true;
     }
