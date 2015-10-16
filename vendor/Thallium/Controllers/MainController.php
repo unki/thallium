@@ -243,7 +243,7 @@ class MainController extends DefaultController
             return false;
         }
 
-        if (!preg_match('/model$/', $model)) {
+        if (!preg_match('/model$/i', $model)) {
             $model.= 'Model';
         }
 
@@ -768,11 +768,11 @@ class MainController extends DefaultController
             return false;
         }
 
-        if (in_array($models, $this->registerModels)) {
+        if (in_array(strtolower($model), $this->getRegisteredModels())) {
             return true;
         }
 
-        array_push($this->registerModels, $models);
+        array_push($this->registerModels, strtolower($model));
         return true;
     }
 
@@ -791,7 +791,7 @@ class MainController extends DefaultController
             return false;
         }
 
-        if (in_array($model, $this->registerModels)) {
+        if (in_array(strtolower($model), $this->getRegisteredModels())) {
             return true;
         }
 
