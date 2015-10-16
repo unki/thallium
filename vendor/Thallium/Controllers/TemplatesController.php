@@ -42,7 +42,7 @@ class TemplatesController extends DefaultController
 
     public function __construct()
     {
-        global $config, $views;
+        global $config, $views, $thallium;
 
         try {
             $this->smarty = new Smarty;
@@ -51,12 +51,17 @@ class TemplatesController extends DefaultController
             return false;
         }
 
+        if (!($prefix = $thallium->getNamespacePrefix())) {
+            $this->raiseError(get_class($thallium) .'::getNameSpacePrefix() returned false!', true);
+            return false;
+        }
+
         // disable template caching during development
         $this->smarty->setCaching(Smarty::CACHING_OFF);
         $this->smarty->force_compile = true;
         $this->smarty->caching = false;
 
-        $this->config_template_dir = APP_BASE .'/views/templates';
+        $this->config_template_dir = APP_BASE .'/vendor/'. $prefix .'/Views/templates';
         $this->config_compile_dir  = self::CACHE_DIRECTORY .'/templates_c';
         $this->config_config_dir   = self::CACHE_DIRECTORY .'/smarty_config';
         $this->config_cache_dir    = self::CACHE_DIRECTORY .'/smarty_cache';
@@ -65,12 +70,13 @@ class TemplatesController extends DefaultController
             $this->raiseError(
                 "Cache directory ". CACHE_DIRECTORY ." is not writeable"
                 ."for user (". $this->getuid() .").<br />\n"
-                ."Please check that permissions are set correctly to this directory.<br />\n"
+                ."Please check that permissions are set correctly to this directory.<br />\n",
+                true
             );
         }
 
         if (!file_exists($this->config_compile_dir) && !mkdir($this->config_compile_dir, 0700)) {
-            $this->raiseError("Failed to create directory ". $this->config_compile_dir);
+            $this->raiseError("Failed to create directory ". $this->config_compile_dir, true);
             return false;
         }
 
@@ -78,7 +84,8 @@ class TemplatesController extends DefaultController
             $this->raiseError(
                 "Error - Smarty compile directory ". $this->config_compile_dir ." is not writeable
                 for the current user (". $this->getuid() .").<br />\n
-                Please check that permissions are set correctly to this directory.<br />\n"
+                Please check that permissions are set correctly to this directory.<br />\n",
+                true
             );
             return false;
         }
@@ -88,62 +95,17 @@ class TemplatesController extends DefaultController
         $this->smarty->setConfigDir($this->config_config_dir);
         $this->smarty->setCacheDir($this->config_cache_dir);
 
-        if (!($base_web_path = $config->getWebPath())) {
-            $this->raiseError("Web path is missing!");
+        if (!($app_web_path = $config->getWebPath())) {
+            $this->raiseError("Web path is missing!", true);
             return false;
         }
 
-        if ($base_web_path == '/') {
-            $base_web_path = '';
+        if ($app_web_path == '/') {
+            $app_web_path = '';
         }
 
-        $this->assign('icon_chains', $base_web_path .'/resources/icons/flag_blue.gif');
-        $this->assign('icon_chains_assign_pipe', $base_web_path .'/resources/icons/flag_blue_with_purple_arrow.gif');
-        $this->assign('icon_options', $base_web_path .'/resources/icons/options.gif');
-        $this->assign('icon_pipes', $base_web_path .'/resources/icons/flag_pink.gif');
-        $this->assign('icon_ports', $base_web_path .'/resources/icons/flag_orange.gif');
-        $this->assign('icon_protocols', $base_web_path .'/resources/icons/flag_red.gif');
-        $this->assign('icon_servicelevels', $base_web_path .'/resources/icons/flag_yellow.gif');
-        $this->assign('icon_filters', $base_web_path .'/resources/icons/flag_green.gif');
-        $this->assign('icon_targets', $base_web_path .'/resources/icons/flag_purple.gif');
-        $this->assign('icon_clone', $base_web_path .'/resources/icons/clone.png');
-        $this->assign('icon_delete', $base_web_path .'/resources/icons/delete.png');
-        $this->assign('icon_active', $base_web_path .'/resources/icons/active.gif');
-        $this->assign('icon_inactive', $base_web_path .'/resources/icons/inactive.gif');
-        $this->assign('icon_arrow_left', $base_web_path .'/resources/icons/arrow_left.gif');
-        $this->assign('icon_arrow_right', $base_web_path .'/resources/icons/arrow_right.gif');
-        $this->assign('icon_chains_arrow_up', $base_web_path .'/resources/icons/ms_chains_arrow_up_14.gif');
-        $this->assign('icon_chains_arrow_down', $base_web_path .'/resources/icons/ms_chains_arrow_down_14.gif');
-        $this->assign('icon_pipes_arrow_up', $base_web_path .'/resources/icons/ms_pipes_arrow_up_14.gif');
-        $this->assign('icon_pipes_arrow_down', $base_web_path .'/resources/icons/ms_pipes_arrow_down_14.gif');
-        $this->assign('icon_users', $base_web_path .'/resources/icons/ms_users_14.gif');
-        $this->assign('icon_about', $base_web_path .'/resources/icons/home.gif');
-        $this->assign('icon_home', $base_web_path .'/resources/icons/home.gif');
-        $this->assign('icon_new', $base_web_path .'/resources/icons/page_white.gif');
-        $this->assign('icon_monitor', $base_web_path .'/resources/icons/chart_pie.gif');
-        $this->assign('icon_shaper_start', $base_web_path .'/resources/icons/enable.gif');
-        $this->assign('icon_shaper_stop', $base_web_path .'/resources/icons/disable.gif');
-        $this->assign('icon_bandwidth', $base_web_path .'/resources/icons/bandwidth.gif');
-        $this->assign('icon_update', $base_web_path .'/resources/icons/update.gif');
-        $this->assign('icon_interfaces', $base_web_path .'/resources/icons/network_card.gif');
-        $this->assign('icon_hosts', $base_web_path .'/resources/icons/host.png');
-        $this->assign('icon_treeend', $base_web_path .'/resources/icons/tree_end.gif');
-        $this->assign('icon_rules_show', $base_web_path .'/resources/icons/show.gif');
-        $this->assign('icon_rules_load', $base_web_path .'/resources/icons/enable.gif');
-        $this->assign('icon_rules_unload', $base_web_path .'/resources/icons/disable.gif');
-        $this->assign('icon_rules_export', $base_web_path .'/resources/icons/disk.gif');
-        $this->assign('icon_rules_restore', $base_web_path .'/resources/icons/restore.gif');
-        $this->assign('icon_rules_reset', $base_web_path .'/resources/icons/reset.gif');
-        $this->assign('icon_rules_update', $base_web_path .'/resources/icons/update.gif');
-        $this->assign('icon_pdf', $base_web_path .'/resources/icons/page_white_acrobat.gif');
-        $this->assign('icon_menu_down', $base_web_path .'/resources/icons/bullet_arrow_down.png');
-        $this->assign('icon_menu_right', $base_web_path .'/resources/icons/bullet_arrow_right.png');
-        $this->assign('icon_busy', $base_web_path .'/resources/icons/busy.png');
-        $this->assign('icon_ready', $base_web_path .'/resources/icons/ready.png');
-        $this->assign('icon_process', $base_web_path .'/resources/icons/task.png');
-        $this->assign('web_path', $base_web_path);
-
-        $this->registerPlugin('function', 'get_page_url', array(&$this, 'getPageUrl'), false);
+        $this->smarty->assign('app_web_path', $app_web_path);
+        $this->smarty->registerPlugin('function', 'get_page_url', array(&$this, 'getPageUrl'), false);
         return true;
     }
 
