@@ -27,6 +27,7 @@ class MainController extends DefaultController
     const VERSION = "1.0";
 
     private $verbosity_level = LOG_WARNING;
+    private $override_namespace_prefix;
 
     public function __construct($mode = null)
     {
@@ -848,10 +849,10 @@ class MainController extends DefaultController
 
     final public function getNamespacePrefix()
     {
-        if (isset($override_namespace_prefix) &&
-            !empty($override_namespace_prefix)
+        if (isset($this->override_namespace_prefix) &&
+            !empty($this->override_namespace_prefix)
         ) {
-            return $override_namespace_prefix;
+            return $this->override_namespace_prefix;
         }
 
         $namespace = __NAMESPACE__;
@@ -874,6 +875,16 @@ class MainController extends DefaultController
         }
 
         return $namespace_parts[0];
+    }
+
+    final public function setNamespacePrefix($prefix)
+    {
+        if (!isset($prefix) || empty($prefix) || !is_string($prefix)) {
+            $this->raiseError(__METHOD__ .', \$prefix parameter is invalid!');
+            return false;
+        }
+
+        $this->override_namespace_prefix = $prefix;
     }
 }
 
