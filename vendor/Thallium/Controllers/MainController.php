@@ -791,7 +791,7 @@ class MainController extends DefaultController
             return false;
         }
 
-        if (in_array($models, $this->registerModels)) {
+        if (in_array($model, $this->registerModels)) {
             return true;
         }
 
