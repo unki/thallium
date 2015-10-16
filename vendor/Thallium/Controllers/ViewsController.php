@@ -32,15 +32,30 @@ class ViewsController extends DefaultController
 
     public function __construct()
     {
-        $this->page_skeleton = new Views\SkeletonView;
+        try {
+            $tmpl = new TemplatesController;
+        } catch (\Exception $e) {
+            $this->raiseError(__CLASS__ .', unable to load TemplatesController!', true, $e);
+            return false;
+        }
+        $GLOBALS['tmpl'] =& $tmpl;
+
+        try {
+            $this->page_skeleton = new Views\SkeletonView;
+        } catch (\Exception $e) {
+            $this->raiseError(__CLASS__ .', unable to load SkeletonView!', true, $e);
+            return false;
+        }
+
+        return true;
     }
 
     public function getViewName($view)
     {
         foreach (array_keys($this->page_map) as $entry) {
             if (($result = preg_match($entry, $view)) === false) {
-                print "Error - unable to match ${entry} in ${view}";
-                exit(1);
+                $this->raiseError(__METHOD__ ."(), unable to match ${entry} in ${view}");
+                return false;
             }
 
             if ($result == 0) {
@@ -48,12 +63,11 @@ class ViewsController extends DefaultController
             }
 
             if (!class_exists('\\Thallium\\Views\\'.$this->page_map[$entry])) {
-                print "Error - view class ". $this->page_map[$entry] ." does not exist!";
-                exit(1);
+                $this->raiseError(__METHOD__ ."(), view class ". $this->page_map[$entry] ." does not exist!");
+                return false;
             }
 
             return $this->page_map[$entry];
-
         }
     }
 
