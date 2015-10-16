@@ -472,9 +472,7 @@ class MainController extends DefaultController
     {
         global $jobs;
 
-        if (empty($message) ||
-            get_class($message) != '\Thallium\Models\MessageModel'
-        ) {
+        if (!$this->requireModel($message, 'MessageModel')) {
             $this->raiseError(__METHOD__ .' requires a MessageModel reference as parameter!');
             return false;
         }
@@ -564,9 +562,7 @@ class MainController extends DefaultController
     {
         global $mbus;
 
-        if (empty($message) ||
-            get_class($message) != '\Thallium\Models\MessageModel'
-        ) {
+        if (!$this->requireModel($message, 'MessageModel')) {
             $this->raiseError(__METHOD__ .', requires a MessageModel reference as parameter!');
             return false;
         }
@@ -655,9 +651,7 @@ class MainController extends DefaultController
     {
         global $mbus;
 
-        if (empty($message) ||
-            get_class($message) != '\Thallium\Models\MessageModel'
-        ) {
+        if (!$this->requireModel($message, 'MessageModel')) {
             $this->raiseError(__METHOD__ .', requires a MessageModel reference as parameter!');
             return false;
         }
@@ -686,161 +680,6 @@ class MainController extends DefaultController
 
         if (!$mbus->sendMessageToClient('mailimport-reply', 'Done', '100%')) {
             $this->raiseError(get_class($mbus) .'::sendMessageToClient() returned false!');
-            return false;
-        }
-
-        return true;
-    }
-
-    private function signDocument(&$document)
-    {
-        if (get_class($document) != "\Thallium\Models\DocumentModel") {
-            $this->raiseError(__METHOD__ .', can only work with DocumentModels!');
-            return false;
-        }
-
-        if ($document->document_signed_copy == 'Y') {
-            $this->raiseError(__METHOD__ .", will not resign an already signed document!");
-            return false;
-        }
-
-        try {
-            $archive = new Controllers\ArchiveController;
-        } catch (\Exception $e) {
-            $this->raiseError("Failed to load ArchiveController!");
-            return false;
-        }
-
-        if (!$archive) {
-            $this->raiseError("Unable to load ArchiveController!");
-            return false;
-        }
-
-        if (!$archive->sign($document)) {
-            $this->raiseError("ArchiveController::sign() returned false!");
-            return false;
-        }
-
-        return true;
-    }
-
-    private function handleScanDocumentRequests(&$message)
-    {
-        global $mbus;
-
-        if (empty($message) ||
-            get_class($message) != '\Thallium\Models\MessageModel'
-        ) {
-            $this->raiseError(__METHOD__ .', requires a MessageModel reference as parameter!');
-            return false;
-        }
-
-        if (!$message->hasBody() || !($body = $message->getBody())) {
-            $this->raiseError(get_class($message) .'::getBody() returned false!');
-            return false;
-        }
-
-        if (!is_string($body)) {
-            $this->raiseError(get_class($message) .'::getBody() has not returned a string!');
-            return false;
-        }
-
-        if (!($sessionid = $message->getSessionId())) {
-            $this->raiseError(get_class($message) .'::getSessionId() returned false!');
-            return false;
-        }
-
-        if (!is_string($sessionid)) {
-            $this->raiseError(get_class($message) .'::getSessionId() has not returned a string!');
-            return false;
-        }
-
-        if (!$mbus->sendMessageToClient('scan-reply', 'Preparing', '10%')) {
-            $this->raiseError(get_class($mbus) .'::sendMessageToClient() returned false!');
-            return false;
-        }
-
-        if (!($scan_request = unserialize($body))) {
-            $this->raiseError(__METHOD__ .', unable to unserialize message body!');
-            return false;
-        }
-
-        if (!is_object($scan_request)) {
-            $this->raiseError(__METHOD__ .', unserialize() has not returned an object!');
-            return false;
-        }
-
-        if (!isset($scan_request->id) || empty($scan_request->id) ||
-            !isset($scan_request->guid) || empty($scan_request->guid)
-        ) {
-            $this->raiseError(__METHOD__ .', scan-request is incomplete!');
-            return false;
-        }
-
-        if (!$this->isValidId($scan_request->id)) {
-            $this->raiseError(__METHOD__ .', \$id is invalid!');
-            return false;
-        }
-
-        if (!$this->isValidGuidSyntax($scan_request->guid)) {
-            $this->raiseError(__METHOD__ .', \$guid is invalid!');
-            return false;
-        }
-
-        if (!$mbus->sendMessageToClient('scan-reply', 'Loading document', '20%')) {
-            $this->raiseError(get_class($mbus) .'::sendMessageToClient() returned false!');
-            return false;
-        }
-
-        try {
-            $document = new Models\DocumentModel(
-                $scan_request->id,
-                $scan_request->guid
-            );
-        } catch (\Exception $e) {
-            $this->raiseError(__METHOD__ .", unable to load DocumentModel!");
-            return false;
-        }
-
-        if (!$this->scanDocument($document)) {
-            $this->raiseError(__CLASS__ .'::scanDocument() returned false!');
-            return false;
-        }
-
-        if (!$mbus->sendMessageToClient('scan-reply', 'Done', '100%')) {
-            $this->raiseError(get_class($mbus) .'::sendMessageToClient() returned false!');
-            return false;
-        }
-
-        return true;
-    }
-
-    private function scanDocument(&$document)
-    {
-        if (get_class($document) != "\Thallium\Models\DocumentModel") {
-            $this->raiseError(__METHOD__ .', can only work with DocumentModels!');
-            return false;
-        }
-
-        if ($document->document_signed_copy == 'Y' || $document->document_version != 1) {
-            $this->raiseError(__METHOD__ .", will only scan the original document!");
-            return false;
-        }
-
-        try {
-            $parser = new Controllers\PdfIndexerController;
-        } catch (\Exception $e) {
-            $this->raiseError("Failed to load PdfIndexerController!");
-            return false;
-        }
-
-        if (!$parser) {
-            $this->raiseError("Unable to load PdfIndexerController!");
-            return false;
-        }
-
-        if (!$parser->scan($document)) {
-            $this->raiseError(get_class($parser) .'::scan() returned false!');
             return false;
         }
 
