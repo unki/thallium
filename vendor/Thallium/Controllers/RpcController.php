@@ -88,7 +88,7 @@ class RpcController extends DefaultController
         return true;
     }
 
-    private function rpcDeleteObject()
+    protected function rpcDeleteObject()
     {
         global $thallium;
 
@@ -180,7 +180,7 @@ class RpcController extends DefaultController
 
     }
 
-    private function rpcArchiveObject()
+    protected function rpcArchiveObject()
     {
         global $thallium;
 
@@ -257,7 +257,7 @@ class RpcController extends DefaultController
         return true;
     }
 
-    private function rpcGetContent()
+    protected function rpcGetContent()
     {
         global $views;
 
@@ -290,7 +290,7 @@ class RpcController extends DefaultController
         return false;
     }
 
-    private function rpcFindPrevNextObject()
+    protected function rpcFindPrevNextObject()
     {
         global $thallium, $views;
 
@@ -369,7 +369,7 @@ class RpcController extends DefaultController
         return true;
     }
 
-    private function rpcUpdateObject()
+    protected function rpcUpdateObject()
     {
         global $thallium;
 
@@ -498,7 +498,7 @@ class RpcController extends DefaultController
         return true;
     }
 
-    private function rpcSubmitToMessageBus()
+    protected function rpcSubmitToMessageBus()
     {
         global $mbus;
 
@@ -519,7 +519,7 @@ class RpcController extends DefaultController
         return true;
     }
 
-    private function rpcRetrieveFromMessageBus()
+    protected function rpcRetrieveFromMessageBus()
     {
         global $mbus;
 
