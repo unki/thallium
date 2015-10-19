@@ -21,9 +21,9 @@ namespace Thallium\Controllers;
 
 class ConfigController extends DefaultController
 {
-    private $config_file_local = "config.ini";
-    private $config_file_dist = "config.ini.dist";
-    private $config;
+    protected $config_file_local = "config.ini";
+    protected $config_file_dist = "config.ini.dist";
+    protected $config;
 
     public function __construct()
     {
