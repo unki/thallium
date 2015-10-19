@@ -233,22 +233,22 @@ class TemplatesController extends DefaultController
 
     public function getUrl($params, &$smarty)
     {
-        global $mtlda, $config;
+        global $config;
 
         if (!array_key_exists('page', $params)) {
-            $mtlda->raiseError("getUrl: missing 'page' parameter", E_USER_WARNING);
+            $this->raiseError("getUrl: missing 'page' parameter", E_USER_WARNING);
             $repeat = false;
             return false;
         }
 
         if (array_key_exists('mode', $params) && !in_array($params['mode'], $this->supported_modes)) {
-            $mtlda->raiseError("getUrl: value of parameter 'mode' ({$params['mode']}) isn't supported", E_USER_WARNING);
+            $this->raiseError("getUrl: value of parameter 'mode' ({$params['mode']}) isn't supported", E_USER_WARNING);
             $repeat = false;
             return false;
         }
 
         if (!($url = $config->getWebPath())) {
-            $mtlda->raiseError("Web path is missing!");
+            $this->raiseError("Web path is missing!");
             return false;
         }
 
