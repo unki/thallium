@@ -26,9 +26,9 @@ class MainController extends DefaultController
 {
     const VERSION = "1.0";
 
-    private $verbosity_level = LOG_WARNING;
-    private $override_namespace_prefix;
-    private $registerModels = array(
+    protected $verbosity_level = LOG_WARNING;
+    protected $override_namespace_prefix;
+    protected $registerModels = array(
         'AuditEntryModel',
         'AuditLogModel',
         'JobModel',
@@ -149,7 +149,7 @@ class MainController extends DefaultController
 
     } // setVerbosity()
 
-    private function rpcHandler()
+    protected function rpcHandler()
     {
         $this->loadController("Rpc", "rpc");
         global $rpc;
@@ -178,7 +178,7 @@ class MainController extends DefaultController
         return true;
     }
 
-    private function imageHandler()
+    protected function imageHandler()
     {
         $this->loadController("Image", "image");
         global $image;
@@ -192,7 +192,7 @@ class MainController extends DefaultController
         return true;
     }
 
-    private function documentHandler()
+    protected function documentHandler()
     {
         $this->loadController("Document", "document");
         global $document;
@@ -206,7 +206,7 @@ class MainController extends DefaultController
         return true;
     }
 
-    private function uploadHandler()
+    protected function uploadHandler()
     {
         $this->loadController("Upload", "upload");
         global $upload;
@@ -446,7 +446,7 @@ class MainController extends DefaultController
         return false;
     }
 
-    private function performActions()
+    protected function performActions()
     {
         global $mbus;
 
@@ -481,7 +481,7 @@ class MainController extends DefaultController
         return true;
     }
 
-    private function handleMessage(&$message)
+    protected function handleMessage(&$message)
     {
         global $jobs;
 
@@ -571,7 +571,7 @@ class MainController extends DefaultController
         return true;
     }
 
-    private function handleSignRequest(&$message)
+    protected function handleSignRequest(&$message)
     {
         global $mbus;
 
@@ -660,7 +660,7 @@ class MainController extends DefaultController
         return true;
     }
 
-    private function handleMailImportRequest(&$message)
+    protected function handleMailImportRequest(&$message)
     {
         global $mbus;
 

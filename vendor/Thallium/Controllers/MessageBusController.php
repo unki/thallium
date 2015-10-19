@@ -24,7 +24,7 @@ use \Thallium\Models;
 class MessageBusController extends DefaultController
 {
     const EXPIRE_TIMEOUT = 300;
-    private $suppressOutboundMessaging = false;
+    protected $suppressOutboundMessaging = false;
 
     public function __construct()
     {
@@ -237,7 +237,7 @@ class MessageBusController extends DefaultController
         return $messages;
     }
 
-    private function removeExpiredMessages()
+    protected function removeExpiredMessages()
     {
         try {
             $msgs = new Models\MessageBusModel;
@@ -326,7 +326,7 @@ class MessageBusController extends DefaultController
         return true;
     }
 
-    private function getSessionIdFromJob($job_guid = null)
+    protected function getSessionIdFromJob($job_guid = null)
     {
         global $thallium, $jobs;
 

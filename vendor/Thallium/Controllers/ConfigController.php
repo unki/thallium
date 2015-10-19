@@ -79,7 +79,7 @@ class ConfigController extends DefaultController
         return true;
     }
 
-    private function readConfig($config_target)
+    protected function readConfig($config_target)
     {
         $config_file = "config_file_{$config_target}";
         $config_fqpn = self::CONFIG_DIRECTORY ."/". $this->$config_file;

@@ -74,7 +74,7 @@ abstract class DefaultModel
      * load
      *
      */
-    private function load()
+    protected function load()
     {
         global $thallium, $db;
 

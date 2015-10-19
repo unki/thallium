@@ -24,7 +24,7 @@ use \Thallium\Models;
 class JobsController extends DefaultController
 {
     const EXPIRE_TIMEOUT = 300;
-    private $currentJobGuid;
+    protected $currentJobGuid;
 
     public function __construct()
     {
@@ -36,7 +36,7 @@ class JobsController extends DefaultController
         return true;
     }
 
-    private function removeExpiredJobs()
+    protected function removeExpiredJobs()
     {
         try {
             $jobs = new Models\JobsModel;

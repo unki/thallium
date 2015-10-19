@@ -23,7 +23,7 @@ use \Smarty;
 
 class TemplatesController extends DefaultController
 {
-    private $smarty;
+    protected $smarty;
 
     public $config_template_dir;
     public $config_compile_dir;

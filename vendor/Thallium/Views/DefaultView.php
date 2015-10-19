@@ -134,7 +134,7 @@ abstract class DefaultView
         return $tmpl->fetch($this->class_name ."_show.tpl");
     }
 
-    private function isKnownMode($mode)
+    protected function isKnownMode($mode)
     {
         $valid_modes = array(
             'list',

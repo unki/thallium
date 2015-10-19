@@ -28,7 +28,7 @@ class ViewsController extends DefaultController
         '/^main$/' => 'MainView',
         '/^about$/' => 'AboutView',
     );
-    private $page_skeleton;
+    protected $page_skeleton;
 
     public function __construct()
     {

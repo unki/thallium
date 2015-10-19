@@ -25,9 +25,9 @@ class DatabaseController extends DefaultController
 {
     const SCHEMA_VERSION = 1;
 
-    private $db;
-    private $db_cfg;
-    private $is_connected = false;
+    protected $db;
+    protected $db_cfg;
+    protected $is_connected = false;
 
     public function __construct()
     {
@@ -73,7 +73,7 @@ class DatabaseController extends DefaultController
         return true;
     }
 
-    private function connect()
+    protected function connect()
     {
         $options = array(
                 'debug' => 2,
@@ -108,12 +108,12 @@ class DatabaseController extends DefaultController
         return true;
     }
 
-    private function setConnectionStatus($status)
+    protected function setConnectionStatus($status)
     {
         $this->is_connected = $status;
     }
 
-    private function getConnectionStatus()
+    protected function getConnectionStatus()
     {
         return $this->is_connected;
     }

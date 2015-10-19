@@ -21,7 +21,7 @@ namespace Thallium\Controllers;
 
 class HttpRouterController extends DefaultController
 {
-    private $query;
+    protected $query;
 
     public function __construct()
     {
@@ -267,7 +267,7 @@ class HttpRouterController extends DefaultController
         return false;
     }
 
-    private function isValidAction($action)
+    protected function isValidAction($action)
     {
         $valid_actions = array(
                 'overview',
@@ -363,7 +363,7 @@ class HttpRouterController extends DefaultController
         return true;
     }
 
-    private function isValidRequestMethod($method)
+    protected function isValidRequestMethod($method)
     {
         $valid_methods = array(
             'GET',
@@ -377,7 +377,7 @@ class HttpRouterController extends DefaultController
         return false;
     }
 
-    private function isValidUpdateObject($update_object)
+    protected function isValidUpdateObject($update_object)
     {
         $valid_update_objects = array(
             'archive',

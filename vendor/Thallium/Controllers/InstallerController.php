@@ -21,7 +21,7 @@ namespace Thallium\Controllers;
 
 class InstallerController extends DefaultController
 {
-    private $schema_version_before;
+    protected $schema_version_before;
 
     public function setup()
     {
@@ -157,7 +157,7 @@ class InstallerController extends DefaultController
         return true;
     }
 
-    private function upgradeDatabaseSchema()
+    protected function upgradeDatabaseSchema()
     {
         global $db;
 
