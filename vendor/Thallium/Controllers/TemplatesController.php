@@ -111,6 +111,12 @@ class TemplatesController extends DefaultController
         $this->smarty->assign('app_web_path', $app_web_path);
         $this->smarty->assign('page_title', $page_title);
         $this->registerPlugin("function", "get_url", array(&$this, "getUrl"), false);
+        $this->registerPlugin(
+            "function",
+            "get_humanreadable_filesize",
+            array(&$this, "getHumanReadableFilesize"),
+            false
+        );
         return true;
     }
 
