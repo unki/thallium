@@ -138,7 +138,10 @@ class HttpRouterController extends DefaultController
         for ($i = 1; $i < count($parts); $i++) {
             array_push($this->query->params, $parts[$i]);
         }
+    }
 
+    public function select()
+    {
         //
         // RPC
         //
@@ -209,16 +212,6 @@ class HttpRouterController extends DefaultController
         }
 
         $this->query->call_type = "common";
-
-        return true;
-    }
-
-    public function getQuery()
-    {
-        if (!isset($this->query) || empty($this->query) || !is_object($this->query)) {
-            return false;
-        }
-
         return $this->query;
     }
 
