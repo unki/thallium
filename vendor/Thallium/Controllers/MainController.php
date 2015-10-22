@@ -59,7 +59,10 @@ class MainController extends DefaultController
         if (!$this->isCmdline()) {
             $this->loadController("HttpRouter", "router");
             global $router;
-            $GLOBALS['query'] = $router->getQuery();
+            if (($GLOBALS['query'] = $router->select()) === false) {
+                $this->raiseError(__METHOD__ .'(), HttpRouterController::select() returned false!');
+                return false;
+            }
             global $query;
         }
 
