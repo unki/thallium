@@ -22,6 +22,7 @@ namespace Thallium\Controllers;
 class HttpRouterController extends DefaultController
 {
     protected $query;
+    protected $query_parts;
 
     public function __construct()
     {
@@ -72,18 +73,21 @@ class HttpRouterController extends DefaultController
         $uri = ltrim($uri, '/');
 
         // explode string into an array
-        $parts = explode('/', $uri);
+        $this->query_parts = explode('/', $uri);
 
-        if (!is_array($parts) || empty($parts) || count($parts) < 1) {
+        if (!is_array($this->query_parts) ||
+            empty($this->query_parts) ||
+            count($this->query_parts) < 1
+        ) {
             $this->raiseError("Unable to parse request URI - nothing to be found.");
             exit(1);
         }
 
         // remove empty array elements
-        $parts = array_filter($parts);
+        $this->query_parts = array_filter($this->query_parts);
 
         /* for requests to the root page (config item base_web_path), select MainView */
-        if (!isset($parts[0]) &&
+        if (!isset($this->query_parts[0]) &&
             empty($uri) && (
                 $_SERVER['REQUEST_URI'] == "/" ||
                 rtrim($_SERVER['REQUEST_URI'], '/') == $config->getWebPath()
@@ -91,8 +95,8 @@ class HttpRouterController extends DefaultController
         ) {
             $this->query->view = "main";
         /* select View according parsed request URI */
-        } elseif (isset($parts[0]) && !empty($parts[0])) {
-            $this->query->view = $parts[0];
+        } elseif (isset($this->query_parts[0]) && !empty($this->query_parts[0])) {
+            $this->query->view = $this->query_parts[0];
         } else {
             $this->raiseError(
                 "Something is wrong here. "
@@ -101,10 +105,10 @@ class HttpRouterController extends DefaultController
             return false;
         }
 
-        if (isset($parts[0]) && $this->isValidAction($parts[0])) {
-            $this->query->mode = $parts[0];
-        } elseif (isset($parts[1]) && $this->isValidAction($parts[1])) {
-            $this->query->mode = $parts[1];
+        if (isset($this->query_parts[0]) && $this->isValidAction($this->query_parts[0])) {
+            $this->query->mode = $this->query_parts[0];
+        } elseif (isset($this->query_parts[1]) && $this->isValidAction($this->query_parts[1])) {
+            $this->query->mode = $this->query_parts[1];
         }
 
         $this->query->params = array();
@@ -135,8 +139,8 @@ class HttpRouterController extends DefaultController
             }
         }
 
-        for ($i = 1; $i < count($parts); $i++) {
-            array_push($this->query->params, $parts[$i]);
+        for ($i = 1; $i < count($this->query_parts); $i++) {
+            array_push($this->query->params, $this->query_parts[$i]);
         }
     }
 
@@ -168,7 +172,7 @@ class HttpRouterController extends DefaultController
         }
 
         // no more information in URI, then we are done
-        if (count($parts) <= 1) {
+        if (count($this->query_parts) <= 1) {
             return $this->query;
         }
 
