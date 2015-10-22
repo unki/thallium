@@ -247,10 +247,12 @@ class MainController extends DefaultController
         }
 
         if (!preg_match('/model$/i', $model)) {
-            $model.= 'Model';
+            if ($this->isRegisteredModel($model)) {
+                return true;
+            }
         }
 
-        if ($this->isRegisteredModel($model)) {
+        if ($this->isRegisteredModel(null, $model)) {
             return true;
         }
 
