@@ -28,13 +28,13 @@ class MainController extends DefaultController
 
     protected $verbosity_level = LOG_WARNING;
     protected $override_namespace_prefix;
-    protected $registerModels = array(
-        'AuditEntryModel',
-        'AuditLogModel',
-        'JobModel',
-        'JobsModel',
-        'MessageBusModel',
-        'MessageModel',
+    protected $registeredModels = array(
+        'auditentry' => 'AuditEntryModel',
+        'auditlog' => 'AuditLogModel',
+        'jobmodel' => 'JobModel',
+        'jobsmodel' => 'JobsModel',
+        'messagebusmodel' => 'MessageBusModel',
+        'messagemodel' => 'MessageModel',
     );
 
     public function __construct($mode = null)
@@ -745,24 +745,29 @@ class MainController extends DefaultController
 
     final public function getRegisteredModels()
     {
-        if (!isset($this->registerModels) ||
-            empty($this->registerModels) ||
-            !is_array($this->registerModels)
+        if (!isset($this->registeredModels) ||
+            empty($this->registeredModels) ||
+            !is_array($this->registeredModels)
         ) {
-            $this->raiseError(__METHOD__ .'(), registerModels property is invalid!');
+            $this->raiseError(__METHOD__ .'(), registeredModels property is invalid!');
             return false;
         }
 
-        return $this->registerModels;
+        return $this->registeredModels;
     }
 
-    final public function registerModel($model)
+    final public function registerModel($nick, $model)
     {
-        if (!isset($this->registerModels) ||
-            empty($this->registerModels) ||
-            !is_array($this->registerModels)
+        if (!isset($this->registeredModels) ||
+            empty($this->registeredModels) ||
+            !is_array($this->registeredModels)
         ) {
-            $this->raiseError(__METHOD__ .'(), registerModels property is invalid!');
+            $this->raiseError(__METHOD__ .'(), registeredModels property is invalid!');
+            return false;
+        }
+
+        if (!isset($nick) || empty($nick) || !is_string($nick)) {
+            $this->raiseError(__METHOD__ .'(), \$nick parameter is invalid!');
             return false;
         }
 
@@ -771,34 +776,74 @@ class MainController extends DefaultController
             return false;
         }
 
-        if (in_array(strtolower($model), $this->getRegisteredModels())) {
+        if ($this->isRegisteredModel($nick, $model)) {
             return true;
         }
 
-        array_push($this->registerModels, strtolower($model));
+        $this->registeredModels[$nick] = $model;
         return true;
     }
 
-    final public function isRegisteredModel($model)
+    final public function isRegisteredModel($nick = null, $model = null)
     {
-        if (!isset($this->registerModels) ||
-            empty($this->registerModels) ||
-            !is_array($this->registerModels)
+        if ((!isset($nick) || empty($nick) || !is_string($nick)) &&
+            (!isset($model) || empty($model) || !is_string($nick))
         ) {
-            $this->raiseError(__METHOD__ .'(), registerModels property is invalid!');
+            $this->raiseError(__METHOD__ .'(), can not look for nothing!');
             return false;
         }
 
-        if (!isset($model) || empty($model) || !is_string($model)) {
-            $this->raiseError(__METHOD__ .'(), \$model parameter is invalid!');
+        if (($known_models = $this->getRegisteredModels()) === false) {
+            $this->raiseError(__METHOD__ .'(), getRegisteredModels() returned false!');
             return false;
         }
 
-        if (in_array(strtolower($model), $this->getRegisteredModels())) {
-            return true;
+        $result = false;
+
+        if (isset($nick) && !empty($nick)) {
+            if (in_array($nick, array_keys($known_models))) {
+                $result = true;
+            }
         }
 
-        return false;
+        // not looking for $model? then we are done.
+        if (!isset($model) || empty($model)) {
+            return $result;
+        }
+
+        // looking for nick was ok, but does it also match $model?
+        if ($result) {
+            if ($known_models[$nick] == $model) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        if (!in_array($model, $known_models)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function getModelByNick($nick)
+    {
+        if (!isset($nick) || empty($nick) || !is_string($nick)) {
+            $this->raiseError(__METHOD__ .'(), $nick parameter is invalid!');
+            return false;
+        }
+
+        if (($known_models = $this->getRegisteredModels()) === false) {
+            $this->raiseError(__METHOD__ .'(), getRegisteredModels() returned false!');
+            return false;
+        }
+
+        if (!isset($known_models[$nick])) {
+            return false;
+        }
+
+        return $known_models[$nick];
     }
 }
 
