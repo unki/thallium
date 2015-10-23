@@ -985,7 +985,7 @@ abstract class DefaultModel
 
         $fields = array();
 
-        foreach($this->fields as $field => $sec) {
+        foreach ($this->fields as $field => $sec) {
             $field_ary = array(
                 'name' => $field,
                 'value' => $this->$field,
@@ -1017,7 +1017,7 @@ abstract class DefaultModel
             return false;
         }
 
-        if (!in_array($field_name, $this->fields)) {
+        if (!in_array($field_name, array_keys($this->fields))) {
             return false;
         }
 
