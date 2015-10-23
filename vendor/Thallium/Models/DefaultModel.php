@@ -970,6 +970,59 @@ abstract class DefaultModel
 
         return $this->$guid_field;
     }
+
+    final public function getFields()
+    {
+        global $thallium;
+
+        if (!isset($this->fields) ||
+            empty($this->fields) ||
+            !is_array($this->fields)
+        ) {
+            $thallium->raiseError(__METHOD__ .'(), no fields defined!');
+            return false;
+        }
+
+        $fields = array();
+
+        foreach($this->fields as $field => $sec) {
+            $field_ary = array(
+                'name' => $field,
+                'value' => $this->$field,
+                'privacy' => $sec,
+            );
+            array_push($fields, $field_ary);
+        }
+
+        return $fields;
+    }
+
+    final public function hasField($field_name)
+    {
+        global $thallium;
+
+        if (!isset($field_name) ||
+            empty($field_name) ||
+            !is_string($field_name)
+        ) {
+            $thallium->raiseError(__METHOD__ .'(), do not know what to look for!');
+            return false;
+        }
+
+        if (!isset($this->fields) ||
+            empty($this->fields) ||
+            !is_array($this->fields)
+        ) {
+            $thallium->raiseError(__METHOD__ .'(), no fields defined!');
+            return false;
+        }
+
+        if (!in_array($field_name, $this->fields)) {
+            return false;
+        }
+
+        return true;
+    }
 }
 
 // vim: set filetype=php expandtab softtabstop=4 tabstop=4 shiftwidth=4:
