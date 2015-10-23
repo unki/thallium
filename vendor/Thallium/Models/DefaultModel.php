@@ -1023,6 +1023,21 @@ abstract class DefaultModel
 
         return true;
     }
+
+    final public function getFieldPrefix()
+    {
+        global $thallium;
+
+        if (!isset($this->column_name) ||
+            empty($this->column_name) ||
+            !is_string($this->column_name)
+        ) {
+            $thallium->raiseError(__METHOD__ .'(), column name is not set!');
+            return false;
+        }
+
+        return $this->column_name;
+    }
 }
 
 // vim: set filetype=php expandtab softtabstop=4 tabstop=4 shiftwidth=4:
