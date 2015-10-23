@@ -236,23 +236,25 @@ class MainController extends DefaultController
         return true;
     }
 
-    public function isValidModel($model)
+    public function isValidModel($model_name)
     {
-        if (!isset($model) ||
-            empty($model) ||
-            !is_string($model)
+        if (!isset($model_name) ||
+            empty($model_name) ||
+            !is_string($model_name)
         ) {
-            $this->raiseError(__METHOD__ .'(), \$model parameter is invalid!');
+            $this->raiseError(__METHOD__ .'(), \$model_name parameter is invalid!');
             return false;
         }
 
-        if (!preg_match('/model$/i', $model)) {
-            if ($this->isRegisteredModel($model)) {
-                return true;
-            }
+        if (!preg_match('/model$/i', $model_name)) {
+            $nick = $model_name;
+            $model = null;
+        } else {
+            $nick = null;
+            $model = $model_name;
         }
 
-        if ($this->isRegisteredModel(null, $model)) {
+        if ($this->isRegisteredModel($nick, $model)) {
             return true;
         }
 
@@ -316,14 +318,24 @@ class MainController extends DefaultController
             return false;
         }
 
-        switch ($model_name) {
-            case 'queue':
-                $model = $prefix .'\\Models\\QueueModel';
-                break;
+        if (!($known_models =  $this->getRegisteredModels())) {
+            $this->raiseError(__METHOD__ .'(), getRegisteredModels returned false!');
+            return false;
         }
 
+        $nick = null;
+        $name = null;
+
+        if (in_array(strtolower($model_name), array_keys($known_models))) {
+            $model = $known_models[$model_name];
+        } elseif (in_array($model_name, $known_models)) {
+            $model = $model_name;
+        }
+
+        $model = $prefix .'\\Models\\'. $model;
+
         try {
-            $obj = new $model;
+            $obj = new $model($id, $guid);
         } catch (\Exception $e) {
             $this->raiseError("Failed to load model {$object_name}! ". $e->getMessage());
             return false;
