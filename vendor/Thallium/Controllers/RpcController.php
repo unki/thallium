@@ -104,31 +104,6 @@ class RpcController extends DefaultController
 
         $id = $_POST['id'];
 
-        /* for flushing queue */
-        if (preg_match('/(\w+)-flush$/', $id, $parts)) {
-            if (!isset($parts) ||
-                !is_array($parts) ||
-                !isset($parts[1]) ||
-                $parts[1] != "queueitem"
-            ) {
-                $this->raiseError("flushing only supported for queueitems!");
-                return false;
-            }
-
-            if (!($queue = $thallium->loadModel('queue'))) {
-                $this->raiseError("unable to locate model for QueueModel!");
-                return false;
-            }
-
-            if (!$queue->flush()) {
-                $this->raiseError("QueueModel::flush() returned false!");
-                return false;
-            }
-
-            print "ok";
-            return true;
-        }
-
         $parts = array();
         if (!preg_match('/(\w+)-([0-9]+)-([a-z0-9]+)/', $id, $parts)) {
             $this->raiseError("id in incorrect format!");
@@ -178,83 +153,6 @@ class RpcController extends DefaultController
         $this->raiseError("unknown error!");
         return false;
 
-    }
-
-    protected function rpcArchiveObject()
-    {
-        global $thallium;
-
-        if (!isset($_POST['id'])) {
-            $this->raiseError("id is missing!");
-            return false;
-        }
-
-        try {
-            $queue = new Controllers\QueueController;
-        } catch (Exception $e) {
-            $this->raiseError("Failed to load QueueController!");
-            return false;
-        }
-
-        if (preg_match('/-all$/', $_POST['id'])) {
-            if (!$queue->ArchiveAll()) {
-                $this->raiseError("QueueController::ArchiveAll() returned false!");
-                return false;
-            }
-            print "ok";
-            return true;
-        }
-
-        $id = $_POST['id'];
-
-        $parts = array();
-        if (!preg_match('/(\w+)-([0-9]+)-([a-z0-9]+)/', $id, $parts)) {
-            $this->raiseError("id in incorrect format!");
-            return false;
-        }
-
-        /* $parts() should now contain
-         * [0] = original id
-         * [1] = object (queueitem, etc.)
-         * [2] = queue_idx
-         * [3] = guid
-         */
-        if (!array($parts) || empty($parts) || count($parts) != 4) {
-            $this->raiseError("id does not contain all required information!");
-            return false;
-        }
-
-        if (!isset($parts[1]) || !$thallium->isValidModel($parts[1])) {
-            $this->raiseError("id contains an invalid model!");
-            return false;
-        }
-
-        if (!isset($parts[2]) || !is_numeric($parts[2])) {
-            $this->raiseError("id contains an invalid idx!");
-            return false;
-        }
-
-        if (!isset($parts[3]) || !$thallium->isValidGuidSyntax($parts[3])) {
-            $this->raiseError("id contains an invalid guid!");
-            return false;
-        }
-
-        $request_object = $parts[1];
-        $id = $parts[2];
-        $guid = $parts[3];
-
-        if ($request_object != "queueitem") {
-            $this->raiseError("archive function can only be used for Queue items!");
-            return false;
-        }
-
-        if (!$queue->archive($id, $guid)) {
-            $this->raiseError("QueueController::archive() returned false!");
-            return false;
-        }
-
-        print "ok";
-        return true;
     }
 
     protected function rpcGetContent()
@@ -436,61 +334,6 @@ class RpcController extends DefaultController
 
         if (!$obj->save()) {
             $this->raiseError(get_class($obj) ."::save() returned false!");
-            return false;
-        }
-
-        print "ok";
-        return true;
-    }
-
-    protected function rpcDeleteDocument()
-    {
-        global $thallium;
-
-        $input_fields = array('id', 'guid');
-
-        foreach ($input_fields as $field) {
-            if (!isset($_POST[$field])) {
-                $this->raiseError(__METHOD__ ."(), '{$field}' isn't set in POST request!");
-                return false;
-            }
-            if (empty($_POST[$field])) {
-                $this->raiseError(__METHOD__ ."(), '{$field}' is empty!");
-                return false;
-            }
-            if (!is_string($_POST[$field]) && !is_numeric($_POST[$field])) {
-                $this->raiseError(__METHOD__ ."(), '{$field}' is not from a valid type!");
-                return false;
-            }
-        }
-
-        $id = $_POST['id'];
-        $guid = $_POST['guid'];
-
-        if (!$thallium->isValidId($id)) {
-            $this->raiseError(__METHOD__ .'(), \$id is invalid!');
-            return false;
-        }
-
-        if (!$thallium->isValidGuidSyntax($guid)) {
-            $this->raiseError(__METHOD__ .'(), \$guid is invalid!');
-            return false;
-        }
-
-        try {
-            $document = new Models\DocumentModel($id, $guid);
-        } catch (\Exception $e) {
-            $this->raiseError(__METHOD__ ."(), unable to load DocumentModel!");
-            return false;
-        }
-
-        if (!$document->permitsRpcActions('delete')) {
-            $this->raiseError(get_class($document) .' does not permit "delete" via a RPC call!');
-            return false;
-        }
-
-        if (!$document->delete()) {
-            $this->raiseError(__CLASS__ .'::delete() returned false!');
             return false;
         }
 
