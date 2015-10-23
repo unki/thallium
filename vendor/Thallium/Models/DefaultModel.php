@@ -175,15 +175,19 @@ abstract class DefaultModel
         global $thallium, $db;
 
         if (!isset($this->id)) {
+            $thallium->raiseError(__METHOD__ .', object id is not set!');
             return false;
         }
         if (!is_numeric($this->id)) {
+            $thallium->raiseError(__METHOD__ .', object id is invalid!');
             return false;
         }
         if (!isset($this->table_name)) {
+            $thallium->raiseError(__METHOD__ .', table name is not set!');
             return false;
         }
         if (!isset($this->column_name)) {
+            $thallium->raiseError(__METHOD__ .', column name is not set!');
             return false;
         }
 
