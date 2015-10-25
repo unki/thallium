@@ -180,6 +180,14 @@ class DatabaseController extends DefaultController
             return false;
         }
 
+        /* if empty array is provided, we have to unset the $data.
+           otherwise an empty array may clear all previously done
+           (bindParam(), bindValue(), ...) bindings.
+        */
+        if (!isset($data) || empty($data) && !is_array($data)) {
+            $data = null;
+        }
+
         try {
             $result = $sth->execute($data);
         } catch (\PDOException $e) {
