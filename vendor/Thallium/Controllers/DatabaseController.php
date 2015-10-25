@@ -184,7 +184,7 @@ class DatabaseController extends DefaultController
            otherwise an empty array may clear all previously done
            (bindParam(), bindValue(), ...) bindings.
         */
-        if (!isset($data) || empty($data) && !is_array($data)) {
+        if (!isset($data) || empty($data) || !is_array($data)) {
             $data = null;
         }
 
