@@ -19,9 +19,6 @@
 
 namespace Thallium\Controllers;
 
-use \Thallium\Views;
-use \Thallium\Models;
-
 class MainController extends DefaultController
 {
     const VERSION = "1.0";
@@ -474,7 +471,7 @@ class MainController extends DefaultController
     {
         global $jobs;
 
-        if (!$this->requireModel($message, 'MessageModel')) {
+        if (get_class($message) != 'Thallium\\Models\\MessageModel') {
             $this->raiseError(__METHOD__ .' requires a MessageModel reference as parameter!');
             return false;
         }
