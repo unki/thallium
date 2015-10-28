@@ -19,8 +19,6 @@
 
 namespace Thallium\Controllers;
 
-use \Thallium\Views;
-
 class ViewsController extends DefaultController
 {
     public $page_map = array(
@@ -40,7 +38,7 @@ class ViewsController extends DefaultController
         }
 
         try {
-            $this->page_skeleton = new Views\SkeletonView;
+            $this->page_skeleton = new \Thallium\Views\SkeletonView;
         } catch (\Exception $e) {
             $this->raiseError(__CLASS__ .', unable to load SkeletonView!', true, $e);
             return false;
