@@ -19,8 +19,6 @@
 
 namespace Thallium\Controllers;
 
-use \Thallium\Models;
-
 class MessageBusController extends DefaultController
 {
     const EXPIRE_TIMEOUT = 300;
@@ -107,7 +105,7 @@ class MessageBusController extends DefaultController
             }
 
             try {
-                $mbmsg = new Models\MessageModel;
+                $mbmsg = new \Thallium\Models\MessageModel;
             } catch (\Exception $e) {
                 $this->raiseError('Failed to load MessageModel!');
                 return false;
@@ -159,7 +157,7 @@ class MessageBusController extends DefaultController
         $messages = array();
 
         try {
-            $msgs = new Models\MessageBusModel;
+            $msgs = new \Thallium\Models\MessageBusModel;
         } catch (\Exception $e) {
             $this->raiseError('Failed to load MessageBusModel!');
             return false;
@@ -218,7 +216,7 @@ class MessageBusController extends DefaultController
     public function getRequestMessages()
     {
         try {
-            $msgs = new Models\MessageBusModel;
+            $msgs = new \Thallium\Models\MessageBusModel;
         } catch (\Exception $e) {
             $this->raiseError('Failed to load MessageBusModel!');
             return false;
@@ -240,7 +238,7 @@ class MessageBusController extends DefaultController
     protected function removeExpiredMessages()
     {
         try {
-            $msgs = new Models\MessageBusModel;
+            $msgs = new \Thallium\Models\MessageBusModel;
         } catch (\Exception $e) {
             $this->raiseError('Failed to load MessageBusModel!');
             return false;
@@ -287,7 +285,7 @@ class MessageBusController extends DefaultController
         }
 
         try {
-            $msg = new Models\MessageModel;
+            $msg = new \Thallium\Models\MessageModel;
         } catch (\Exception $e) {
             $this->raiseError(__METHOD__ .', failed to load MessageModel!');
             return false;
@@ -341,7 +339,7 @@ class MessageBusController extends DefaultController
         }
 
         try {
-            $job = new Models\JobModel(null, $job_guid);
+            $job = new \Thallium\Models\JobModel(null, $job_guid);
         } catch (\Exception $e) {
             $this->raiseError(__METHOD__ .', failed to load JobModel(null, {$job})!');
             return false;
