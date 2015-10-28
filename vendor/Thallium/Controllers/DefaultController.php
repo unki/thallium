@@ -133,10 +133,12 @@ abstract class DefaultController
 
     } // getVerbosity()
 
-    public function requireModel($object, $model)
+    public function requireModel($obj, $model)
     {
-        if (!isset($object) || empty($object) || !is_object($object) ||
-            !isset($model) || empty($model) || is_string($model)) {
+        global $thallium;
+
+        if (!isset($obj) || empty($obj) || !is_object($obj) ||
+            !isset($model) || empty($model) || !is_string($model)) {
             $this->raiseError(__METHOD__ .'(), parameters are invalid!');
             return false;
         }
@@ -146,9 +148,9 @@ abstract class DefaultController
             return false;
         }
 
-        $model_full = '\\'. $prefix .'\\Models\\'. $model;
+        $model_full = $prefix .'\\Models\\'. $model;
 
-        if (get_class($object) != $model_full) {
+        if (get_class($obj) != $model_full) {
             return false;
         }
 
