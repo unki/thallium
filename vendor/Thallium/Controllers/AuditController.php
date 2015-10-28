@@ -19,14 +19,12 @@
 
 namespace Thallium\Controllers;
 
-use \Thallium\Models;
-
 class AuditController extends DefaultController
 {
     public function log($message, $entry_type, $scene, $guid = null)
     {
         try {
-            $entry = new Models\AuditEntryModel;
+            $entry = new \Thallium\Models\AuditEntryModel;
         } catch (Exception $e) {
             $this->raiseError("Failed to load AuditEntryModel");
             return false;
@@ -70,7 +68,7 @@ class AuditController extends DefaultController
         }
 
         try {
-            $log = new Models\AuditLogModel($guid);
+            $log = new \Thallium\Models\AuditLogModel($guid);
         } catch (\Exception $e) {
             $this->raiseError("Failed to load AuditLogModel! ". $e->getMessage());
             return false;
