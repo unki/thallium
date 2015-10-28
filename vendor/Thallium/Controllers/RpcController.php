@@ -19,9 +19,6 @@
 
 namespace Thallium\Controllers;
 
-use \Thallium\Models;
-use \Thallium\Controllers;
-
 class RpcController extends DefaultController
 {
     public function perform()
@@ -240,7 +237,7 @@ class RpcController extends DefaultController
 
         switch ($id->model) {
             case 'queueitem':
-                $model = new Models\QueueItemModel($id->id, $id->guid);
+                $model = new \Thallium\Models\QueueItemModel($id->id, $id->guid);
                 break;
         }
 
