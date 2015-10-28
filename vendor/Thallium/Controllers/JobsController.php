@@ -19,8 +19,6 @@
 
 namespace Thallium\Controllers;
 
-use \Thallium\Models;
-
 class JobsController extends DefaultController
 {
     const EXPIRE_TIMEOUT = 300;
@@ -39,7 +37,7 @@ class JobsController extends DefaultController
     protected function removeExpiredJobs()
     {
         try {
-            $jobs = new Models\JobsModel;
+            $jobs = new \Thallium\Models\JobsModel;
         } catch (\Exception $e) {
             $this->raiseError('Failed to load JobsModel!');
             return false;
@@ -72,7 +70,7 @@ class JobsController extends DefaultController
         }
 
         try {
-            $job = new Models\JobModel;
+            $job = new \Thallium\Models\JobModel;
         } catch (\Exception $e) {
             $this->raiseError(__METHOD__ .', unable to load JobModel!');
             return false;
@@ -114,7 +112,7 @@ class JobsController extends DefaultController
         }
 
         try {
-            $job = new Models\JobModel(null, $job_guid);
+            $job = new \Thallium\Models\JobModel(null, $job_guid);
         } catch (\Exception $e) {
             $this->raiseError(__METHOD__ .", failed to load JobModel(null, {$job_guid})");
             return false;
@@ -178,7 +176,7 @@ class JobsController extends DefaultController
         }
 
         try {
-            $job = new Models\JobModel(null, $guid);
+            $job = new \Thallium\Models\JobModel(null, $guid);
         } catch (\Exception $e) {
             $this->raiseError(__METHOD__ .", failed to load JobModel(null, {$guid})!");
             return false;
