@@ -24,6 +24,7 @@ use \PDO;
 class DatabaseController extends DefaultController
 {
     const SCHEMA_VERSION = 1;
+    const FRAMEWORK_SCHEMA_VERSION = 1;
 
     protected $db;
     protected $db_cfg;
@@ -156,13 +157,13 @@ class DatabaseController extends DefaultController
         }
 
         try {
-            $sth = $this->db->prepare($query);
+            $result = $this->db->prepare($query);
         } catch (\PDOException $e) {
             $this->raiseError("Unable to prepare statement: ". $e->getMessage());
             return false;
         }
 
-        return $sth;
+        return $result;
 
     } // db_prepare()
 
@@ -343,7 +344,7 @@ class DatabaseController extends DefaultController
         return $tables;
     }
 
-    public function getDatabaseSchemaVersion()
+    public function getApplicationDatabaseSchemaVersion()
     {
         if (!$this->getConnectionStatus()) {
             $this->raiseError("Can't check table - we are not connected!");
@@ -373,15 +374,58 @@ class DatabaseController extends DefaultController
         return 0;
     }
 
-    public function setDatabaseSchemaVersion($version = null)
+    public function getFrameworkDatabaseSchemaVersion()
     {
-        if (!isset($version) || empty($version)) {
-            $version = $this->getSoftwareSchemaVersion();
+        if (!$this->getConnectionStatus()) {
+            $this->raiseError("Can't check table - we are not connected!");
+            return false;
         }
 
         if (!$this->checkTableExists("TABLEPREFIXmeta")) {
+            return false;
+        }
+
+        $result = $this->fetchSingleRow(
+            "SELECT
+                meta_value
+            FROM
+                TABLEPREFIXmeta
+            WHERE
+                meta_key LIKE 'framework_schema_version'"
+        );
+
+        if (isset($result->meta_value) && is_numeric($result->meta_value)) {
+            return $result->meta_value;
+        } elseif (isset($result->meta_value) && !is_numeric($result->meta_value)) {
+            return false;
+        }
+
+        // in doubt we claim it's version 0
+        return 0;
+    }
+
+    public function setDatabaseSchemaVersion($version = null, $mode = 'application')
+    {
+        if (!$this->checkTableExists("TABLEPREFIXmeta")) {
             $this->raiseError("Can not set schema version when 'meta' table does not exist!");
             return false;
+        }
+
+        if ($mode == 'application') {
+            $key = 'schema_version';
+        } elseif ($mode == 'framework') {
+            $key = 'framework_schema_version';
+        } else {
+            $this->raiseError(__METHOD__ .'(), unsupported $mode parameter!');
+            return false;
+        }
+
+        if (!isset($version) || empty($version)) {
+            if ($mode == 'application') {
+                $version = $this->getSoftwareSchemaVersion();
+            } elseif ($mode == 'framework') {
+                $version = $this->getFrameworkSoftwareSchemaVersion();
+            }
         }
 
         $result = $this->query(
@@ -389,22 +433,27 @@ class DatabaseController extends DefaultController
                 meta_key,
                 meta_value
             ) VALUES (
-                'schema_version',
+                '{$key}',
                 '{$version}'
             )"
         );
 
         if (!$result) {
-            $this->raiseError("Unable to set schema_version in meta table!");
+            $this->raiseError(__METHOD__ ."(), unable to set {$key} in meta table!");
             return false;
         }
 
         return true;
     }
 
-    public function getSoftwareSchemaVersion()
+    public function getApplicationSoftwareSchemaVersion()
     {
-        return $this::SCHEMA_VERSION;
+        return static::SCHEMA_VERSION;
+    }
+
+    public function getFrameworkSoftwareSchemaVersion()
+    {
+        return self::FRAMEWORK_SCHEMA_VERSION;
     }
 
     public function truncateDatabaseTables()
