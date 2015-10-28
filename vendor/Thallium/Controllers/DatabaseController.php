@@ -305,26 +305,42 @@ class DatabaseController extends DefaultController
             return false;
         }
 
-        $result = $this->query("SHOW TABLES");
-
-        if (!$result) {
+        if (($tables = $this->getDatabaseTables()) === false) {
+            $this->raiseError(__CLASS__ .'::getDatabaseTables() returned false!');
             return false;
         }
 
         if ($this->hasTablePrefix()) {
             $table_name = str_replace("TABLEPREFIX", $this->getTablePrefix(), $table_name);
-            $this->insertTablePrefix($query);
+        }
+
+        if (!in_array($table_name, $tables)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function getDatabaseTables()
+    {
+        $tables = array();
+
+        if (!($result = $this->query("SHOW TABLES"))) {
+            $this->raiseError(__METHOD__ .'(), SHOW TABLES query failed!');
+            return false;
+        }
+
+        if (!$result) {
+            return $tables;
         }
 
         $tables_in = "Tables_in_{$this->db_cfg['db_name']}";
 
         while ($row = $result->fetch()) {
-            if ($row->$tables_in == $table_name) {
-                return true;
-            }
+            array_push($tables, $row->$tables_in);
         }
 
-        return false;
+        return $tables;
     }
 
     public function getDatabaseSchemaVersion()
@@ -393,54 +409,16 @@ class DatabaseController extends DefaultController
 
     public function truncateDatabaseTables()
     {
-        if (($this->query("TRUNCATE TABLE TABLEPREFIXmeta")) === false) {
-            $this->raiseError("failed to truncate 'meta' table!");
+        if (($tables = $this->getDatabaseTables()) === false) {
+            $this->raiseError(__CLASS__ .'::getDatabaseTables() returned false!');
             return false;
         }
 
-        if (($this->query("TRUNCATE TABLE TABLEPREFIXjobs")) === false) {
-            $this->raiseError("failed to truncate 'jobs' table!");
-            return false;
-        }
-
-        if (($this->query("TRUNCATE TABLE TABLEPREFIXmessage_bus")) === false) {
-            $this->raiseError("failed to truncate 'message_bus' table!");
-            return false;
-        }
-
-        if (($this->query("TRUNCATE TABLE TABLEPREFIXaudit")) === false) {
-            $this->raiseError("failed to truncate 'audit' table!");
-            return false;
-        }
-
-        if (($this->query("TRUNCATE TABLE TABLEPREFIXqueue")) === false) {
-            $this->raiseError("failed to truncate 'queue' table!");
-            return false;
-        }
-
-        if (($this->query("TRUNCATE TABLE TABLEPREFIXarchive")) === false) {
-            $this->raiseError("failed to truncate 'archive' table!");
-            return false;
-        }
-
-        if (($this->query("TRUNCATE TABLE TABLEPREFIXkeywords")) === false) {
-            $this->raiseError("failed to truncate 'keywords' table!");
-            return false;
-        }
-
-        if (($this->query("TRUNCATE TABLE TABLEPREFIXassign_keywords_to_document")) === false) {
-            $this->raiseError("failed to truncate 'assign_keywords_to_document' table!");
-            return false;
-        }
-
-        if (($this->query("TRUNCATE TABLE TABLEPREFIXdocument_indices")) === false) {
-            $this->raiseError("failed to truncate 'document_indices' table!");
-            return false;
-        }
-
-        if (($this->query("TRUNCATE TABLE TABLEPREFIXdocument_properties")) === false) {
-            $this->raiseError("failed to truncate 'document_properties' table!");
-            return false;
+        foreach ($tables as $table) {
+            if (($this->query("TRUNCATE TABLE ${table}")) === false) {
+                $this->raiseError(__METHOD__ ."(), failed to truncate '{$table}' table!");
+                return false;
+            }
         }
 
         return true;
