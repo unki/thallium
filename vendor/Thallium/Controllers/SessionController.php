@@ -42,7 +42,7 @@ class SessionController extends DefaultController
         global $thallium;
 
         if (!($guid = $thallium->createGuid())) {
-            $thallium->raiseError(get_class($thallium) .'::createGuid() returned false!');
+            $this->raiseError(get_class($thallium) .'::createGuid() returned false!');
             return false;
         }
 
