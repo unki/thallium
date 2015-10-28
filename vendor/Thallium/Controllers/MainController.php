@@ -181,34 +181,6 @@ class MainController extends DefaultController
         return true;
     }
 
-    protected function imageHandler()
-    {
-        $this->loadController("Image", "image");
-        global $image;
-
-        if (!$image->perform()) {
-            $this->raiseError("ImageController::perform() returned false!");
-            return false;
-        }
-
-        unset($image);
-        return true;
-    }
-
-    protected function documentHandler()
-    {
-        $this->loadController("Document", "document");
-        global $document;
-
-        if (!$document->perform()) {
-            $this->raiseError("DocumentController::perform() returned false!");
-            return false;
-        }
-
-        unset($document);
-        return true;
-    }
-
     protected function uploadHandler()
     {
         $this->loadController("Upload", "upload");
@@ -552,164 +524,13 @@ class MainController extends DefaultController
             return false;
         }
 
-        switch ($command) {
-            default:
-                $this->raiseError(__METHOD__ .', unknown command \"'. $command .'\" found!');
-                return false;
-                break;
-
-            case 'sign-request':
-                if (!$this->handleSignRequest($message)) {
-                    $this->raiseError('handleSignRequest() returned false!');
-                    return false;
-                }
-                break;
-
-            case 'mailimport-request':
-                if (!$this->handleMailImportRequest($message)) {
-                    $this->raiseError('handleMailImportRequest() returned false!');
-                    return false;
-                }
-                break;
-
-            case 'scan-request':
-                if (!$this->handleScanDocumentRequests($message)) {
-                    $this->raiseError('handleScanDocumentRequests() returned false!');
-                    return false;
-                }
-                break;
-        }
+        return array(
+            'command' => $command,
+            'job' => $job
+        );
 
         if (!$jobs->deleteJob($job)) {
             $this->raiseError(get_class($jobs) .'::deleteJob() returned false!');
-            return false;
-        }
-
-        return true;
-    }
-
-    protected function handleSignRequest(&$message)
-    {
-        global $mbus;
-
-        if (!$this->requireModel($message, 'MessageModel')) {
-            $this->raiseError(__METHOD__ .', requires a MessageModel reference as parameter!');
-            return false;
-        }
-
-        if (!$message->hasBody() || !($body = $message->getBody())) {
-            $this->raiseError(get_class($message) .'::getBody() returned false!');
-            return false;
-        }
-
-        if (!is_string($body)) {
-            $this->raiseError(get_class($message) .'::getBody() has not returned a string!');
-            return false;
-        }
-
-        if (!($sessionid = $message->getSessionId())) {
-            $this->raiseError(get_class($message) .'::getSessionId() returned false!');
-            return false;
-        }
-
-        if (!is_string($sessionid)) {
-            $this->raiseError(get_class($message) .'::getSessionId() has not returned a string!');
-            return false;
-        }
-
-        if (!$mbus->sendMessageToClient('sign-request', 'Preparing', '10%')) {
-            $this->raiseError(get_class($mbus) .'::sendMessageToClient() returned false!');
-            return false;
-        }
-
-        if (!($sign_request = unserialize($body))) {
-            $this->raiseError(__METHOD__ .', unable to unserialize message body!');
-            return false;
-        }
-
-        if (!is_object($sign_request)) {
-            $this->raiseError(__METHOD__ .', unserialize() has not returned an object!');
-            return false;
-        }
-
-        if (!isset($sign_request->id) || empty($sign_request->id) ||
-            !isset($sign_request->guid) || empty($sign_request->guid)
-        ) {
-            $this->raiseError(__METHOD__ .', sign-request is incomplete!');
-            return false;
-        }
-
-        if (!$this->isValidId($sign_request->id)) {
-            $this->raiseError(__METHOD__ .', \$id is invalid!');
-            return false;
-        }
-
-        if (!$this->isValidGuidSyntax($sign_request->guid)) {
-            $this->raiseError(__METHOD__ .', \$guid is invalid!');
-            return false;
-        }
-
-        if (!$mbus->sendMessageToClient('sign-request', 'Loading document', '20%')) {
-            $this->raiseError(get_class($mbus) .'::sendMessageToClient() returned false!');
-            return false;
-        }
-
-        try {
-            $document = new Models\DocumentModel(
-                $sign_request->id,
-                $sign_request->guid
-            );
-        } catch (\Exception $e) {
-            $this->raiseError(__METHOD__ .", unable to load DocumentModel!");
-            return false;
-        }
-
-        if (!$this->signDocument($document)) {
-            $this->raiseError(__CLASS__ .'::signDocument() returned false!');
-            return false;
-        }
-
-        if (!$mbus->sendMessageToClient('sign-request', 'Done', '100%')) {
-            $this->raiseError(get_class($mbus) .'::sendMessageToClient() returned false!');
-            return false;
-        }
-
-        return true;
-    }
-
-    protected function handleMailImportRequest(&$message)
-    {
-        global $mbus;
-
-        if (!$this->requireModel($message, 'MessageModel')) {
-            $this->raiseError(__METHOD__ .', requires a MessageModel reference as parameter!');
-            return false;
-        }
-
-        if (!($sessionid = $message->getSessionId())) {
-            $this->raiseError(get_class($message) .'::getSessionId() returned false!');
-            return false;
-        }
-
-        if (!is_string($sessionid)) {
-            $this->raiseError(get_class($message) .'::getSessionId() has not returned a string!');
-            return false;
-        }
-
-        try {
-            $importer = new MailImportController;
-        } catch (\Exception $e) {
-            $this->raiseError("Failed to load MailImportController!");
-            return false;
-        }
-
-        if (!$importer->fetch()) {
-            $this->raiseError("MailImportController::fetch() returned false!");
-            return false;
-        }
-
-        if (!$mbus->sendMessageToClient('mailimport-reply', 'Done', '100%')) {
-            $this->raiseError(get_class($mbus) .'::sendMessageToClient() returned false!');
             return false;
         }
 
@@ -858,6 +679,41 @@ class MainController extends DefaultController
         }
 
         return $known_models[$nick];
+    }
+
+    public function isBelowDirectory($dir, $topmost = null)
+    {
+        if (empty($dir)) {
+            $this->raiseError("\$dir can not be empty!");
+            return false;
+        }
+
+        if (empty($topmost)) {
+            $topmost = APP_BASE;
+        }
+
+        $dir = strtolower(realpath($dir));
+        $dir_top = strtolower(realpath($topmost));
+
+        $dir_top_reg = preg_quote($dir_top, '/');
+
+        // check if $dir is within $dir_top
+        if (!preg_match('/^'. preg_quote($dir_top, '/') .'/', $dir)) {
+            return false;
+        }
+
+        if ($dir == $dir_top) {
+            return false;
+        }
+
+        $cnt_dir = count(explode('/', $dir));
+        $cnt_dir_top = count(explode('/', $dir_top));
+
+        if ($cnt_dir > $cnt_dir_top) {
+            return true;
+        }
+
+        return false;
     }
 }
 
