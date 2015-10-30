@@ -340,11 +340,12 @@ class MainController extends DefaultController
             return true;
         }
 
-        if ($db->getDatabaseSchemaVersion() < $db::SCHEMA_VERSION) {
+        if ($db->getApplicationDatabaseSchemaVersion() < $db->getApplicationSoftwareSchemaVersion() ||
+            $db->getFrameworkDatabaseSchemaVersion() < $db->getFrameworkSoftwareSchemaVersion()
+        ) {
             $this->raiseError(
-                "The local schema version ({$db->getDatabaseSchemaVersion()}) is lower "
-                ."than the programs schema version (". $db::SCHEMA_VERSION ."). "
-                ."You may run <a href=\"{$base_path}/install\">Installer</a> "
+                "A database schema version upgrade is pending.&nbsp;"
+                ."You have to run <a href=\"{$base_path}/install\">Installer</a> "
                 ."again to upgrade.",
                 true
             );
