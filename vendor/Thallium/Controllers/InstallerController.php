@@ -28,8 +28,12 @@ class InstallerController extends DefaultController
         global $db, $config;
 
         if ($db->checkTableExists("TABLEPREFIXmeta")) {
-            if (($this->schema_version_before = $db->getDatabaseSchemaVersion()) === false) {
-                $this->raiseError("DatabaseController::getDatabaseSchemaVersion() returned false!");
+            if (($this->schema_version_before = $db->getApplicationDatabaseSchemaVersion()) === false) {
+                $this->raiseError(get_class($db) .'::getApplicationDatabaseSchemaVersion() returned false!');
+                return false;
+            }
+            if (($this->framework_schema_version_before = $db->getFrameworkDatabaseSchemaVersion()) === false) {
+                $this->raiseError(get_class($db) .'::getFrameworkDatabaseSchemaVersion() returned false!');
                 return false;
             }
         }
@@ -38,28 +42,42 @@ class InstallerController extends DefaultController
             $this->schema_version_before = 0;
         }
 
-        if ($this->schema_version_before < $db->getSoftwareSchemaVersion()) {
+        if (!isset($this->framework_schema_version_before)) {
+            $this->framework_schema_version_before = 0;
+        }
+
+        if ($this->schema_version_before < $db->getApplicationSoftwareSchemaVersion() ||
+            $this->framework_schema_version_before < $db->getFrameworkSoftwareSchemaVersion()
+        ) {
             if (!$this->createDatabaseTables()) {
-                $this->raiseError("InstallerController::createDatabaseTables() returned false!");
+                $this->raiseError(__CLASS__ .'::createDatabaseTables() returned false!');
                 return false;
             }
         }
 
-        if ($db->getDatabaseSchemaVersion() < $db->getSoftwareSchemaVersion()) {
+        if ($db->getApplicationDatabaseSchemaVersion() < $db->getApplicationSoftwareSchemaVersion() ||
+            $db->getFrameworkDatabaseSchemaVersion() < $db->getFrameworkSoftwareSchemaVersion()
+        ) {
             if (!$this->upgradeDatabaseSchema()) {
-                $this->raiseError("InstallerController::upgradeDatabaseSchema() returned false!");
+                $this->raiseError(__CLASS__ .'::upgradeDatabaseSchema() returned false!');
                 return false;
             }
         }
 
         if (!empty($this->schema_version_before)) {
-            print "Database schema version before upgrade: {$this->schema_version_before}<br />\n";
+            print "Application database schema version before upgrade: {$this->schema_version_before}<br />\n";
         }
-        print "Software supported schema version: {$db->getSoftwareSchemaVersion()}<br />\n";
-        print "Database schema version after upgrade: {$db->getDatabaseSchemaVersion()}<br />\n";
+        print "Application software supported schema version: {$db->getApplicationSoftwareSchemaVersion()}<br />\n";
+        print "Application database schema version after upgrade: {$db->getApplicationDatabaseSchemaVersion()}<br />\n";
+        print "<br /><br />";
+        if (!empty($this->framework_schema_version_before)) {
+            print "Framework database schema version before upgrade: {$this->framework_schema_version_before}<br />\n";
+        }
+        print "Framework software supported schema version: {$db->getFrameworkSoftwareSchemaVersion()}<br />\n";
+        print "Framework database schema version after upgrade: {$db->getFrameworkDatabaseSchemaVersion()}<br />\n";
 
         if (!($base_path = $config->getWebPath())) {
-            $this->raiseError("ConfigController::getWebPath() returned false!");
+            $this->raiseError(get_class($config) .'"::getWebPath() returned false!');
             return false;
         }
 
@@ -69,6 +87,21 @@ class InstallerController extends DefaultController
     }
 
     protected function createDatabaseTables()
+    {
+        if (!($this->createFrameworkDatabaseTables())) {
+            $this->raiseError(__CLASS__ .'::createFrameworkDatabaseTables() returned false!');
+            return false;
+        }
+
+        if (!($this->createApplicationDatabaseTables())) {
+            $this->raiseError(__CLASS__ .'::createApplicationDatabaseTables() returned false!');
+            return false;
+        }
+
+        return true;
+    }
+
+    protected function createFrameworkDatabaseTables()
     {
         global $db;
 
@@ -81,11 +114,11 @@ class InstallerController extends DefaultController
                 `audit_message` text,
                 `audit_time` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
                 PRIMARY KEY (`audit_idx`)
-                    )
-                    ENGINE=InnoDB DEFAULT CHARSET=utf8;";
+                )
+                ENGINE=InnoDB DEFAULT CHARSET=utf8;";
 
             if ($db->query($table_sql) === false) {
-                $this->raiseError("Failed to create 'audit' table");
+                $this->raiseError(__METHOD__ .'(), failed to create "audit" table!');
                 return false;
             }
         }
@@ -105,7 +138,7 @@ class InstallerController extends DefaultController
                 ) ENGINE=MyISAM DEFAULT CHARSET=utf8";
 
             if ($db->query($table_sql) === false) {
-                $this->raiseError("Failed to create 'message_bus' table");
+                $this->raiseError(__METHOD__ .'(), failed to create "message_bus" table!');
                 return false;
             }
         }
@@ -122,7 +155,7 @@ class InstallerController extends DefaultController
                 ) ENGINE=MyISAM DEFAULT CHARSET=utf8";
 
             if ($db->query($table_sql) === false) {
-                $this->raiseError("Failed to create 'jobs' table");
+                $this->raiseError(__METHOD__ .'(), failed to create "jobs" table!');
                 return false;
             }
         }
@@ -134,22 +167,35 @@ class InstallerController extends DefaultController
                 `meta_value` varchar(255) default NULL,
                 PRIMARY KEY  (`meta_idx`),
                 UNIQUE KEY `meta_key` (`meta_key`)
-                    )
-                    ENGINE=MyISAM DEFAULT CHARSET=utf8;";
+                )
+                ENGINE=MyISAM DEFAULT CHARSET=utf8;";
 
             if ($db->query($table_sql) === false) {
-                $this->raiseError("Failed to create 'meta' table");
+                $this->raiseError(__METHOD__ .'(), failed to create "meta" table!');
                 return false;
             }
 
             if (!$db->setDatabaseSchemaVersion()) {
-                $this->raiseError("Failed to set schema verison!");
+                $this->raiseError(get_class($db) .'::setDatabaseFrameworkSchemaVersion() returned false!');
+                return false;
+            }
+
+            if (!$db->setDatabaseSchemaVersion(null, 'framework')) {
+                $this->raiseError(get_class($db) .'::setDatabaseFrameworkSchemaVersion() returned false!');
                 return false;
             }
         }
-        if (!$db->getDatabaseSchemaVersion()) {
+
+        if (!$db->getApplicationDatabaseSchemaVersion()) {
             if (!$db->setDatabaseSchemaVersion()) {
-                $this->raiseError("DatabaseController:setDatabaseSchemaVersion() returned false!");
+                $this->raiseError(get_class($db) .'::setDatabaseSchemaVersion() returned false!');
+                return false;
+            }
+        }
+
+        if (!$db->getFrameworkDatabaseSchemaVersion()) {
+            if (!$db->setDatabaseSchemaVersion(null, 'framework')) {
+                $this->raiseError(get_class($db) .'::setDatabaseSchemaVersion() returned false!');
                 return false;
             }
         }
@@ -157,17 +203,40 @@ class InstallerController extends DefaultController
         return true;
     }
 
+    protected function createApplicationDatabaseTables()
+    {
+        /* this method should be overloaded to install application specific tables. */
+        return true;
+    }
+
     protected function upgradeDatabaseSchema()
     {
         global $db;
 
-        if (!$software_version = $db->getSoftwareSchemaVersion()) {
+        if (!$this->upgradeApplicationDatabaseSchema()) {
+            $this->raiseError(__CLASS__ .'::upgradeApplicationDatabaseSchema() returned false!');
+            return false;
+        }
+
+        if (!$this->upgradeFrameworkDatabaseSchema()) {
+            $this->raiseError(__CLASS__ .'::upgradeFrameworkDatabaseSchema() returned false!');
+            return false;
+        }
+
+        return true;
+    }
+
+    protected function upgradeApplicationDatabaseSchema()
+    {
+        global $db;
+
+        if (!$software_version = $db->getApplicationSoftwareSchemaVersion()) {
             $this->raiseError(get_class($db) .'::getSoftwareSchemaVersion() returned false!');
             return false;
         }
 
-        if (($db_version = $db->getDatabaseSchemaVersion()) === false) {
-            $this->raiseError(get_class($db) .'::getDatabaseSchemaVersion() returned false!');
+        if (($db_version = $db->getApplicationDatabaseSchemaVersion()) === false) {
+            $this->raiseError(get_class($db) .'::getApplicationDatabaseSchemaVersion() returned false!');
             return false;
         }
 
@@ -176,14 +245,48 @@ class InstallerController extends DefaultController
         }
 
         for ($i = $db_version+1; $i <= $software_version; $i++) {
-            $method_name = "upgradeDatabaseSchemaV{$i}";
+            $method_name = "upgradeApplicationDatabaseSchemaV{$i}";
 
             if (!method_exists($this, $method_name)) {
                 continue;
             }
 
             if (!$this->$method_name()) {
-                $this->raiseError(__CLASS__ ."::{$method_name} returned false!");
+                $this->raiseError(__CLASS__ ."::{$method_name}() returned false!");
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    protected function upgradeFrameworkDatabaseSchema()
+    {
+        global $db;
+
+        if (!$software_version = $db->getFrameworkSoftwareSchemaVersion()) {
+            $this->raiseError(get_class($db) .'::getFrameworkSoftwareSchemaVersion() returned false!');
+            return false;
+        }
+
+        if (($db_version = $db->getFrameworkDatabaseSchemaVersion()) === false) {
+            $this->raiseError(get_class($db) .'::getFrameworkDatabaseSchemaVersion() returned false!');
+            return false;
+        }
+
+        if ($db_version == $software_version) {
+            return true;
+        }
+
+        for ($i = $db_version+1; $i <= $software_version; $i++) {
+            $method_name = "upgradeFrameworkDatabaseSchemaV{$i}";
+
+            if (!method_exists($this, $method_name)) {
+                continue;
+            }
+
+            if (!$this->$method_name()) {
+                $this->raiseError(__CLASS__ ."::{$method_name}() returned false!");
                 return false;
             }
         }
