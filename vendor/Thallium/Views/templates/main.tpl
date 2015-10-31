@@ -24,7 +24,8 @@
 <br /><br />
 Thallium Version: {$software_version}
 <br />
-Thallium Database Schema: {$schema_version}
+Application Database Schema: {$schema_version}<br />
+Thallium Database Schema: {$framework_schema_version}</br>
 </div>
 <div class="ui segment">
 <h4 class="ui header">Appreciation</h4>

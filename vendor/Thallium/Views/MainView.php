@@ -31,7 +31,8 @@ class MainView extends DefaultView
         global $db, $tmpl;
 
         $tmpl->assign("software_version", Controllers\MainController::VERSION);
-        $tmpl->assign("schema_version", $db->getDatabaseSchemaVersion());
+        $tmpl->assign("schema_version", $db->getApplicationDatabaseSchemaVersion());
+        $tmpl->assign("framework_schema_version", $db->getFrameworkDatabaseSchemaVersion());
 
         return $tmpl->fetch("main.tpl");
     }
