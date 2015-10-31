@@ -101,7 +101,7 @@ class InstallerController extends DefaultController
         return true;
     }
 
-    protected function createFrameworkDatabaseTables()
+    final protected function createFrameworkDatabaseTables()
     {
         global $db;
 
@@ -253,7 +253,10 @@ class InstallerController extends DefaultController
             $method_name = "upgradeApplicationDatabaseSchemaV{$i}";
 
             if (!method_exists($this, $method_name)) {
-                continue;
+                $this->raiseError(__METHOD__ .'(), no upgrade method found for version '. $i);
+                return false;
+            } else {
+                print "Invoking {$method_name}().<br />\n";
             }
 
             if (!$this->$method_name()) {
@@ -265,7 +268,7 @@ class InstallerController extends DefaultController
         return true;
     }
 
-    protected function upgradeFrameworkDatabaseSchema()
+    final protected function upgradeFrameworkDatabaseSchema()
     {
         global $db;
 
@@ -292,7 +295,10 @@ class InstallerController extends DefaultController
             $method_name = "upgradeFrameworkDatabaseSchemaV{$i}";
 
             if (!method_exists($this, $method_name)) {
-                continue;
+                $this->raiseError(__METHOD__ .'(), no upgrade method found for version '. $i);
+                return false;
+            } else {
+                print "Invoking {$method_name}().<br />\n";
             }
 
             if (!$this->$method_name()) {
