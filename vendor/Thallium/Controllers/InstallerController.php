@@ -235,12 +235,17 @@ class InstallerController extends DefaultController
             return false;
         }
 
+        if ($software_version < 1) {
+            $this->raiseError(__METHOD__ .'(), invalid framework schema version found!');
+            return false;
+        }
+
         if (($db_version = $db->getApplicationDatabaseSchemaVersion()) === false) {
             $this->raiseError(get_class($db) .'::getApplicationDatabaseSchemaVersion() returned false!');
             return false;
         }
 
-        if ($db_version == $software_version) {
+        if ($db_version >= $software_version) {
             return true;
         }
 
@@ -269,12 +274,17 @@ class InstallerController extends DefaultController
             return false;
         }
 
+        if ($software_version < 1) {
+            $this->raiseError(__METHOD__ .'(), invalid framework schema version found!');
+            return false;
+        }
+
         if (($db_version = $db->getFrameworkDatabaseSchemaVersion()) === false) {
             $this->raiseError(get_class($db) .'::getFrameworkDatabaseSchemaVersion() returned false!');
             return false;
         }
 
-        if ($db_version == $software_version) {
+        if ($db_version >= $software_version) {
             return true;
         }
 
