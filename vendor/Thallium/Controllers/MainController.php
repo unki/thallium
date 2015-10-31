@@ -344,7 +344,7 @@ class MainController extends DefaultController
             $db->getFrameworkDatabaseSchemaVersion() < $db->getFrameworkSoftwareSchemaVersion()
         ) {
             $this->raiseError(
-                "A database schema version upgrade is pending.&nbsp;"
+                "A database schema upgrade is pending.&nbsp;"
                 ."You have to run <a href=\"{$base_path}/install\">Installer</a> "
                 ."again to upgrade.",
                 true
