@@ -36,13 +36,7 @@ class RpcController extends DefaultController
 
         switch ($query->action) {
             case 'delete':
-                $this->rpcDeleteObject();
-                break;
-            case 'delete-document':
-                $this->rpcDeleteDocument();
-                break;
-            case 'archive':
-                $this->rpcArchiveObject();
+                $this->rpcDelete();
                 break;
             case 'add':
             case 'update':
@@ -85,71 +79,91 @@ class RpcController extends DefaultController
         return true;
     }
 
-    protected function rpcDeleteObject()
+    protected function rpcDelete()
     {
         global $thallium;
 
-        if (!isset($_POST['id'])) {
-            $this->raiseError("id is missing!");
-            return false;
-        }
+        $input_fields = array('id', 'guid', 'model');
 
-        if (!$thallium->isValidId($_POST['id'])) {
-            $this->raiseError("id looks invalid!");
-            return false;
+        foreach ($input_fields as $field) {
+            if (!isset($_POST[$field])) {
+                $this->raiseError(__METHOD__ ."'{$field}' isn't set in POST request!");
+                return false;
+            }
+            if (empty($_POST[$field])) {
+                $this->raiseError(__METHOD__ ."'{$field}' is empty!");
+                return false;
+            }
+            if (!is_string($_POST[$field]) && !is_numeric($_POST[$field])) {
+                $this->raiseError(__METHOD__ ."'{$field}' is not from a valid type!");
+                return false;
+            }
         }
 
         $id = $_POST['id'];
+        $guid = $_POST['guid'];
+        $model = $_POST['model'];
 
-        $parts = array();
-        if (!preg_match('/(\w+)-([0-9]+)-([a-z0-9]+)/', $id, $parts)) {
-            $this->raiseError("id in incorrect format!");
+        if (!$thallium->isValidId($id) && $id != 'flush') {
+            $this->raiseError(__METHOD__ .', \$id is invalid!');
             return false;
         }
 
-        /* $parts() should now contain
-         * [0] = original id
-         * [1] = object (queueitem, etc.)
-         * [2] = queue_idx
-         * [3] = guid
-         */
-        if (!array($parts) || empty($parts) || count($parts) != 4) {
-            $this->raiseError("id does not contain all required information!");
+        if (!$thallium->isValidGuidSyntax($guid) && $guid != 'flush') {
+            $this->raiseError(__METHOD__ .', \$guid is invalid!');
             return false;
         }
 
-        if (!isset($parts[1]) || !$thallium->isValidModel($parts[1])) {
-            $this->raiseError("id contains an invalid model!");
+        if (($model_name = $thallium->getModelByNick($model)) === false) {
+            $this->raiseError(get_class($thallium) .'::getModelNameByNick() returned false!');
             return false;
         }
 
-        if (!isset($parts[2]) || !is_numeric($parts[2])) {
-            $this->raiseError("id contains an invalid idx!");
-            return false;
-        }
+        /* special delete operation 'flush' */
+        if ($id == 'flush' && $guid == 'flush') {
+            if (($obj = $thallium->loadModel($model_name)) === false) {
+                $this->raiseError(get_class($thallium) .'::loadModel() returned false!');
+                return false;
+            }
 
-        if (!isset($parts[3]) || !$thallium->isValidGuidSyntax($parts[3])) {
-            $this->raiseError("id contains an invalid guid!");
-            return false;
-        }
-
-        $request_object = $parts[1];
-        $id = $parts[2];
-        $guid = $parts[3];
-
-        if (!($obj = $thallium->loadModel($request_object, $id, $guid))) {
-            $this->raiseError("unable to locate model for {$request_object}!");
-            return false;
-        }
-
-        if ($obj->delete()) {
+            if (!method_exists($obj, 'flush')) {
+                $this->raiseError(__METHOD__ ."(), model {$model_name} does not provide a flush() method!");
+                return false;
+            }
+            if (!$obj->permitsRpcActions('flush')) {
+                $this->raiseError(__METHOD__ ."(), model {$model_name} does not support flush-opertions!");
+                return false;
+            }
+            if (!$obj->flush()) {
+                $this->raiseError(get_class($obj) .'::flush() returned false!');
+                return false;
+            }
             print "ok";
             return true;
         }
 
-        $this->raiseError("unknown error!");
-        return false;
+        if (($obj = $thallium->loadModel($model_name, $id, $guid)) === false) {
+            $this->raiseError(get_class($thallium) .'::loadModel() returned false!');
+            return false;
+        }
 
+        if (!method_exists($obj, 'delete')) {
+            $this->raiseError(__METHOD__ ."(), model {$model_name} does not provide a delete() method!");
+            return false;
+        }
+
+        if (!$obj->permitsRpcActions('delete')) {
+            $this->raiseError(get_class($obj) .' does not permit "delete" via a RPC call!');
+            return false;
+        }
+
+        if (!$obj->delete()) {
+            $this->raiseError(get_class($obj) .'::delete() returned false!');
+            return false;
+        }
+
+        print "ok";
+        return true;
     }
 
     protected function rpcGetContent()
