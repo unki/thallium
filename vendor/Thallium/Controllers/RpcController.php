@@ -40,7 +40,7 @@ class RpcController extends DefaultController
                 break;
             case 'add':
             case 'update':
-                $this->rpcUpdateObject();
+                $this->rpcUpdate();
                 break;
             case 'find-prev-next':
                 $this->rpcFindPrevNextObject();
@@ -278,7 +278,7 @@ class RpcController extends DefaultController
         return true;
     }
 
-    protected function rpcUpdateObject()
+    protected function rpcUpdate()
     {
         global $thallium;
 
@@ -323,7 +323,12 @@ class RpcController extends DefaultController
             $id = null;
         }
 
-        if (!($obj = $thallium->loadModel($model, $id))) {
+        if (($model_name = $thallium->getModelByNick($model)) === false) {
+            $this->raiseError(get_class($thallium) .'::getModelNameByNick() returned false!');
+            return false;
+        }
+
+        if (!($obj = $thallium->loadModel($model_name, $id))) {
             $this->raiseError(__METHOD__ ."(), failed to load {$model}!");
             return false;
         }
