@@ -39,6 +39,13 @@ class MainController extends DefaultController
         $GLOBALS['thallium'] =& $this;
 
         $this->loadController("Config", "config");
+        global $config;
+
+        if ($config->inMaintenanceMode()) {
+            print "This application is in maintenance mode. Please try again later!";
+            exit(0);
+        }
+
         $this->loadController("Requirements", "requirements");
 
         global $requirements;
