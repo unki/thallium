@@ -133,12 +133,19 @@ class MainController extends DefaultController
             return true;
 
         } elseif ($page_name = $views->getViewName($query->view)) {
-            if (!$page = $views->load($page_name)) {
+            if (($page = $views->load($page_name)) === false) {
                 $this->raiseError("ViewController:load() returned false!");
                 return false;
             }
 
-            print $page;
+            if ($page === true) {
+                return true;
+            }
+
+            if (!empty($page)) {
+                print $page;
+            }
+
             return true;
         }
 
