@@ -71,8 +71,14 @@ class RpcController extends DefaultController
                 print "ok";
                 break;
             default:
-                $this->raiseError("Unknown RPC action\n");
-                return false;
+                if (!method_exists($this, 'performApplicationSpecifc')) {
+                    $this->raiseError("Unknown RPC action\n");
+                    return false;
+                }
+                if (!$this->performApplicationSpecifc()) {
+                    $this->raiseError(__CLASS__ .'::performApplicationSpecifc() returned false!');
+                    return false;
+                }
                 break;
         }
 
