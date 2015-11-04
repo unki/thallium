@@ -201,6 +201,25 @@ class ConfigController extends DefaultController
 
         return true;
     }
+
+    public function inMaintenanceMode()
+    {
+        if (!isset($this->config['app']['maintenance_mode']) ||
+            empty($this->config['app']['maintenance_mode'])
+        ) {
+            return false;
+        }
+
+        if ($this->isDisabled($this->config['app']['maintenance_mode'])) {
+            return false;
+        }
+
+        if ($this->isEnabled($this->config['app']['maintenance_mode'])) {
+            return true;
+        }
+
+        $this->raiseError(__METHOD__ .'(), configuration option "maintenance_mode" in [app] section is invalid!', true);
+    }
 }
 
 // vim: set filetype=php expandtab softtabstop=4 tabstop=4 shiftwidth=4:
