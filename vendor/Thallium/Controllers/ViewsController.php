@@ -97,7 +97,7 @@ class ViewsController extends DefaultController
             return $page->show();
         }
 
-        if (!($content = $page->show())) {
+        if (($content = $page->show()) === false) {
             return false;
         }
 
@@ -106,7 +106,10 @@ class ViewsController extends DefaultController
             return true;
         }
 
-        $tmpl->assign('page_content', $content);
+        if (!empty($content)) {
+            $tmpl->assign('page_content', $content);
+        }
+
         return $this->page_skeleton->show();
     }
 }
