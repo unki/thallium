@@ -28,6 +28,12 @@ base_web_path = /thallium/
 ;
 page_title = "Thallium"
 
+;
+; Maintenance Mode
+;   0 = disabled, 1 = enabled
+;
+maintenance_mode = 0
+
 [database]
 
 ;
