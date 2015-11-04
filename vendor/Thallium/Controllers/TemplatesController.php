@@ -105,7 +105,7 @@ class TemplatesController extends DefaultController
         }
 
         if (!($page_title = $config->getPageTitle())) {
-            $page_title = 'Thallium v'. MainController::VERSION;
+            $page_title = 'Thallium v'. MainController::FRAMEWORK_VERSION;
         }
 
         $this->smarty->assign('app_web_path', $app_web_path);

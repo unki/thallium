@@ -21,7 +21,7 @@ namespace Thallium\Controllers;
 
 class MainController extends DefaultController
 {
-    const VERSION = "1.0";
+    const FRAMEWORK_VERSION = "1.1";
 
     protected $verbosity_level = LOG_WARNING;
     protected $override_namespace_prefix;

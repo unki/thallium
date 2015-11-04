@@ -19,8 +19,6 @@
 
 namespace Thallium\Views;
 
-use \Thallium\Controllers;
-
 class MainView extends DefaultView
 {
     public $default_mode = 'show';
@@ -30,7 +28,7 @@ class MainView extends DefaultView
     {
         global $db, $tmpl;
 
-        $tmpl->assign("software_version", Controllers\MainController::VERSION);
+        $tmpl->assign("software_version", \Thallium\Controllers\MainController::FRAMEWORK_VERSION);
         $tmpl->assign("schema_version", $db->getApplicationDatabaseSchemaVersion());
         $tmpl->assign("framework_schema_version", $db->getFrameworkDatabaseSchemaVersion());
 
