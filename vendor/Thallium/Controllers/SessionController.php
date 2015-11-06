@@ -59,6 +59,33 @@ class SessionController extends DefaultController
     {
         return session_id();
     }
+
+    public function getVariable($key)
+    {
+        if (!isset($key) || empty($key) || !is_string($key)) {
+            $this->raiseError(__METHOD__ .'(), $key parameter is invalid!');
+            return false;
+        }
+
+        if (!isset($_SESSION[$key])) {
+            return false;
+        }
+
+        return $_SESSION[$key];
+    }
+
+    public function setVariable($key, $value)
+    {
+        if (!isset($key) || empty($key) || !is_string($key) ||
+            !isset($value) || is_string($value) || !is_numeric($value)
+        ) {
+            $this->raiseError(__METHOD__ .'(), $key and/or $value parameters are invalid!');
+            return false;
+        }
+
+        $_SESSION[$key] = $value;
+        return true;
+    }
 }
 
 // vim: set filetype=php expandtab softtabstop=4 tabstop=4 shiftwidth=4:
