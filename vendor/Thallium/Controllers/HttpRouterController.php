@@ -190,29 +190,6 @@ class HttpRouterController extends DefaultController
         } elseif ($this->query->view == "document") {
             $this->query->call_type = "document";
             return $this->query;
-
-
-        /* queue-xxx.html ... */
-        } elseif (preg_match('/(.*)-([0-9]+)/', $this->query->view)) {
-            preg_match('/.*\/(.*)-([0-9]+)/', $this->query->view, $parts);
-
-            if (!$this->isValidAction($parts[1])) {
-                $this->raiseError('Invalid action: '. $parts[1]);
-            }
-            if (!$thallium->isValidId($parts[2])) {
-                $this->raiseError('Invalid id: '. $parts[2]);
-            }
-
-            $this->action = $parts[1];
-            $this->id = $parts[2];
-        /* main.html, ... */
-        } elseif (preg_match('/.*\/.*\.html$/', $this->query->view)) {
-            preg_match('/.*\/(.*)\.html$/', $this->query->view, $parts);
-            if (!$this->isValidAction($parts[1])) {
-                $this->raiseError('Invalid action: '. $parts[1]);
-            }
-
-            $this->action = $parts[1];
         }
 
         $this->query->call_type = "common";
