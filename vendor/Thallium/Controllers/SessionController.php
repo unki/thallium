@@ -77,7 +77,7 @@ class SessionController extends DefaultController
     public function setVariable($key, $value)
     {
         if (!isset($key) || empty($key) || !is_string($key) ||
-            !isset($value) || is_string($value) || !is_numeric($value)
+            !isset($value) || (!is_string($value) && !is_numeric($value))
         ) {
             $this->raiseError(__METHOD__ .'(), $key and/or $value parameters are invalid!');
             return false;
