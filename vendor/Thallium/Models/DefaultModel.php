@@ -1038,6 +1038,15 @@ abstract class DefaultModel
 
         return $this->column_name;
     }
+
+    final public function isNew()
+    {
+        if (isset($this->id) && !empty($this->id)) {
+            return false;
+        }
+
+        return true;
+    }
 }
 
 // vim: set filetype=php expandtab softtabstop=4 tabstop=4 shiftwidth=4:
