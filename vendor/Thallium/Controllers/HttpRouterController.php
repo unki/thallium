@@ -355,8 +355,8 @@ class HttpRouterController extends DefaultController
     {
         global $thallium;
 
-        if (($models = $nox->getRegisteredModels()) === false) {
-            $this->raiseError(get_class($nox) .'::getRegisteredModels() returned false!');
+        if (($models = $thallium->getRegisteredModels()) === false) {
+            $this->raiseError(get_class($thallium) .'::getRegisteredModels() returned false!');
             return false;
         }
 
