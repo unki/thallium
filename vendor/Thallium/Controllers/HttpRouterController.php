@@ -353,9 +353,14 @@ class HttpRouterController extends DefaultController
 
     protected function isValidUpdateObject($update_object)
     {
-        $valid_update_objects = array(
-            'archive',
-        );
+        global $thallium;
+
+        if (($models = $nox->getRegisteredModels()) === false) {
+            $this->raiseError(get_class($nox) .'::getRegisteredModels() returned false!');
+            return false;
+        }
+
+        $valid_update_objects = array_keys($models);
 
         if (in_array($update_object, $valid_update_objects)) {
             return true;
