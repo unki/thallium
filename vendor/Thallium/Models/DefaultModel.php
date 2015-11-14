@@ -36,20 +36,18 @@ abstract class DefaultModel
 
     public function __construct($id = null)
     {
-        global $thallium;
-
         if (!isset($this->table_name)) {
-            $thallium->raiseError(__METHOD__ .', missing key table_name', true);
+            $this->raiseError(__METHOD__ .', missing key table_name', true);
             return false;
         }
 
         if (!isset($this->column_name)) {
-            $thallium->raiseError(__METHOD__ .', missing key column_name', true);
+            $this->raiseError(__METHOD__ .', missing key column_name', true);
             return false;
         }
 
         if (!isset($this->fields)) {
-            $thallium->raiseError(__METHOD__ .', missing key fields', true);
+            $this->raiseError(__METHOD__ .', missing key fields', true);
             return false;
         }
 
@@ -62,7 +60,7 @@ abstract class DefaultModel
         $this->id = $id;
 
         if (!$this->load()) {
-            $thallium->raiseError(__CLASS__ ."::load() returned false!", true);
+            $this->raiseError(__CLASS__ ."::load() returned false!", true);
             return false;
         }
 
@@ -76,15 +74,15 @@ abstract class DefaultModel
      */
     protected function load()
     {
-        global $thallium, $db;
+        global $db;
 
         if (!isset($this->fields) || empty($this->fields)) {
-            $thallium->raiseError(__METHOD__ .", fields array not set for class ". get_class($this));
+            $this->raiseError(__METHOD__ .", fields array not set for class ". get_class($this));
         }
 
         if (method_exists($this, 'preLoad')) {
             if (!$this->preLoad()) {
-                $thallium->raiseError(get_called_class() ."::preLoad() method returned false!");
+                $this->raiseError(get_called_class() ."::preLoad() method returned false!");
                 return false;
             }
         }
@@ -110,23 +108,23 @@ abstract class DefaultModel
         $sth = $db->prepare($sql, array('integer'));
 
         if (!$sth) {
-            $thallium->raiseError(__METHOD__ .", unable to prepare query");
+            $this->raiseError(__METHOD__ .", unable to prepare query");
             return false;
         }
 
         if (!$db->execute($sth, array($this->id))) {
-            $thallium->raiseError(__METHOD__ .", unable to execute query");
+            $this->raiseError(__METHOD__ .", unable to execute query");
             return false;
         }
 
         if ($sth->rowCount() <= 0) {
             $db->freeStatement($sth);
-            $thallium->raiseError(__METHOD__ .", No object with id {$this->id}");
+            $this->raiseError(__METHOD__ .", No object with id {$this->id}");
         }
 
         if (!$row = $sth->fetch(\PDO::FETCH_ASSOC)) {
             $db->freeStatement($sth);
-            $thallium->raiseError(__METHOD__ .", unable to fetch SQL result for object id ". $this->id);
+            $this->raiseError(__METHOD__ .", unable to fetch SQL result for object id ". $this->id);
         }
 
         $db->freeStatement($sth);
@@ -138,7 +136,7 @@ abstract class DefaultModel
 
         if (method_exists($this, 'postLoad')) {
             if (!$this->postLoad()) {
-                $thallium->raiseError(get_called_class() ."::postLoad() method returned false!");
+                $this->raiseError(get_called_class() ."::postLoad() method returned false!");
                 return false;
             }
         }
@@ -172,28 +170,28 @@ abstract class DefaultModel
      */
     public function delete()
     {
-        global $thallium, $db;
+        global $db;
 
         if (!isset($this->id)) {
-            $thallium->raiseError(__METHOD__ .', object id is not set!');
+            $this->raiseError(__METHOD__ .', object id is not set!');
             return false;
         }
         if (!is_numeric($this->id)) {
-            $thallium->raiseError(__METHOD__ .', object id is invalid!');
+            $this->raiseError(__METHOD__ .', object id is invalid!');
             return false;
         }
         if (!isset($this->table_name)) {
-            $thallium->raiseError(__METHOD__ .', table name is not set!');
+            $this->raiseError(__METHOD__ .', table name is not set!');
             return false;
         }
         if (!isset($this->column_name)) {
-            $thallium->raiseError(__METHOD__ .', column name is not set!');
+            $this->raiseError(__METHOD__ .', column name is not set!');
             return false;
         }
 
         if (method_exists($this, 'preDelete')) {
             if (!$this->preDelete()) {
-                $thallium->raiseError(get_called_class() ."::preDelete() method returned false!");
+                $this->raiseError(get_called_class() ."::preDelete() method returned false!");
                 return false;
             }
         }
@@ -207,12 +205,12 @@ abstract class DefaultModel
         );
 
         if (!$sth) {
-            $thallium->raiseError(__METHOD__ .", unable to prepare query");
+            $this->raiseError(__METHOD__ .", unable to prepare query");
             return false;
         }
 
         if (!$db->execute($sth, array($this->id))) {
-            $thallium->raiseError(__METHOD__ .", unable to execute query");
+            $this->raiseError(__METHOD__ .", unable to execute query");
             return false;
         }
 
@@ -220,7 +218,7 @@ abstract class DefaultModel
 
         if (method_exists($this, 'postDelete')) {
             if (!$this->postDelete()) {
-                $thallium->raiseError(get_called_class() .", postDelete() method returned false!");
+                $this->raiseError(get_called_class() .", postDelete() method returned false!");
                 return false;
             }
         }
@@ -257,7 +255,7 @@ abstract class DefaultModel
 
         if (method_exists($this, 'preClone')) {
             if (!$this->preClone($srcobj)) {
-                $thallium->raiseError(get_called_class() ."::preClone() method returned false!");
+                $this->raiseError(get_called_class() ."::preClone() method returned false!");
                 return false;
             }
         }
@@ -283,7 +281,7 @@ abstract class DefaultModel
 
         // if saving was successful, our new object should have an ID now
         if (!isset($this->id) || empty($this->id)) {
-            $thallium->raiseError(__METHOD__ .", error on saving clone. no ID was returned from database!");
+            $this->raiseError(__METHOD__ .", error on saving clone. no ID was returned from database!");
             return false;
         }
 
@@ -297,7 +295,7 @@ abstract class DefaultModel
 
                 // initate an empty child object
                 if (!($child_obj = $thallium->load_class($child))) {
-                    $thallium->raiseError(__METHOD__ .", unable to locate class for {$child_obj}");
+                    $this->raiseError(__METHOD__ .", unable to locate class for {$child_obj}");
                     return false;
                 }
 
@@ -311,12 +309,12 @@ abstract class DefaultModel
                 );
 
                 if (!$sth) {
-                    $thallium->raiseError(__METHOD__ .", unable to prepare query");
+                    $this->raiseError(__METHOD__ .", unable to prepare query");
                     return false;
                 }
 
                 if (!$db->execute($sth, array($srcobj->id))) {
-                    $thallium->raiseError(__METHOD__ .", unable to execute query");
+                    $this->raiseError(__METHOD__ .", unable to execute query");
                     return false;
                 }
 
@@ -365,7 +363,7 @@ abstract class DefaultModel
 
         if (method_exists($this, 'postClone')) {
             if (!$this->postClone($srcobj)) {
-                $thallium->raiseError(get_called_class() ."::postClone() method returned false!");
+                $this->raiseError(get_called_class() ."::postClone() method returned false!");
                 return false;
             }
         }
@@ -379,8 +377,6 @@ abstract class DefaultModel
      */
     final protected function initFields($override = null)
     {
-        global $thallium, $db;
-
         if (!isset($this->fields) || !is_array($this->fields)) {
             return;
         }
@@ -404,14 +400,12 @@ abstract class DefaultModel
     /* overloading PHP's __set() function */
     final public function __set($name, $value)
     {
-        global $thallium;
-
         if (!isset($this->fields) || empty($this->fields)) {
-            $thallium->raiseError(__METHOD__ .", fields array not set for class ". get_class($this));
+            $this->raiseError(__METHOD__ .", fields array not set for class ". get_class($this));
         }
 
         if (!array_key_exists($name, $this->fields) && $name != 'id') {
-            $thallium->raiseError(__METHOD__ .", unknown key in ". __CLASS__ ."::__set(): {$name}");
+            $this->raiseError(__METHOD__ .", unknown key in ". __CLASS__ ."::__set(): {$name}");
         }
 
         $this->$name = $value;
@@ -423,12 +417,12 @@ abstract class DefaultModel
         global $thallium, $db;
 
         if (!isset($this->fields) || empty($this->fields)) {
-            $thallium->raiseError(__METHOD__ .", fields array not set for class ". get_class($this));
+            $this->raiseError(__METHOD__ .", fields array not set for class ". get_class($this));
         }
 
         if (method_exists($this, 'preSave')) {
             if (!$this->preSave()) {
-                $thallium->raiseError(get_called_class() ."::preSave() method returned false!");
+                $this->raiseError(get_called_class() ."::preSave() method returned false!");
                 return false;
             }
         }
@@ -475,12 +469,12 @@ abstract class DefaultModel
         }
 
         if (!($sth = $db->prepare($sql))) {
-            $thallium->raiseError(__METHOD__ .", unable to prepare query");
+            $this->raiseError(__METHOD__ .", unable to prepare query");
             return false;
         }
 
         if (!$db->execute($sth, $arr_values)) {
-            $thallium->raiseError(__METHOD__ .", unable to execute query");
+            $this->raiseError(__METHOD__ .", unable to execute query");
             return false;
         }
 
@@ -496,7 +490,7 @@ abstract class DefaultModel
 
         if (method_exists($this, 'postSave')) {
             if (!$this->postSave()) {
-                $thallium->raiseError(get_called_class() ."::postSave() method returned false!");
+                $this->raiseError(get_called_class() ."::postSave() method returned false!");
                 return false;
             }
         }
@@ -553,12 +547,12 @@ abstract class DefaultModel
         );
 
         if (!$sth) {
-            $thallium->raiseError(__METHOD__ .", unable to prepare query");
+            $this->raiseError(__METHOD__ .", unable to prepare query");
             return false;
         }
 
         if (!$db->execute($sth, array($new_status, $this->id))) {
-            $thallium->raiseError(__METHOD__ .", unable to execute query");
+            $this->raiseError(__METHOD__ .", unable to execute query");
             return false;
         }
 
@@ -572,18 +566,18 @@ abstract class DefaultModel
         global $db, $thallium;
 
         if (!isset($this->child_names)) {
-            $thallium->raiseError(__METHOD__ .", this object has no childs at all!");
+            $this->raiseError(__METHOD__ .", this object has no childs at all!");
             return false;
         }
         if (!isset($this->child_names[$child_obj])) {
-            $thallium->raiseError(__METHOD__ .", requested child is not known to this object!");
+            $this->raiseError(__METHOD__ .", requested child is not known to this object!");
             return false;
         }
 
         $prefix = $this->child_names[$child_obj];
 
         if (!($child_obj = $thallium->load_class($child_obj, $child_id))) {
-            $thallium->raiseError(__METHOD__ .", unable to locate class for {$child_obj}");
+            $this->raiseError(__METHOD__ .", unable to locate class for {$child_obj}");
             return false;
         }
 
@@ -621,7 +615,7 @@ abstract class DefaultModel
         );
 
         if (!$sth) {
-            $thallium->raiseError(__METHOD__ .", unable to prepare query");
+            $this->raiseError(__METHOD__ .", unable to prepare query");
             return false;
         }
 
@@ -630,7 +624,7 @@ abstract class DefaultModel
             $this->id,
             $child_id
         ))) {
-            $thallium->raiseError(__METHOD__ .", unable to execute query");
+            $this->raiseError(__METHOD__ .", unable to execute query");
             return false;
         }
 
@@ -665,17 +659,17 @@ abstract class DefaultModel
         );
 
         if (!isset($result)) {
-            $thallium->raiseError(__METHOD__ .", unable to locate previous record!");
+            $this->raiseError(__METHOD__ .", unable to locate previous record!");
             return false;
         }
 
         if (!isset($result->$idx_field) || !isset($result->$guid_field)) {
-            $thallium->raiseError(__METHOD__ .", no previous record available!");
+            $this->raiseError(__METHOD__ .", no previous record available!");
             return false;
         }
 
         if (!is_numeric($result->$idx_field) || !$thallium->isValidGuidSyntax($result->$guid_field)) {
-            $thallium->raiseError(
+            $this->raiseError(
                 __METHOD__ .", Invalid previous record found: ". htmlentities($result->$id, ENT_QUOTES)
             );
             return false;
@@ -710,17 +704,17 @@ abstract class DefaultModel
         );
 
         if (!isset($result)) {
-            $thallium->raiseError(__METHOD__ .", unable to locate next record!");
+            $this->raiseError(__METHOD__ .", unable to locate next record!");
             return false;
         }
 
         if (!isset($result->$idx_field) || !isset($result->$guid_field)) {
-            $thallium->raiseError(__METHOD__ .", no next record available!");
+            $this->raiseError(__METHOD__ .", no next record available!");
             return false;
         }
 
         if (!is_numeric($result->$idx_field) || !$thallium->isValidGuidSyntax($result->$guid_field)) {
-            $thallium->raiseError(__METHOD__ .", invalid next record found: ". htmlentities($result->$id, ENT_QUOTES));
+            $this->raiseError(__METHOD__ .", invalid next record found: ". htmlentities($result->$id, ENT_QUOTES));
             return false;
         }
 
@@ -729,7 +723,7 @@ abstract class DefaultModel
 
     final protected function isDuplicate()
     {
-        global $thallium, $db;
+        global $db;
 
         // no need to check yet if $id isn't set
         if (empty($this->id)) {
@@ -742,7 +736,7 @@ abstract class DefaultModel
         if ((!isset($this->$idx_field) || empty($this->$idx_field)) &&
             (!isset($this->$guid_field) || empty($this->$guid_field))
         ) {
-            $thallium->raiseError(
+            $this->raiseError(
                 __METHOD__ ." can't check for duplicates if neither \$idx_field or \$guid_field is set!"
             );
             return false;
@@ -788,12 +782,12 @@ abstract class DefaultModel
         $sth = $db->prepare($sql);
 
         if (!$sth) {
-            $thallium->raiseError(__METHOD__ .", unable to prepare query");
+            $this->raiseError(__METHOD__ .", unable to prepare query");
             return false;
         }
 
         if (!$db->execute($sth, $arr_values)) {
-            $thallium->raiseError(__METHOD__ .", unable to execute query");
+            $this->raiseError(__METHOD__ .", unable to execute query");
             return false;
         }
 
@@ -808,8 +802,6 @@ abstract class DefaultModel
 
     final protected function column($suffix)
     {
-        global $thallium;
-
         if (!isset($this->column_name) || empty($this->column_name)) {
             return $suffix;
         }
@@ -819,10 +811,8 @@ abstract class DefaultModel
 
     final protected function permitRpcUpdates($state)
     {
-        global $thallium;
-
         if (!is_bool($state)) {
-            $thallium->raiseError(__METHOD__ .', parameter must be a boolean value');
+            $this->raiseError(__METHOD__ .', parameter must be a boolean value');
             return false;
         }
 
@@ -843,15 +833,13 @@ abstract class DefaultModel
 
     final protected function addRpcEnabledField($field)
     {
-        global $thallium;
-
         if (!is_array($this->rpc_allowed_fields)) {
-            $thallium->raiseError("\$rpc_allowed_fields is not an array!");
+            $this->raiseError("\$rpc_allowed_fields is not an array!");
             return false;
         }
 
         if (!is_string($field)) {
-            $thallium->raiseError(__METHOD__ .' parameter must be a string');
+            $this->raiseError(__METHOD__ .' parameter must be a string');
             return false;
         }
 
@@ -865,15 +853,13 @@ abstract class DefaultModel
 
     final protected function addRpcAction($action)
     {
-        global $thallium;
-
         if (!is_array($this->rpc_allowed_actions)) {
-            $thallium->raiseError("\$rpc_allowed_actions is not an array!");
+            $this->raiseError("\$rpc_allowed_actions is not an array!");
             return false;
         }
 
         if (!is_string($action)) {
-            $thallium->raiseError(__METHOD__ .', parameter must be a string!');
+            $this->raiseError(__METHOD__ .', parameter must be a string!');
             return false;
         }
 
@@ -887,15 +873,13 @@ abstract class DefaultModel
 
     final public function permitsRpcUpdateToField($field)
     {
-        global $thallium;
-
         if (!is_array($this->rpc_allowed_fields)) {
-            $thallium->raiseError("\$rpc_allowed_fields is not an array!");
+            $this->raiseError("\$rpc_allowed_fields is not an array!");
             return false;
         }
 
         if (!is_string($field)) {
-            $thallium->raiseError(__METHOD__ .' parameter must be a string');
+            $this->raiseError(__METHOD__ .' parameter must be a string');
             return false;
         }
 
@@ -912,15 +896,13 @@ abstract class DefaultModel
 
     final public function permitsRpcActions($action)
     {
-        global $thallium;
-
         if (!is_array($this->rpc_allowed_actions)) {
-            $thallium->raiseError("\$rpc_allowed_actions is not an array!");
+            $this->raiseError("\$rpc_allowed_actions is not an array!");
             return false;
         }
 
         if (!is_string($action)) {
-            $thallium->raiseError(__METHOD__ .' parameter must be a string');
+            $this->raiseError(__METHOD__ .' parameter must be a string');
             return false;
         }
 
@@ -937,10 +919,8 @@ abstract class DefaultModel
 
     final public function getId()
     {
-        global $thallium;
-
         if (!isset($this->fields[$this->column_name .'_idx'])) {
-            $thallium->raiseError(__CLASS__ .'has no idx field!');
+            $this->raiseError(__CLASS__ .'has no idx field!');
             return false;
         }
 
@@ -955,10 +935,8 @@ abstract class DefaultModel
 
     final public function getGuid()
     {
-        global $thallium;
-
         if (!isset($this->fields[$this->column_name .'_guid'])) {
-            $thallium->raiseError(__CLASS__ .'has no guid field!');
+            $this->raiseError(__CLASS__ .'has no guid field!');
             return false;
         }
 
@@ -973,13 +951,11 @@ abstract class DefaultModel
 
     final public function getFields()
     {
-        global $thallium;
-
         if (!isset($this->fields) ||
             empty($this->fields) ||
             !is_array($this->fields)
         ) {
-            $thallium->raiseError(__METHOD__ .'(), no fields defined!');
+            $this->raiseError(__METHOD__ .'(), no fields defined!');
             return false;
         }
 
@@ -999,13 +975,11 @@ abstract class DefaultModel
 
     final public function hasField($field_name)
     {
-        global $thallium;
-
         if (!isset($field_name) ||
             empty($field_name) ||
             !is_string($field_name)
         ) {
-            $thallium->raiseError(__METHOD__ .'(), do not know what to look for!');
+            $this->raiseError(__METHOD__ .'(), do not know what to look for!');
             return false;
         }
 
@@ -1013,7 +987,7 @@ abstract class DefaultModel
             empty($this->fields) ||
             !is_array($this->fields)
         ) {
-            $thallium->raiseError(__METHOD__ .'(), no fields defined!');
+            $this->raiseError(__METHOD__ .'(), no fields defined!');
             return false;
         }
 
@@ -1026,13 +1000,11 @@ abstract class DefaultModel
 
     final public function getFieldPrefix()
     {
-        global $thallium;
-
         if (!isset($this->column_name) ||
             empty($this->column_name) ||
             !is_string($this->column_name)
         ) {
-            $thallium->raiseError(__METHOD__ .'(), column name is not set!');
+            $this->raiseError(__METHOD__ .'(), column name is not set!');
             return false;
         }
 
@@ -1044,6 +1016,19 @@ abstract class DefaultModel
         if (isset($this->id) && !empty($this->id)) {
             return false;
         }
+
+        return true;
+    }
+
+    public function raiseError($string, $stop_execution = false, $exception = null)
+    {
+        global $mtlda;
+
+        $mtlda->raiseError(
+            $string,
+            $stop_execution,
+            $exception
+        );
 
         return true;
     }
