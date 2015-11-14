@@ -203,8 +203,8 @@ class PagingController extends DefaultController
             }
 
             if ($pageno > $total) {
-                $this->raiseError(__METHOD__ .'(), current page outside maximum page number!');
-                return false;
+                $this->currentPage = 1;
+                return true;
             }
         }
 
