@@ -34,7 +34,7 @@ class JobModel extends DefaultModel
 
     public function __construct($id = null, $guid = null)
     {
-        global $thallium, $db;
+        global $db;
 
         // are we creating a new item?
         if (!isset($id) && !isset($guid)) {
@@ -71,22 +71,22 @@ class JobModel extends DefaultModel
         };
 
         if (!($sth = $db->prepare($sql))) {
-            $thallium->raiseError("DatabaseController::prepare() returned false!");
+            $this->raiseError("DatabaseController::prepare() returned false!");
             return false;
         }
 
         if (!$db->execute($sth, $arr_query)) {
-            $thallium->raiseError("DatabaseController::execute() returned false!");
+            $this->raiseError("DatabaseController::execute() returned false!");
             return false;
         }
 
         if (!($row = $sth->fetch())) {
-            $thallium->raiseError("Unable to find job with guid value {$guid}");
+            $this->raiseError("Unable to find job with guid value {$guid}");
             return false;
         }
 
         if (!isset($row->job_idx) || empty($row->job_idx)) {
-            $thallium->raiseError("Unable to find job with guid value {$guid}");
+            $this->raiseError("Unable to find job with guid value {$guid}");
             return false;
         }
 
@@ -98,15 +98,13 @@ class JobModel extends DefaultModel
 
     public function setSessionId($sessionid)
     {
-        global $thallium;
-
         if (empty($sessionid)) {
-            $thallium->raiseError(__METHOD__ .', an empty session id is not allowed!');
+            $this->raiseError(__METHOD__ .', an empty session id is not allowed!');
             return false;
         }
 
         if (!is_string($sessionid)) {
-            $thallium->raiseError(__METHOD__ .', parameter has to be a string!');
+            $this->raiseError(__METHOD__ .', parameter has to be a string!');
             return false;
         }
 
@@ -116,10 +114,8 @@ class JobModel extends DefaultModel
 
     public function getSessionId()
     {
-        global $thallium;
-
         if (!isset($this->job_session_id)) {
-            $thallium->raiseError(__METHOD__ .', \$job_session_id has not been set yet!');
+            $this->raiseError(__METHOD__ .', \$job_session_id has not been set yet!');
             return false;
         }
 
@@ -148,8 +144,6 @@ class JobModel extends DefaultModel
 
     public function isProcessing()
     {
-        global $thallium;
-
         if (!isset($this->getProcessingFlag)) {
             return false;
         }
@@ -175,7 +169,7 @@ class JobModel extends DefaultModel
         global $thallium;
 
         if (empty($guid) || !$thallium->isValidGuidSyntax($guid)) {
-            $thallium->raiseError(__METHOD__ .', first parameter needs to be a valid GUID!');
+            $this->raiseError(__METHOD__ .', first parameter needs to be a valid GUID!');
             return false;
         }
 
@@ -185,10 +179,8 @@ class JobModel extends DefaultModel
 
     public function getRequestGuid()
     {
-        global $thallium;
-
         if (!isset($this->job_request_guid)) {
-            $thallium->raiseError(__METHOD__ .', \$job_request_guid has not been set yet!');
+            $this->raiseError(__METHOD__ .', \$job_request_guid has not been set yet!');
             return false;
         }
 
