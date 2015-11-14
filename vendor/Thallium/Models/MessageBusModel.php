@@ -31,12 +31,12 @@ class MessageBusModel extends DefaultModel
 
     public function getMessagesForSession($session_id)
     {
-        global $thallium, $db;
+        global $db;
 
         $messages = array();
 
         if (empty($session_id)) {
-            $thallium->raiseError(__METHOD__ .', \$session_id can not be empty!');
+            $this->raiseError(__METHOD__ .', \$session_id can not be empty!');
             return false;
         }
 
@@ -60,13 +60,13 @@ class MessageBusModel extends DefaultModel
                 msg_submit_time ASC";
 
         if (!($sth = $db->prepare($sql))) {
-            $thallium->raiseError(__METHOD__ .', failed to prepare query!');
+            $this->raiseError(__METHOD__ .', failed to prepare query!');
             return false;
         };
 
         if (!$db->execute($sth, array($session_id))) {
             $db->freeStatement($sth);
-            $thallium->raiseError(__METHOD__ .', failed to execute query!');
+            $this->raiseError(__METHOD__ .', failed to execute query!');
             return false;
         }
 
@@ -75,14 +75,14 @@ class MessageBusModel extends DefaultModel
                 !isset($row->msg_guid) || empty($row->msg_guid)
             ) {
                 $db->freeStatement($sth);
-                $thallium->raiseError(__METHOD__ .', message returned from query is incomplete!');
+                $this->raiseError(__METHOD__ .', message returned from query is incomplete!');
             }
 
             try {
                 $message = new MessageModel($row->msg_idx, $row->msg_guid);
             } catch (\Exception $e) {
                 $db->freeStatement($sth);
-                $thallium->raiseError('Failed to load MessageModel!');
+                $this->raiseError('Failed to load MessageModel!');
                 return false;
             }
 
@@ -95,7 +95,7 @@ class MessageBusModel extends DefaultModel
 
     public function getServerRequests()
     {
-        global $thallium, $db;
+        global $db;
 
         $messages = array();
 
@@ -115,7 +115,7 @@ class MessageBusModel extends DefaultModel
                 msg_in_processing <> 'Y'";
 
         if (!($result = $db->query($sql))) {
-            $thallium->raiseError(__METHOD__ .', failed to query database!');
+            $this->raiseError(__METHOD__ .', failed to query database!');
             return false;
         };
 
@@ -124,13 +124,13 @@ class MessageBusModel extends DefaultModel
                 !isset($row->msg_guid) || empty($row->msg_guid)
             ) {
                 $db->freeStatement($sth);
-                $thallium->raiseError(__METHOD__ .', message returned from query is incomplete!');
+                $this->raiseError(__METHOD__ .', message returned from query is incomplete!');
             }
 
             try {
                 $message = new MessageModel($row->msg_idx, $row->msg_guid);
             } catch (\Exception $e) {
-                $thallium->raiseError('Failed to load MessageModel!');
+                $this->raiseError('Failed to load MessageModel!');
                 return false;
             }
 
@@ -142,10 +142,10 @@ class MessageBusModel extends DefaultModel
 
     public function deleteExpiredMessages($timeout)
     {
-        global $thallium, $db;
+        global $db;
 
         if (!isset($timeout) || empty($timeout) || !is_numeric($timeout)) {
-            $thallium->raiseError(__METHOD__ .', parameter needs to be an integer!');
+            $this->raiseError(__METHOD__ .', parameter needs to be an integer!');
             return false;
         }
 
@@ -159,12 +159,12 @@ class MessageBusModel extends DefaultModel
                 UNIX_TIMESTAMP(msg_submit_time) < ?";
 
         if (!($sth = $db->prepare($sql))) {
-            $thallium->raiseError(__METHOD__ .', failed to prepare query!');
+            $this->raiseError(__METHOD__ .', failed to prepare query!');
             return false;
         }
 
         if (!($db->execute($sth, array($oldest)))) {
-            $thallium->raiseError(__METHOD__ .', failed to execute query!');
+            $this->raiseError(__METHOD__ .', failed to execute query!');
             return false;
         }
 
