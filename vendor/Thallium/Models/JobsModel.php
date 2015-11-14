@@ -31,10 +31,10 @@ class JobsModel extends DefaultModel
 
     public function deleteExpiredJobs($timeout)
     {
-        global $thallium, $db;
+        global $db;
 
         if (!isset($timeout) || empty($timeout) || !is_numeric($timeout)) {
-            $thallium->raiseError(__METHOD__ .', parameter needs to be an integer!');
+            $this->raiseError(__METHOD__ .', parameter needs to be an integer!');
             return false;
         }
 
@@ -48,12 +48,12 @@ class JobsModel extends DefaultModel
                 job_time < ?";
 
         if (!($sth = $db->prepare($sql))) {
-            $thallium->raiseError(__METHOD__ .', failed to prepare query!');
+            $this->raiseError(__METHOD__ .', failed to prepare query!');
             return false;
         }
 
         if (!($db->execute($sth, array($oldest)))) {
-            $thallium->raiseError(__METHOD__ .', failed to execute query!');
+            $this->raiseError(__METHOD__ .', failed to execute query!');
             return false;
         }
 
