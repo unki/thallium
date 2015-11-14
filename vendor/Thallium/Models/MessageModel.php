@@ -37,15 +37,13 @@ class MessageModel extends DefaultModel
 
     public function setCommand($command)
     {
-        global $thallium;
-
         if (empty($command)) {
-            $thallium->raiseError(__METHOD__ .', an empty command is not allowed!');
+            $this->raiseError(__METHOD__ .', an empty command is not allowed!');
             return false;
         }
 
         if (!is_string($command)) {
-            $thallium->raiseError(__METHOD__ .', parameter has to be a string!');
+            $this->raiseError(__METHOD__ .', parameter has to be a string!');
             return false;
         }
 
@@ -53,35 +51,15 @@ class MessageModel extends DefaultModel
         return true;
     }
 
-    public function setMessage($message)
-    {
-        global $thallium;
-
-        if (empty($message)) {
-            $thallium->raiseError(__METHOD__ .', an empty message is not allowed!');
-            return false;
-        }
-
-        if (!is_string($message)) {
-            $thallium->raiseError(__METHOD__ .', parameter has to be a string!');
-            return false;
-        }
-
-        $this->msg_body = $message;
-        return true;
-    }
-
     public function setSessionId($sessionid)
     {
-        global $thallium;
-
         if (empty($sessionid)) {
-            $thallium->raiseError(__METHOD__ .', an empty session id is not allowed!');
+            $this->raiseError(__METHOD__ .', an empty session id is not allowed!');
             return false;
         }
 
         if (!is_string($sessionid)) {
-            $thallium->raiseError(__METHOD__ .', parameter has to be a string!');
+            $this->raiseError(__METHOD__ .', parameter has to be a string!');
             return false;
         }
 
@@ -91,10 +69,8 @@ class MessageModel extends DefaultModel
 
     public function getSessionId()
     {
-        global $thallium;
-
         if (!isset($this->msg_session_id)) {
-            $thallium->raiseError(__METHOD__ .', \$msg_session_id has not been set yet!');
+            $this->raiseError(__METHOD__ .', \$msg_session_id has not been set yet!');
             return false;
         }
 
@@ -103,10 +79,8 @@ class MessageModel extends DefaultModel
 
     public function getCommand()
     {
-        global $thallium;
-
         if (!isset($this->msg_command)) {
-            $thallium->raiseError(__METHOD__ .', \$msg_command has not been set yet!');
+            $this->raiseError(__METHOD__ .', \$msg_command has not been set yet!');
             return false;
         }
 
@@ -115,14 +89,58 @@ class MessageModel extends DefaultModel
 
     public function setBody($body)
     {
-        global $thallium;
-
-        if (!isset($body) || empty($body) || !is_string($body)) {
-            $thallium->raiseError(__METHOD__ .', first parameter needs to be a string!');
+        if (!isset($body) || empty($body)) {
+            $this->raiseError(__METHOD__ .', $body parameter needs to be set!');
             return false;
         }
 
-        $this->msg_body = $body;
+        if (is_string($body)) {
+            $this->msg_body = $body;
+            return true;
+        }
+
+        if (is_array($body)) {
+            $filtered_body = array_filter($body, function ($var) {
+                if (is_numeric($var) || is_string($var)) {
+                    return true;
+                }
+                return false;
+            });
+            $this->msg_body = serialize($filtered_body);
+            return true;
+        }
+
+        if (!is_object($body)) {
+            $this->raiseError(__METHOD__ .'(), unknown $body type!');
+            return false;
+        }
+
+        if (!is_a($body, 'stdClass')) {
+            $this->raiseError(__METHOD__ .'(), only stdClass objects are supported!');
+            return false;
+        }
+
+        if (($vars = get_object_vars($body)) === null) {
+            $this->raiseError(__METHOD__ .'(), $body object has no properties assigned!');
+            return false;
+        }
+
+        if (!isset($vars) || empty($vars) || !is_array($vars)) {
+            $this->raiseError(__METHOD__ .'(), get_object_vars() has not reveal any class properties!');
+            return false;
+        }
+
+        $filtered_body = new \stdClass;
+        foreach ($vars as $key => $value) {
+            if ((!is_string($key) && !is_numeric($key)) ||
+                (!is_string($value) && !is_numeric($value))
+            ) {
+                continue;
+            }
+            $filtered_body->$key = $value;
+        }
+
+        $this->msg_body = serialize($filtered_body);
         return true;
     }
 
@@ -137,10 +155,8 @@ class MessageModel extends DefaultModel
 
     public function getBody()
     {
-        global $thallium;
-
         if (!isset($this->msg_body)) {
-            $thallium->raiseError(__METHOD__ .', \$msg_body has not been set yet!');
+            $this->raiseError(__METHOD__ .', \$msg_body has not been set yet!');
             return false;
         }
 
@@ -149,15 +165,13 @@ class MessageModel extends DefaultModel
 
     public function setScope($scope)
     {
-        global $thallium;
-
         if (!is_string($scope)) {
-            $thallium->raiseError(__METHOD__ .', parameter has to be a string!');
+            $this->raiseError(__METHOD__ .', parameter has to be a string!');
             return false;
         }
 
         if (!in_array($scope, array('inbound', 'outbound'))) {
-            $thallium->raiseError(__METHOD__ .', allowed values for scope are "inbound" and "outbound" only!');
+            $this->raiseError(__METHOD__ .', allowed values for scope are "inbound" and "outbound" only!');
             return false;
         }
 
@@ -167,10 +181,8 @@ class MessageModel extends DefaultModel
 
     public function getScope()
     {
-        global $thallium;
-
         if (!isset($this->msg_scope)) {
-            $thallium->raiseError(__METHOD__ .', \$msg_scope has not been set yet!');
+            $this->raiseError(__METHOD__ .', \$msg_scope has not been set yet!');
             return false;
         }
 
@@ -179,10 +191,8 @@ class MessageModel extends DefaultModel
 
     public function isClientMessage()
     {
-        global $thallium;
-
         if (!($scope = $this->getScope())) {
-            $thallium->raiseError(__CLASS__ .'::getScope() returned false!');
+            $this->raiseError(__CLASS__ .'::getScope() returned false!');
             return false;
         }
 
@@ -195,10 +205,8 @@ class MessageModel extends DefaultModel
 
     public function isServerMessage()
     {
-        global $thallium;
-
         if (!($scope = $this->getScope())) {
-            $thallium->raiseError(__CLASS__ .'::getScope() returned false!');
+            $this->raiseError(__CLASS__ .'::getScope() returned false!');
             return false;
         }
 
@@ -231,8 +239,6 @@ class MessageModel extends DefaultModel
 
     public function isProcessing()
     {
-        global $thallium;
-
         if (!isset($this->getProcessingFlag)) {
             return false;
         }
@@ -246,10 +252,8 @@ class MessageModel extends DefaultModel
 
     public function setValue($value)
     {
-        global $thallium;
-
         if (!isset($value) || empty($value) || !is_string($value)) {
-            $thallium->raiseError(__METHOD__ .', first parameter \$value has to be a string!');
+            $this->raiseError(__METHOD__ .', first parameter \$value has to be a string!');
             return false;
         }
 
