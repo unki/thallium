@@ -29,11 +29,11 @@ class AuditLogModel extends DefaultModel
 
     public function __construct($guid = null)
     {
-        global $thallium, $db;
+        global $db;
 
         // are we creating a new item?
         if (!isset($guid) || empty($guid)) {
-            $thallium->raiseError('$guid parameter is missing!', true);
+            $this->raiseError('$guid parameter is missing!', true);
             return false;
         }
 
@@ -52,12 +52,12 @@ class AuditLogModel extends DefaultModel
         ";
 
         if (!($sth = $db->prepare($sql))) {
-            $thallium->raiseError("DatabaseController::prepare() returned false!");
+            $this->raiseError("DatabaseController::prepare() returned false!");
             return false;
         }
 
         if (!$db->execute($sth, array($guid))) {
-            $thallium->raiseError("DatabaseController::execute() returned false!");
+            $this->raiseError("DatabaseController::execute() returned false!");
             return false;
         }
 
