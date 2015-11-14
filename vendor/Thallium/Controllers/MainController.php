@@ -354,8 +354,18 @@ class MainController extends DefaultController
             return true;
         }
 
-        if ($db->getApplicationDatabaseSchemaVersion() < $db->getApplicationSoftwareSchemaVersion() ||
-            $db->getFrameworkDatabaseSchemaVersion() < $db->getFrameworkSoftwareSchemaVersion()
+        try {
+            $framework_db_schema_version = $db->getFrameworkDatabaseSchemaVersion();
+            $framework_sw_schema_version = $db->getFrameworkSoftwareSchemaVersion();
+            $application_db_schema_version = $db->getApplicationDatabaseSchemaVersion();
+            $application_sw_schema_version = $db->getApplicationSoftwareSchemaVersion();
+        } catch (\Exception $e) {
+            $this->raiseError(__METHOD__ .'(), failed to read current schema state!');
+            return false;
+        }
+
+        if ($application_db_schema_version < $application_sw_schema_version ||
+            $framework_db_schema_version < $framework_sw_schema_version
         ) {
             $this->raiseError(
                 "A database schema upgrade is pending.&nbsp;"
