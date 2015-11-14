@@ -34,7 +34,7 @@ class AuditEntryModel extends DefaultModel
 
     public function __construct($id = null, $guid = null)
     {
-        global $thallium, $db;
+        global $db;
 
         // are we creating a new item?
         if (!isset($id) && !isset($guid)) {
@@ -71,22 +71,22 @@ class AuditEntryModel extends DefaultModel
         };
 
         if (!($sth = $db->prepare($sql))) {
-            $thallium->raiseError("DatabaseController::prepare() returned false!");
+            $this->raiseError("DatabaseController::prepare() returned false!");
             return false;
         }
 
         if (!$db->execute($sth, $arr_query)) {
-            $thallium->raiseError("DatabaseController::execute() returned false!");
+            $this->raiseError("DatabaseController::execute() returned false!");
             return false;
         }
 
         if (!($row = $sth->fetch())) {
-            $thallium->raiseError("Unable to find audit entry with guid value {$guid}");
+            $this->raiseError("Unable to find audit entry with guid value {$guid}");
             return false;
         }
 
         if (!isset($row->audit_idx) || empty($row->audit_idx)) {
-            $thallium->raiseError("Unable to find audit entry with guid value {$guid}");
+            $this->raiseError("Unable to find audit entry with guid value {$guid}");
             return false;
         }
 
@@ -99,10 +99,8 @@ class AuditEntryModel extends DefaultModel
 
     public function preSave()
     {
-        global $thallium;
-
         if (!($time = microtime(true))) {
-            $thallium->raiseError("microtime() returned false!");
+            $this->raiseError("microtime() returned false!");
             return false;
         }
 
@@ -120,7 +118,7 @@ class AuditEntryModel extends DefaultModel
         }
 
         if (!$thallium->isValidGuidSyntax($guid)) {
-            $thallium->raiseError(get_class($thallium) .'::isValidGuidSyntax() returned false!');
+            $this->raiseError(get_class($thallium) .'::isValidGuidSyntax() returned false!');
             return false;
         }
 
@@ -130,19 +128,17 @@ class AuditEntryModel extends DefaultModel
 
     public function setMessage($message)
     {
-        global $thallium;
-
         if (empty($message)) {
-            $thallium->raiseError(__METHOD__ .", \$message can not be empty!");
+            $this->raiseError(__METHOD__ .", \$message can not be empty!");
             return false;
         }
         if (!is_string($message)) {
-            $thallium->raiseError(__METHOD__ .", \$message must be a string!");
+            $this->raiseError(__METHOD__ .", \$message must be a string!");
             return false;
         }
 
         if (strlen($message) > 8192) {
-            $thallium->raiseError(__METHOD__ .", \$message is to long!");
+            $this->raiseError(__METHOD__ .", \$message is to long!");
             return false;
         }
 
@@ -152,19 +148,17 @@ class AuditEntryModel extends DefaultModel
 
     public function setEntryType($entry_type)
     {
-        global $thallium;
-
         if (empty($entry_type)) {
-            $thallium->raiseError(__METHOD__ .", \$entry_type can not be empty!");
+            $this->raiseError(__METHOD__ .", \$entry_type can not be empty!");
             return false;
         }
         if (!is_string($entry_type)) {
-            $thallium->raiseError(__METHOD__ .", \$entry_type must be a string!");
+            $this->raiseError(__METHOD__ .", \$entry_type must be a string!");
             return false;
         }
 
         if (strlen($entry_type) > 255) {
-            $thallium->raiseError(__METHOD__ .", \$entry_type is to long!");
+            $this->raiseError(__METHOD__ .", \$entry_type is to long!");
             return false;
         }
 
@@ -174,19 +168,17 @@ class AuditEntryModel extends DefaultModel
 
     public function setScene($scene)
     {
-        global $thallium;
-
         if (empty($scene)) {
-            $thallium->raiseError(__METHOD__ .", \$scene can not be empty!");
+            $this->raiseError(__METHOD__ .", \$scene can not be empty!");
             return false;
         }
         if (!is_string($scene)) {
-            $thallium->raiseError(__METHOD__ .", \$scene must be a string!");
+            $this->raiseError(__METHOD__ .", \$scene must be a string!");
             return false;
         }
 
         if (strlen($scene) > 255) {
-            $thallium->raiseError(__METHOD__ .", \$scene is to long!");
+            $this->raiseError(__METHOD__ .", \$scene is to long!");
             return false;
         }
 
