@@ -422,7 +422,7 @@ class DatabaseController extends DefaultController
 
         if (!isset($version) || empty($version)) {
             if ($mode == 'application') {
-                $version = $this->getSoftwareSchemaVersion();
+                $version = $this->getApplicationSoftwareSchemaVersion();
             } elseif ($mode == 'framework') {
                 $version = $this->getFrameworkSoftwareSchemaVersion();
             }
