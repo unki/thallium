@@ -105,10 +105,6 @@ class MainController extends DefaultController
         $this->loadController("Jobs", "jobs");
         $this->loadController("MessageBus", "mbus");
 
-        if (!$this->performActions()) {
-            $this->raiseError(__CLASS__ .'::performActions() returned false!', true);
-            return false;
-        }
         return true;
     }
 
@@ -176,14 +172,17 @@ class MainController extends DefaultController
         unset($rpc);
 
         $size = ob_get_length();
-        header("Content-Length: $size");
+        header("Content-Length: {$size}");
         header('Connection: close');
         ob_end_flush();
         ob_flush();
+        flush();
         session_write_close();
+        ignore_user_abort(true);
+        set_time_limit(30);
 
         // invoke the MessageBus processor so pending tasks can
-        // be handled. but suppress any output.
+        // be handled. but suppress any output as client has already disconnected.
         if (!$this->performActions()) {
             $this->raiseError('performActions() returned false!');
             return false;
