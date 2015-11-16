@@ -164,27 +164,8 @@ class MainController extends DefaultController
         $this->loadController("Rpc", "rpc");
         global $rpc;
 
-        ob_start();
         if (!$rpc->perform()) {
-            $this->raiseError("RpcController::perform() returned false!");
-            return false;
-        }
-        unset($rpc);
-
-        $size = ob_get_length();
-        header("Content-Length: {$size}");
-        header('Connection: close');
-        ob_end_flush();
-        ob_flush();
-        flush();
-        session_write_close();
-        ignore_user_abort(true);
-        set_time_limit(30);
-
-        // invoke the MessageBus processor so pending tasks can
-        // be handled. but suppress any output as client has already disconnected.
-        if (!$this->performActions()) {
-            $this->raiseError('performActions() returned false!');
+            $this->raiseError(get_class($rpc) .'::perform() returned false!');
             return false;
         }
 
@@ -456,7 +437,7 @@ class MainController extends DefaultController
         return false;
     }
 
-    protected function performActions()
+    public function processRequestMessages()
     {
         global $mbus;
 
