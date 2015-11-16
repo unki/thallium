@@ -278,6 +278,7 @@ class HttpRouterController extends DefaultController
             'save-description',
             'submit-messages',
             'retrieve-messages',
+            'process-messages',
 
             /*'toggle',
             'clone',
