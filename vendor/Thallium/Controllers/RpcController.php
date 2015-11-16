@@ -66,6 +66,9 @@ class RpcController extends DefaultController
             case 'retrieve-messages':
                 $this->rpcRetrieveFromMessageBus();
                 break;
+            case 'process-messages':
+                $this->rpcProcessMessages();
+                break;
             case 'idle':
                 // just do nothing, for debugging
                 print "ok";
@@ -388,7 +391,7 @@ class RpcController extends DefaultController
     {
         global $mbus;
 
-        if (!($messages = $mbus->poll())) {
+        if (($messages = $mbus->poll()) === false) {
             $this->raiseError(get_class($mbus) .'::poll() returned false!');
             return false;
         }
@@ -399,6 +402,31 @@ class RpcController extends DefaultController
         }
 
         print $messages;
+        return true;
+    }
+
+    protected function rpcProcessMessages()
+    {
+        global $thallium;
+
+        /* disconnect the client so that we can continue to work server-side only */
+        ob_start();
+        print "ok";
+        $size = ob_get_length();
+        header("Content-Length: {$size}");
+        header('Connection: close');
+        ob_end_flush();
+        ob_flush();
+        flush();
+        session_write_close();
+        ignore_user_abort(true);
+        set_time_limit(30);
+
+        if (!$thallium->processRequestMessages()) {
+            $this->raiseError(get_class($thallium) .'::processRequestMessages() returned false!');
+            return false;
+        }
+
         return true;
     }
 }
