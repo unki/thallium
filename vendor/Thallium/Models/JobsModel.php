@@ -59,6 +59,50 @@ class JobsModel extends DefaultModel
 
         return true;
     }
+
+    public function getPendingUnattendedJobs()
+    {
+        global $db;
+
+        $sql =
+            "SELECT
+                job_idx
+            FROM
+                TABLEPREFIX{$this->table_name}
+            WHERE (
+                job_session_id IS NULL
+            OR
+                job_session_id LIKE ''
+            ) AND
+                job_in_processing <> 'Y'";
+
+        if (($sth = $db->prepare($sql)) === false) {
+            $this->raiseError(get_class($db) .'::prepare() returned false!');
+            return false;
+        }
+
+        if (!$db->execute($sth)) {
+            $this->raiseError(get_class($db) .'::execute() returned false!');
+            return false;
+        }
+
+        $jobs = array();
+        if ($sth->rowCount() < 1) {
+            return $jobs;
+        }
+
+        while ($row = $sth->fetch()) {
+            try {
+                $job = new \Thallium\Models\JobModel($row->job_idx);
+            } catch (\Exception $e) {
+                $this->raiseError(__METHOD__ .'(), failed to load JobModel!');
+                return false;
+            }
+            array_push($jobs, $job);
+        }
+
+        return $jobs;
+    }
 }
 
 // vim: set filetype=php expandtab softtabstop=4 tabstop=4 shiftwidth=4:
