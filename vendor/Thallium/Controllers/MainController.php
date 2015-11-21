@@ -115,7 +115,7 @@ class MainController extends DefaultController
 
     public function startup()
     {
-        global $config, $db, $router, $query;
+        global $router, $query;
 
         if (!isset($query->view)) {
             $this->raiseError("Error - parsing request URI hasn't unveiled what to view!");
@@ -125,33 +125,66 @@ class MainController extends DefaultController
         $this->loadController("Views", "views");
         global $views;
 
-
         if ($router->isRpcCall()) {
             if (!$this->rpcHandler()) {
                 $this->raiseError(__CLASS__ .'::rpcHandler() returned false!');
                 return false;
             }
-            return true;
-
-        } elseif ($page_name = $views->getViewName($query->view)) {
-            if (($page = $views->load($page_name)) === false) {
-                $this->raiseError("ViewController:load() returned false!");
+            if (!$this->runBackgroundJobs()) {
+                $this->raiseError(__CLASS__ .'::runBackgroundJobs() returned false!');
                 return false;
             }
-
-            if ($page === true) {
-                return true;
-            }
-
-            if (!empty($page)) {
-                print $page;
-            }
-
             return true;
         }
 
-        $this->raiseError("Unable to find a view for ". $query->view);
-        return false;
+        if (($page_name = $views->getViewName($query->view)) === false) {
+            $this->raiseError(__METHOD__ ."(), unable to find a view for {$query->view}!");
+            return false;
+        }
+
+        if (($page = $views->load($page_name)) === false) {
+            $this->raiseError("ViewController:load() returned false!");
+            return false;
+        }
+
+        if ($page === true) {
+            return true;
+        }
+
+        // display output and close the connection to the client.
+        if (!empty($page)) {
+            ob_start();
+            print $page;
+            $size = ob_get_length();
+            header("Content-Length: {$size}");
+            header('Connection: close');
+            ob_end_flush();
+            ob_flush();
+            flush();
+            session_write_close();
+        }
+
+        if (!$this->runBackgroundJobs()) {
+            $this->raiseError(__CLASS__ .'::runBackgroundJobs() returned false!');
+            return false;
+        }
+
+        return true;
+    }
+
+    public function runBackgroundJobs()
+    {
+        global $jobs;
+
+        ignore_user_abort(true);
+        set_time_limit(30);
+
+        if (!$jobs->runJobs()) {
+            $this->raiseError(get_class($jobs) .'::runJobs() returned false!');
+            return false;
+        }
+
+        return true;
     }
 
     public function setVerbosity($level)
