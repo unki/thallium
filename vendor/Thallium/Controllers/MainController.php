@@ -604,12 +604,12 @@ class MainController extends DefaultController
         }
 
         if (!isset($nick) || empty($nick) || !is_string($nick)) {
-            $this->raiseError(__METHOD__ .'(), \$nick parameter is invalid!');
+            $this->raiseError(__METHOD__ .'(), \$nick parameter is invalid!');
             return false;
         }
 
         if (!isset($model) || empty($model) || !is_string($model)) {
-            $this->raiseError(__METHOD__ .'(), \$model parameter is invalid!');
+            $this->raiseError(__METHOD__ .'(), \$model parameter is invalid!');
             return false;
         }
 
