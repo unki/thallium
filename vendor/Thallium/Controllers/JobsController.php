@@ -99,7 +99,7 @@ class JobsController extends DefaultController
             return false;
         }
 
-        return $job->job_guid;
+        return $job;
     }
 
     public function deleteJob($job_guid)
