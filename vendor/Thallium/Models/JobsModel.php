@@ -45,7 +45,7 @@ class JobsModel extends DefaultModel
             "DELETE FROM
                 TABLEPREFIXjobs
             WHERE
-                job_time < ?";
+                UNIX_TIMESTAMP(job_time) < ?";
 
         if (!($sth = $db->prepare($sql))) {
             $this->raiseError(__METHOD__ .', failed to prepare query!');
