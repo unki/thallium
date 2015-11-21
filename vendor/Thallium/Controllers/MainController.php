@@ -105,6 +105,11 @@ class MainController extends DefaultController
         $this->loadController("Jobs", "jobs");
         $this->loadController("MessageBus", "mbus");
 
+        if (!$this->processRequestMessages()) {
+            $this->raiseError(__CLASS__ .'::processRequestMessages() returned false!', true);
+            return false;
+        }
+
         return true;
     }
 
