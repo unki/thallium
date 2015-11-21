@@ -486,7 +486,7 @@ class MainController extends DefaultController
             return false;
         }
 
-        if (!($command = $message->getCommand())) {
+        if (($command = $message->getCommand()) === false) {
             $this->raiseError(get_class($message) .'::getCommand() returned false!');
             return false;
         }
@@ -496,43 +496,18 @@ class MainController extends DefaultController
             return false;
         }
 
-        if (!($sessionid = $message->getSessionId())) {
+        if (($sessionid = $message->getSessionId()) === false) {
             $this->raiseError(get_class($message) .'::getSessionId() returned false!');
             return false;
         }
 
-        if (!($msg_guid = $message->getGuid()) || !$this->isValidGuidSyntax($msg_guid)) {
+        if (($msg_guid = $message->getGuid()) === false || !$this->isValidGuidSyntax($msg_guid)) {
             $this->raiseError(get_class($message) .'::getGuid() has not returned a valid GUID!');
             return false;
         }
 
-        if (!($job = $jobs->createJob($sessionid, $msg_guid))) {
+        if (($job = $jobs->createJob($sessionid, $msg_guid)) === false) {
             $this->raiseError(get_class($jobs) .'::createJob() returned false!');
-            return false;
-        }
-
-        if (isset($job) && (empty($job) || !$this->isValidGuidSyntax($job))) {
-            $this->raiseError(get_class($jobs) .'::createJob() has not returned a valid GUID!');
-            return false;
-        }
-
-        if (!$jobs->setCurrentJob($job)) {
-            $this->raiseError(get_class($jobs) .'::setCurrentJob() returned false!');
-            return false;
-        }
-
-        if (!$jobs->setJobInProcessing($job)) {
-            $this->raiseError(get_class($jobs) .'::setJobInProcessing() returned false!');
-            return false;
-        }
-
-        return array(
-            'command' => $command,
-            'job' => $job
-        );
-
-        if (!$jobs->deleteJob($job)) {
-            $this->raiseError(get_class($jobs) .'::deleteJob() returned false!');
             return false;
         }
 
