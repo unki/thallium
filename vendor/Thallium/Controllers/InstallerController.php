@@ -147,6 +147,8 @@ class InstallerController extends DefaultController
             $table_sql = "CREATE TABLE `TABLEPREFIXjobs` (
                 `job_idx` int(11) NOT NULL AUTO_INCREMENT,
                 `job_guid` varchar(255) DEFAULT NULL,
+                `job_command` varchar(255) NOT NULL,
+                `job_parameters` varchar(255) DEFAULT NULL,
                 `job_session_id` varchar(255) NOT NULL,
                 `job_request_guid` varchar(255) DEFAULT NULL,
                 `job_time` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
@@ -307,6 +309,37 @@ class InstallerController extends DefaultController
             }
         }
 
+        return true;
+    }
+
+    protected function upgradeFrameworkDatabaseSchemaV2()
+    {
+        global $db;
+
+        if ($db->checkColumnExists('TABLEPREFIXjobs', 'job_command')) {
+            $db->setDatabaseSchemaVersion(2, 'framework');
+            return true;
+        }
+
+        $result = $db->query(
+            "ALTER TABLE
+                TABLEPREFIXjobs
+            ADD COLUMN
+                `job_command` varchar(255) NOT NULL
+            AFTER
+                job_guid,
+            ADD COLUMN
+                `job_parameters` varchar(255) DEFAULT NULL
+            AFTER
+                job_command"
+        );
+
+        if ($result === false) {
+            $this->raiseError(__METHOD__ ." failed!");
+            return false;
+        }
+
+        $db->setDatabaseSchemaVersion(2, 'framework');
         return true;
     }
 }
