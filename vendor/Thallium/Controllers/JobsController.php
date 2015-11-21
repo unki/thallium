@@ -60,10 +60,8 @@ class JobsController extends DefaultController
             return false;
         }
 
-        if (isset($request_guid) && (
-                empty($request_guid) ||
-                !$thallium->isValidGuidSyntax($request_guid)
-            )
+        if (isset($request_guid) &&
+           (empty($request_guid) || !$thallium->isValidGuidSyntax($request_guid))
         ) {
             $this->raiseError(__METHOD__ .', parameter \$request_guid is invalid!');
             return false;
@@ -169,17 +167,21 @@ class JobsController extends DefaultController
         return true;
     }
 
-    public function setJobInProcessing($guid = null)
+    public function runJob($job)
     {
-        if (!isset($guid) || empty($guid) && $this->hasCurrentJob()) {
-            $guid = $this->getCurrentJob();
+        global $thallium;
+
+        if ($thallium->isValidGuidSyntax($job)) {
+            try {
+                $job = new \Thallium\Models\JobModel(null, $job);
+            } catch (\Exception $e) {
+                $this->raiseError(__METHOD__ .'(), failed to load JobModel!');
+                return false;
+            }
         }
 
-        try {
-            $job = new \Thallium\Models\JobModel(null, $guid);
-        } catch (\Exception $e) {
-            $this->raiseError(__METHOD__ .", failed to load JobModel(null, {$guid})!");
-            return false;
+        if ($job->isProcessing()) {
+            return true;
         }
 
         if (!$job->setProcessingFlag()) {
@@ -190,6 +192,44 @@ class JobsController extends DefaultController
         if (!$job->save()) {
             $this->raiseError(get_class($job) .'::save() returned false!');
             return false;
+        }
+
+        return true;
+    }
+
+    public function runJobs()
+    {
+        try {
+            $jobs = new \Thallium\Models\JobsModel;
+        } catch (\Exception $e) {
+            $this->raiseError(__METHOD__ .'(), failed to load JobsModel!');
+            return false;
+        }
+
+        if (($pending = $jobs->getPendingUnattendedJobs()) === false) {
+            $this->raiseError(get_class($jobs) .'::getPendingUnattendedJobs() returned false!');
+            return false;
+        }
+
+        if (!isset($pending) || !is_array($pending)) {
+            $this->raiseError(get_class($jobs) .'::getPendingUnattendedJobs() returned invalid data!');
+            return false;
+        }
+
+        if (empty($pending)) {
+            return true;
+        }
+
+        foreach ($jobs as $job) {
+            if (!$this->runJob($job)) {
+                $this->raiseError(__CLASS__ .'::runJob() returned false!');
+                return false;
+            }
+
+            if (!$job->delete()) {
+                $this->raiseError(get_class($job) .'::delete() returned false!');
+                return false;
+            }
         }
 
         return true;
