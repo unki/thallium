@@ -52,26 +52,31 @@ class JobsController extends DefaultController
         return true;
     }
 
-    public function createJob($sessionid = null, $request_guid = null)
+    public function createJob($command, $parameters, $sessionid = null, $request_guid = null)
     {
         global $thallium;
 
+        if (!isset($command) || empty($command) || !is_string($command)) {
+            $this->raiseError(__METHOD__ .'(), parameter $commmand is required!');
+            return false;
+        }
+
         if (isset($sessionid) && (empty($sessionid) || !is_string($sessionid))) {
-            $this->raiseError(__METHOD__ .', parameter \$sessionid has to be a string!');
+            $this->raiseError(__METHOD__ .'(), parameter $sessionid has to be a string!');
             return false;
         }
 
         if (isset($request_guid) &&
            (empty($request_guid) || !$thallium->isValidGuidSyntax($request_guid))
         ) {
-            $this->raiseError(__METHOD__ .', parameter \$request_guid is invalid!');
+            $this->raiseError(__METHOD__ .'(), parameter $request_guid is invalid!');
             return false;
         }
 
         try {
             $job = new \Thallium\Models\JobModel;
         } catch (\Exception $e) {
-            $this->raiseError(__METHOD__ .', unable to load JobModel!');
+            $this->raiseError(__METHOD__ .'(), unable to load JobModel!');
             return false;
         }
 
@@ -83,6 +88,18 @@ class JobsController extends DefaultController
         if (isset($request_guid) && !$job->setRequestGuid($request_guid)) {
             $this->raiseError(get_class($job) .'::setRequestGuid() returned false!');
             return false;
+        }
+
+        if (!$job->setCommand($command)) {
+            $this->raiseError(get_class($job) .'::setCommand() returned false!');
+            return false;
+        }
+
+        if (isset($parameters) && !empty($parameters)) {
+            if (!$job->setParameters($parameters)) {
+                $this->raiseError(get_class($job) .'::setParameters() returned false!');
+                return false;
+            }
         }
 
         if (!$job->save()) {
