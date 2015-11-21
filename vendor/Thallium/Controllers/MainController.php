@@ -496,6 +496,15 @@ class MainController extends DefaultController
             return false;
         }
 
+        if ($message->hasBody()) {
+            if (($parameters = $message->getBody()) === false) {
+                $this->raiseError(get_class($message) .'::getBody() returned false!');
+                return false;
+            }
+        } else {
+            $parameters = null;
+        }
+
         if (($sessionid = $message->getSessionId()) === false) {
             $this->raiseError(get_class($message) .'::getSessionId() returned false!');
             return false;
@@ -506,7 +515,7 @@ class MainController extends DefaultController
             return false;
         }
 
-        if (($job = $jobs->createJob($sessionid, $msg_guid)) === false) {
+        if ($jobs->createJob($command, $parameters, $sessionid, $msg_guid) === false) {
             $this->raiseError(get_class($jobs) .'::createJob() returned false!');
             return false;
         }
