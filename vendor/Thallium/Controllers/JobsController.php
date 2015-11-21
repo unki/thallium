@@ -189,13 +189,18 @@ class JobsController extends DefaultController
     {
         global $thallium;
 
-        if ($thallium->isValidGuidSyntax($job)) {
+        if (is_string($job) && $thallium->isValidGuidSyntax($job)) {
             try {
                 $job = new \Thallium\Models\JobModel(null, $job);
             } catch (\Exception $e) {
                 $this->raiseError(__METHOD__ .'(), failed to load JobModel!');
                 return false;
             }
+        }
+
+        if (!is_object($job)) {
+            $this->raiseError(__METHOD__ .'(), no valid JobModel provided!');
+            return false;
         }
 
         if ($job->isProcessing()) {
@@ -209,6 +214,44 @@ class JobsController extends DefaultController
 
         if (!$job->save()) {
             $this->raiseError(get_class($job) .'::save() returned false!');
+            return false;
+        }
+
+        if (($command = $job->getCommand()) === false) {
+            $this->raiseError(get_class($job) .'::getCommand() returned false!');
+            return false;
+        }
+
+        if (!isset($command) || empty($command) || !is_string($command)) {
+            $this->raiseError(get_class($job) .'::getCommand() returned invalid data!');
+            return false;
+        }
+
+        if (!$this->isRegisteredHandler($command)) {
+            $this->raiseError(__METHOD__ ."(), there is no handler for {$command}!");
+            return false;
+        }
+
+        if (($handler = $this->getHandler($command)) === false) {
+            $this->raiseError(__CLASS__ .'::getHandler() returned false!');
+            return false;
+        }
+
+        if (!isset($handler) || empty($handler) || !is_array($handler) ||
+            !isset($handler[0]) || empty($handler[0]) || !is_object($handler[0]) ||
+            !isset($handler[1]) || empty($handler[1]) || !is_string($handler[1])
+        ) {
+            $this->raiseError(__CLASS__ .'::getHandler() returned invalid data!');
+            return false;
+        }
+
+        if (!is_callable($handler, true)) {
+            $this->raiseError(__METHOD__ .'(), handler is not callable!');
+            return false;
+        }
+
+        if (!call_user_func($handler, $job)) {
+            $this->raiseError(get_class($handler[0]) ."::{$handler[1]}() returned false!");
             return false;
         }
 
@@ -238,7 +281,12 @@ class JobsController extends DefaultController
             return true;
         }
 
-        foreach ($jobs as $job) {
+        foreach ($pending as $job) {
+            if (!$this->setCurrentJob($job->getGuid())) {
+                $this->raiseError(__CLASS__ .'::setCurrentJob() returned false!');
+                return false;
+            }
+
             if (!$this->runJob($job)) {
                 $this->raiseError(__CLASS__ .'::runJob() returned false!');
                 return false;
@@ -246,6 +294,11 @@ class JobsController extends DefaultController
 
             if (!$job->delete()) {
                 $this->raiseError(get_class($job) .'::delete() returned false!');
+                return false;
+            }
+
+            if (!$this->clearCurrentJob()) {
+                $this->raiseError(__CLASS__ .'::clearCurrentJob() returned false!');
                 return false;
             }
         }
