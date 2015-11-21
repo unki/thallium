@@ -23,6 +23,7 @@ class JobsController extends DefaultController
 {
     const EXPIRE_TIMEOUT = 300;
     protected $currentJobGuid;
+    protected $registeredHandlers = array();
 
     public function __construct()
     {
@@ -233,6 +234,82 @@ class JobsController extends DefaultController
         }
 
         return true;
+    }
+
+    public function registerHandler($job_name, $handler)
+    {
+        if (!isset($job_name) || empty($job_name) || !is_string($job_name)) {
+            $this->raiseError(__METHOD__ .'(), $job_name parameter is invalid!');
+            return false;
+        }
+
+        if (!isset($handler) || empty($handler) || (!is_string($handler) && !is_array($handler))) {
+            $this->raiseError(__METHOD__ .'(), $handler parameter is invalid!');
+            return false;
+        }
+
+        if (is_string($handler)) {
+            $handler = array($this, $handler);
+        } else {
+            if (count($handler) != 2 ||
+                !isset($handler[0]) || empty($handler[0]) || !is_object($handler[0]) ||
+                !isset($handler[1]) || empty($handler[1]) || !is_string($handler[1])
+            ) {
+                $this->raiseError(__METHOD__ .'(), $handler parameter contains invalid data!');
+                return false;
+            }
+        }
+
+        if ($this->isRegisteredHandler($job_name)) {
+            $this->raiseError(__METHOD__ ."(), a handler for {$job_name} is already registered!");
+            return false;
+        }
+
+        $this->registeredHandlers[$job_name] = $handler;
+    }
+
+    public function unregisterHandler($job_name)
+    {
+        if (!isset($job_name) || empty($job_name) || !is_string($job_name)) {
+            $this->raiseError(__METHOD__ .'(), $job_name parameter is invalid!');
+            return false;
+        }
+
+        if (!$this->isRegisteredHandler($job_name)) {
+            return true;
+        }
+
+        unset($this->registeredHandlers[$job_name]);
+        return true;
+    }
+
+    public function isRegisteredHandler($job_name)
+    {
+        if (!isset($job_name) || empty($job_name) || !is_string($job_name)) {
+            $this->raiseError(__METHOD__ .'(), $job_name parameter is invalid!');
+            return false;
+        }
+
+        if (!in_array($job_name, array_keys($this->registeredHandlers))) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function getHandler($job_name)
+    {
+        if (!isset($job_name) || empty($job_name) || !is_string($job_name)) {
+            $this->raiseError(__METHOD__ .'(), $job_name parameter is invalid!');
+            return false;
+        }
+
+        if (!$this->isRegisteredHandler($job_name)) {
+            $this->raiseError(__METHOD__ .'(), no such handler!');
+            return false;
+        }
+
+        return $this->registeredHandlers[$job_name];
     }
 }
 
