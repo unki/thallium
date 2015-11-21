@@ -26,6 +26,8 @@ class JobModel extends DefaultModel
     public $fields = array(
         'job_idx' => 'integer',
         'job_guid' => 'integer',
+        'job_command' => 'string',
+        'job_parameters' => 'string',
         'job_session_id' => 'string',
         'job_request_guid' => 'string',
         'job_time' => 'timestamp',
@@ -185,6 +187,55 @@ class JobModel extends DefaultModel
         }
 
         return $this->job_request_guid;
+    }
+
+    public function getCommand()
+    {
+        if (!isset($this->job_command)) {
+            return false;
+        }
+
+        return $this->job_command;
+    }
+
+    public function setCommand($command)
+    {
+        if (!isset($command) || empty($command) || !is_string($command)) {
+            $this->raiseError(__METHOD__ .'(), $command parameter needs to be set!');
+            return false;
+        }
+
+        $this->job_command = $command;
+        return true;
+    }
+
+    public function getParameters()
+    {
+        if (!isset($this->job_parameters)) {
+            return false;
+        }
+
+        return $this->job_parameters;
+    }
+
+    public function setParameters($parameters)
+    {
+        if (!isset($parameters) || empty($parameters) || !is_string($parameters)) {
+            $this->raiseError(__METHOD__ .'(), $parameters parameter needs to be set!');
+            return false;
+        }
+
+        $this->job_parameters = $parameters;
+        return true;
+    }
+
+    public function hasParameters()
+    {
+        if (!isset($this->job_parameters) || empty($this->job_parameters)) {
+            return false;
+        }
+
+        return true;
     }
 }
 
