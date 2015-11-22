@@ -267,13 +267,13 @@ class JobsController extends DefaultController
             return false;
         }
 
-        if (($pending = $jobs->getPendingUnattendedJobs()) === false) {
-            $this->raiseError(get_class($jobs) .'::getPendingUnattendedJobs() returned false!');
+        if (($pending = $jobs->getPendingJobs()) === false) {
+            $this->raiseError(get_class($jobs) .'::getPendingJobs() returned false!');
             return false;
         }
 
         if (!isset($pending) || !is_array($pending)) {
-            $this->raiseError(get_class($jobs) .'::getPendingUnattendedJobs() returned invalid data!');
+            $this->raiseError(get_class($jobs) .'::getPendingJobs() returned invalid data!');
             return false;
         }
 
