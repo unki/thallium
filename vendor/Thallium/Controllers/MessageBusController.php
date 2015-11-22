@@ -104,12 +104,12 @@ class MessageBusController extends DefaultController
 
         foreach ($messages as $message) {
             if (!is_object($message)) {
-                $this->raiseError(__METHOD__ .', \$message is not an object!');
+                $this->raiseError(__METHOD__ .', $message is not an object!');
                 return false;
             }
 
             if (!isset($message->command) || empty($message->command)) {
-                $this->raiseError(__METHOD__ .', \$message does not contain a command!');
+                $this->raiseError(__METHOD__ .', $message does not contain a command!');
                 return false;
             }
 
@@ -264,16 +264,16 @@ class MessageBusController extends DefaultController
         }
 
         if (!isset($command) || empty($command) || !is_string($command)) {
-            $this->raiseError(__METHOD__ .', parameter \$command is mandatory and has to be a string!');
+            $this->raiseError(__METHOD__ .', parameter $command is mandatory and has to be a string!');
             return false;
         }
         if (!isset($body) || empty($body) || !is_string($body)) {
-            $this->raiseError(__METHOD__ .', parameter \$body is mandatory and has to be a string!');
+            $this->raiseError(__METHOD__ .', parameter $body is mandatory and has to be a string!');
             return false;
         }
 
         if (isset($value) && !empty($value) && !is_string($value)) {
-            $this->raiseError(__METHOD__ .', parameter \$value has to be a string!');
+            $this->raiseError(__METHOD__ .', parameter $value has to be a string!');
             return false;
         }
 
@@ -283,7 +283,7 @@ class MessageBusController extends DefaultController
         }
 
         if (!isset($sessionid) || empty($sessionid) || !is_string($sessionid)) {
-            $this->raiseError(__METHOD__ .', the specified \$sessionid is invalid!');
+            $this->raiseError(__METHOD__ .', the specified $sessionid is invalid!');
             return false;
         }
 
@@ -331,13 +331,19 @@ class MessageBusController extends DefaultController
     {
         global $thallium, $jobs;
 
-        if (empty($job_guid) && !($job_guid = $jobs->getCurrentJob())) {
-            $this->raiseError(get_class($jobs) .'::getCurrentJob() returned false!');
-            return false;
+        if (!isset($job_guid) || empty($job_guid)) {
+            if (($job_guid = $jobs->getCurrentJob()) === false) {
+                $this->raiseError(get_class($jobs) .'::getCurrentJob() returned false!');
+                return false;
+            }
+            if (!isset($job_guid) || empty($job_guid)) {
+                $this->raiseError(__METHOD__ .'(), no job found to work on!');
+                return false;
+            }
         }
 
         if (!$thallium->isValidGuidSyntax($job_guid)) {
-            $this->raiseError(__METHOD__ .', \$job_guid is not a valid GUID!');
+            $this->raiseError(__METHOD__ .', $job_guid is not a valid GUID!');
             return false;
         }
 
