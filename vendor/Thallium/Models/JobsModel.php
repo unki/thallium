@@ -60,7 +60,7 @@ class JobsModel extends DefaultModel
         return true;
     }
 
-    public function getPendingUnattendedJobs()
+    public function getPendingJobs()
     {
         global $db;
 
@@ -69,11 +69,7 @@ class JobsModel extends DefaultModel
                 job_idx
             FROM
                 TABLEPREFIX{$this->table_name}
-            WHERE (
-                job_session_id IS NULL
-            OR
-                job_session_id LIKE ''
-            ) AND
+            WHERE
                 job_in_processing <> 'Y'";
 
         if (($sth = $db->prepare($sql)) === false) {
