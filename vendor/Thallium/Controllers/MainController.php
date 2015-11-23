@@ -33,6 +33,7 @@ class MainController extends DefaultController
         'messagebusmodel' => 'MessageBusModel',
         'messagemodel' => 'MessageModel',
     );
+    protected $registeredHandlers = array();
 
     public function __construct($mode = null)
     {
@@ -110,59 +111,33 @@ class MainController extends DefaultController
             return false;
         }
 
+        try {
+            $this->registerHandler('rpc', array($this, 'rpcHandler'));
+            $this->registerHandler('view', array($this, 'viewHandler'));
+        } catch (\Exception $e) {
+            $this->raiseError(__METHOD__ .'(), failed to register handlers!', true);
+            return false;
+        }
+
         return true;
     }
 
     public function startup()
     {
-        global $router, $query;
+        ob_start();
 
-        if (!isset($query->view)) {
-            $this->raiseError("Error - parsing request URI hasn't unveiled what to view!");
+        if (!$this->callHandlers()) {
+            $this->raiseError(__CLASS__ .'::callHandlers() returned false!');
             return false;
         }
 
-        $this->loadController("Views", "views");
-        global $views;
-
-        if ($router->isRpcCall()) {
-            if (!$this->rpcHandler()) {
-                $this->raiseError(__CLASS__ .'::rpcHandler() returned false!');
-                return false;
-            }
-            if (!$this->runBackgroundJobs()) {
-                $this->raiseError(__CLASS__ .'::runBackgroundJobs() returned false!');
-                return false;
-            }
-            return true;
-        }
-
-        if (($page_name = $views->getViewName($query->view)) === false) {
-            $this->raiseError(__METHOD__ ."(), unable to find a view for {$query->view}!");
-            return false;
-        }
-
-        if (($page = $views->load($page_name)) === false) {
-            $this->raiseError("ViewController:load() returned false!");
-            return false;
-        }
-
-        if ($page === true) {
-            return true;
-        }
-
-        // display output and close the connection to the client.
-        if (!empty($page)) {
-            ob_start();
-            print $page;
-            $size = ob_get_length();
-            header("Content-Length: {$size}");
-            header('Connection: close');
-            ob_end_flush();
-            ob_flush();
-            flush();
-            session_write_close();
-        }
+        $size = ob_get_length();
+        header("Content-Length: {$size}");
+        header('Connection: close');
+        ob_end_flush();
+        ob_flush();
+        flush();
+        session_write_close();
 
         if (!$this->runBackgroundJobs()) {
             $this->raiseError(__CLASS__ .'::runBackgroundJobs() returned false!');
@@ -738,6 +713,168 @@ class MainController extends DefaultController
         }
 
         return false;
+    }
+
+    protected function registerHandler($handler_name, $handler)
+    {
+        if (!isset($handler_name) || empty($handler_name) || !is_string($handler_name)) {
+            $this->raiseError(__METHOD__ .'(), $handler_name parameter is invalid!');
+            return false;
+        }
+
+        if (!isset($handler) || empty($handler) || (!is_string($handler) && !is_array($handler))) {
+            $this->raiseError(__METHOD__ .'(), $handler parameter is invalid!');
+            return false;
+        }
+
+        if (is_string($handler)) {
+            $handler = array($this, $handler);
+        } else {
+            if (count($handler) != 2 ||
+                !isset($handler[0]) || empty($handler[0]) || !is_object($handler[0]) ||
+                !isset($handler[1]) || empty($handler[1]) || !is_string($handler[1])
+            ) {
+                $this->raiseError(__METHOD__ .'(), $handler parameter contains invalid data!');
+                return false;
+            }
+        }
+
+        if ($this->isRegisteredHandler($handler_name)) {
+            $this->raiseError(__METHOD__ ."(), a handler for {$handler_name} is already registered!");
+            return false;
+        }
+
+        $this->registeredHandlers[$handler_name] = $handler;
+    }
+
+    protected function unregisterHandler($handler_name)
+    {
+        if (!isset($handler_name) || empty($handler_name) || !is_string($handler_name)) {
+            $this->raiseError(__METHOD__ .'(), $handler_name parameter is invalid!');
+            return false;
+        }
+
+        if (!$this->isRegisteredHandler($handler_name)) {
+            return true;
+        }
+
+        unset($this->registeredHandlers[$handler_name]);
+        return true;
+    }
+
+    protected function isRegisteredHandler($handler_name)
+    {
+        if (!isset($handler_name) || empty($handler_name) || !is_string($handler_name)) {
+            $this->raiseError(__METHOD__ .'(), $handler_name parameter is invalid!');
+            return false;
+        }
+
+        if (!in_array($handler_name, array_keys($this->registeredHandlers))) {
+            return false;
+        }
+
+        return true;
+    }
+
+    protected function getHandler($handler_name)
+    {
+        if (!isset($handler_name) || empty($handler_name) || !is_string($handler_name)) {
+            $this->raiseError(__METHOD__ .'(), $handler_name parameter is invalid!');
+            return false;
+        }
+
+        if (!$this->isRegisteredHandler($handler_name)) {
+            $this->raiseError(__METHOD__ .'(), no such handler!');
+            return false;
+        }
+
+        return $this->registeredHandlers[$handler_name];
+    }
+
+    protected function viewHandler()
+    {
+        $this->loadController("Views", "views");
+        global $views, $query;
+
+        if (($page_name = $views->getViewName($query->view)) === false) {
+            $this->raiseError(__METHOD__ ."(), unable to find a view for {$query->view}!");
+            return false;
+        }
+
+        if (($page = $views->load($page_name)) === false) {
+            $this->raiseError("ViewController:load() returned false!");
+            return false;
+        }
+
+        if ($page === true) {
+            return true;
+        }
+
+        // display output and close the connection to the client.
+        if (!empty($page)) {
+            print $page;
+        }
+
+        return true;
+    }
+
+    protected function callHandlers()
+    {
+        global $router;
+
+        if ($router->isRpcCall()) {
+            if (!$this->callHandler('rpc')) {
+                $this->raiseError(__CLASS__ .'::callHandler() returned false!');
+                return false;
+            }
+            return true;
+        } elseif ($router->isUploadCall()) {
+            if (!$this->callHandler('upload')) {
+                $this->raiseError(__CLASS__ .'::callHandler() returned false!');
+                return false;
+            }
+            return true;
+        }
+
+        if (!$this->callHandler('view')) {
+            $this->raiseError(__CLASS__ .'::callHandler() returned false!');
+            return false;
+        }
+
+        return true;
+    }
+
+    protected function callHandler($handler_name)
+    {
+        if (!isset($handler_name) || empty($handler_name) || !is_string($handler_name)) {
+            $this->raiseError(__METHOD__ .'(), $handler_name parameter is invalid!');
+            return false;
+        }
+
+        if (($handler = $this->getHandler($handler_name)) === false) {
+            $this->raiseError(__CLASS__ .'::getHandler() returned false!');
+            return false;
+        }
+
+        if (!isset($handler) || empty($handler) || !is_array($handler) ||
+            !isset($handler[0]) || empty($handler[0]) || !is_object($handler[0]) ||
+            !isset($handler[1]) || empty($handler[1]) || !is_string($handler[1])
+        ) {
+            $this->raiseError(__CLASS__ .'::getHandler() returned invalid data!');
+            return false;
+        }
+
+        if (!is_callable($handler, true)) {
+            $this->raiseError(__METHOD__ .'(), handler is not callable!');
+            return false;
+        }
+
+        if (!call_user_func($handler)) {
+            $this->raiseError(get_class($handler[0]) ."::{$handler[1]}() returned false!");
+            return false;
+        }
+
+        return true;
     }
 }
 
