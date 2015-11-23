@@ -378,8 +378,9 @@ class MessageBusController extends DefaultController
             return false;
         }
 
+        $state_before = $this->suppressOutboundMessaging;
         $this->suppressOutboundMessaging = $state;
-        return true;
+        return $state_before;
     }
 }
 
