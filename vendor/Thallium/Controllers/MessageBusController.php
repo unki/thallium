@@ -355,7 +355,7 @@ class MessageBusController extends DefaultController
         }
 
         if (!($sessionid = $job->getSessionId())) {
-            $this->raiseError(get_class($message) .'::getSessionId() returned false!');
+            $this->raiseError(get_class($job) .'::getSessionId() returned false!');
             return false;
         }
 
