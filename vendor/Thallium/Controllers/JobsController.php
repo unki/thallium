@@ -187,7 +187,7 @@ class JobsController extends DefaultController
 
     public function runJob($job)
     {
-        global $thallium;
+        global $thallium, $mbus;
 
         if (is_string($job) && $thallium->isValidGuidSyntax($job)) {
             try {
@@ -250,9 +250,17 @@ class JobsController extends DefaultController
             return false;
         }
 
+        if (!$job->hasSessionId()) {
+            $state = $mbus->suppressOutboundMessaging(true);
+        }
+
         if (!call_user_func($handler, $job)) {
             $this->raiseError(get_class($handler[0]) ."::{$handler[1]}() returned false!");
             return false;
+        }
+
+        if (!$job->hasSessionId()) {
+            $mbus->suppressOutboundMessaging($state);
         }
 
         return true;
