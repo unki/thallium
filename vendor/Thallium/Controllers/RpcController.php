@@ -409,19 +409,6 @@ class RpcController extends DefaultController
     {
         global $thallium;
 
-        /* disconnect the client so that we can continue to work server-side only */
-        ob_start();
-        print "ok";
-        $size = ob_get_length();
-        header("Content-Length: {$size}");
-        header('Connection: close');
-        ob_end_flush();
-        ob_flush();
-        flush();
-        session_write_close();
-        ignore_user_abort(true);
-        set_time_limit(30);
-
         if (!$thallium->processRequestMessages()) {
             $this->raiseError(get_class($thallium) .'::processRequestMessages() returned false!');
             return false;
