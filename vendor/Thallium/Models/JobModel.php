@@ -124,6 +124,15 @@ class JobModel extends DefaultModel
         return $this->job_session_id;
     }
 
+    public function hasSessionId()
+    {
+        if (!isset($this->job_session_id) || empty($this->job_session_id)) {
+            return false;
+        }
+
+        return true;
+    }
+
     public function setProcessingFlag($value = true)
     {
         if (!$value) {
