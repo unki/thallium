@@ -52,7 +52,7 @@ class JobsController extends DefaultController
         return true;
     }
 
-    public function createJob($command, $parameters, $sessionid = null, $request_guid = null)
+    public function createJob($command, $parameters = null, $sessionid = null, $request_guid = null)
     {
         global $thallium;
 
