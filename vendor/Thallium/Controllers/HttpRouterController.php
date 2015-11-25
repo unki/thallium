@@ -152,7 +152,10 @@ class HttpRouterController extends DefaultController
         if (/* common RPC calls */
             (isset($this->query->mode) && $this->query->mode == 'rpc.html') ||
             /* object update RPC calls */
-            ($this->query->method == 'POST' && $this->isValidUpdateObject($this->query->view))
+            (
+                isset($this->query->method) && $this->query->method == 'POST' &&
+                $this->isValidUpdateObject($this->query->view)
+            )
         ) {
             if (!isset($_POST['type']) || !isset($_POST['action'])) {
                 $this->raiseError("Incomplete RPC request!");
