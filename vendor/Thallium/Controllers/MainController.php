@@ -796,7 +796,9 @@ class MainController extends DefaultController
         $this->loadController("Views", "views");
         global $views, $query;
 
-        if (($page_name = $views->getViewName($query->view)) === false) {
+        if (!isset($query->view) || empty($query->view) ||
+            ($page_name = $views->getViewName($query->view)) === false
+        ) {
             $this->raiseError(__METHOD__ ."(), unable to find a view for {$query->view}!");
             return false;
         }
