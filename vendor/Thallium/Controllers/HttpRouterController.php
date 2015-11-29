@@ -23,6 +23,23 @@ class HttpRouterController extends DefaultController
 {
     protected $query;
     protected $query_parts;
+    protected $valid_rpc_actions = array(
+            'add',
+            'update',
+            'delete',
+            'find-prev-next',
+            'get-content',
+            'submit-messages',
+            'retrieve-messages',
+            'process-messages',
+            /*'toggle',
+            'clone',
+            'alter-position',
+            'get-sub-menu',
+            'set-host-profile',
+            'get-host-state',
+            'idle',*/
+    );
 
     public function __construct()
     {
@@ -265,38 +282,42 @@ class HttpRouterController extends DefaultController
         return false;
     }
 
-    public function isValidRpcAction($action)
+    public function addValidRpcAction($action)
     {
-        $valid_actions = array(
-            'add',
-            'update',
-            'delete',
-            'delete-document',
-            'archive',
-            'sign',
-            'find-prev-next',
-            'get-content',
-            'get-keywords',
-            'save-keywords',
-            'save-description',
-            'submit-messages',
-            'retrieve-messages',
-            'process-messages',
+        if (!isset($action) || empty($action) || !is_string($action)) {
+            $this->raiseError(__METHOD__ .'(), $action parameter is invalid!');
+            return false;
+        }
 
-            /*'toggle',
-            'clone',
-            'alter-position',
-            'get-sub-menu',
-            'set-host-profile',
-            'get-host-state',
-            'idle',*/
-        );
-
-        if (in_array($action, $valid_actions)) {
+        if (in_array($action, $this->valid_rpc_actions)) {
             return true;
         }
 
-        return false;
+        array_push($this->valid_rpc_actions, $action);
+        return true;
+    }
+
+    public function isValidRpcAction($action)
+    {
+        if (!isset($action) || empty($action) || !is_string($action)) {
+            $this->raiseError(__METHOD__ .'(), $action parameter is invalid!');
+            return false;
+        }
+
+        if (!in_array($action, $this->valid_rpc_actions)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function getValidRpcActions()
+    {
+        if (!isset($this->valid_rpc_actions)) {
+            return false;
+        }
+
+        return $this->valid_rpc_actions;
     }
 
     public function parseQueryParams()
