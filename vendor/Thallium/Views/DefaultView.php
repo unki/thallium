@@ -21,16 +21,6 @@ namespace Thallium\Views ;
 
 abstract class DefaultView
 {
-    public $supported_modes = array (
-            'list',
-            'show',
-            'edit',
-            'delete',
-            'add',
-            'sign',
-            'upload',
-            'truncate',
-            );
     public $default_mode = "list";
 
     public function __construct()
