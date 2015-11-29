@@ -25,11 +25,11 @@ class TemplatesController extends DefaultController
 {
     protected $smarty;
 
-    public $config_template_dir;
-    public $config_compile_dir;
-    public $config_config_dir;
-    public $config_cache_dir;
-    public $supported_modes = array (
+    protected $config_template_dir;
+    protected $config_compile_dir;
+    protected $config_config_dir;
+    protected $config_cache_dir;
+    protected $supported_modes = array (
             'list',
             'show',
             'edit',
@@ -38,7 +38,7 @@ class TemplatesController extends DefaultController
             'upload',
             'truncate',
             );
-    public $default_mode = "list";
+    protected $default_mode = "list";
 
     public function __construct()
     {
@@ -241,7 +241,7 @@ class TemplatesController extends DefaultController
             return false;
         }
 
-        if (array_key_exists('mode', $params) && !in_array($params['mode'], $this->supported_modes)) {
+        if (array_key_exists('mode', $params) && !$this->isSupportedMode($params['mode'])) {
             $this->raiseError("getUrl: value of parameter 'mode' ({$params['mode']}) isn't supported", E_USER_WARNING);
             $repeat = false;
             return false;
@@ -273,6 +273,49 @@ class TemplatesController extends DefaultController
         return $url;
 
     } // getUrl()
+
+    public function addSupportedMode($mode)
+    {
+        if (!isset($mode) || empty($mode) || !is_string($mode)) {
+            $this->raiseError(__METHOD__ .'(), $mode parameter is invalid!');
+            return false;
+        }
+
+        if (in_array($mode, $this->supported_modes)) {
+            return true;
+        }
+
+        array_push($this->supported_modes, $mode);
+        return true;
+    }
+
+    public function isSupportedMode($mode)
+    {
+        if (!isset($mode) || empty($mode) || !is_string($mode)) {
+            $this->raiseError(__METHOD__ .'(), $mode parameter is invalid!');
+            return false;
+        }
+
+        if (($modes = $this->getSupportedModes()) === false) {
+            $this->raiseError(__CLASS__ .'::getSupportedModes() returned false!');
+            return false;
+        }
+
+        if (!in_array($mode, $modes)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function getSupportedModes()
+    {
+        if (!isset($this->supported_modes)) {
+            return false;
+        }
+
+        return $this->supported_modes;
+    }
 }
 
 // vim: set filetype=php expandtab softtabstop=4 tabstop=4 shiftwidth=4:
