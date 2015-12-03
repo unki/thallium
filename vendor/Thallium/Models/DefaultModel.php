@@ -28,6 +28,7 @@ abstract class DefaultModel
     public $child_names;
     public $ignore_child_on_clone;
     public $fields;
+    public $virtual_fields = array();
     public $id;
     public $init_values;
     protected $permit_rpc_updates = false;
@@ -400,17 +401,61 @@ abstract class DefaultModel
     /* overloading PHP's __set() function */
     final public function __set($name, $value)
     {
+        if ($this->hasVirtualFields()) {
+            if ($this->hasVirtualField($name)) {
+                $name = str_replace("{$this->column_name}_", "", $name);
+                $method_name = 'set'.ucwords(strtolower($name));
+                if (!method_exists($this, $method_name)) {
+                    $this->raiseError(__METHOD__ .'(), virtual field exists but there is no set-method for it!', true);
+                    return false;
+                }
+                if (!$this->$method_name($value)) {
+                    $this->raiseError(__CLASS__ ."::{$method_name} returned false!", true);
+                    return false;
+                }
+                return true;
+            }
+        }
+
         if (!isset($this->fields) || empty($this->fields)) {
-            $this->raiseError(__METHOD__ .", fields array not set for class ". get_class($this));
+            $this->raiseError(__METHOD__ .", fields array not set for class ". get_class($this), true);
         }
 
         if (!array_key_exists($name, $this->fields) && $name != 'id') {
-            $this->raiseError(__METHOD__ .", unknown key in ". __CLASS__ ."::__set(): {$name}");
+            $this->raiseError(__METHOD__ .", unknown key in ". __CLASS__ ."::__set(): {$name}", true);
         }
 
         $this->$name = $value;
 
     } // __set()
+
+    /* overloading PHP's __get() function */
+    final public function __get($name)
+    {
+        if (isset($this->$name)) {
+            return $this->$name;
+        }
+
+        if (!$this->hasVirtualFields()) {
+            return null;
+        }
+
+        if (!$this->hasVirtualField($name)) {
+            return null;
+        }
+
+        $name = str_replace("{$this->column_name}_", "", $name);
+        $method_name = 'get'.ucwords(strtolower($name));
+        if (!method_exists($this, $method_name)) {
+            return null;
+        }
+
+        if (($value = $this->$method_name($value)) === false) {
+            return null;
+        }
+
+        return $value;
+    }
 
     final public function save()
     {
@@ -1030,6 +1075,44 @@ abstract class DefaultModel
             $exception
         );
 
+        return true;
+    }
+
+    public function hasVirtualFields()
+    {
+        if (empty($this->virtual_fields)) {
+            return true;
+        }
+
+        return true;
+    }
+
+    public function hasVirtualField($vfield)
+    {
+        if (!isset($vfield) || empty($vfield) || !is_string($vfield)) {
+            $this->raiseError(__METHOD__ .'(), $vfield parameter is invalid!');
+            return false;
+        }
+
+        if (!in_array($vfield, $this->virtual_fields)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function addVirtualField($vfield)
+    {
+        if (!isset($vfield) || empty($vfield) || !is_string($vfield)) {
+            $this->raiseError(__METHOD__ .'(), $vfield parameter is invalid!');
+            return false;
+        }
+
+        if ($this->hasVirtualField($vfield)) {
+            return true;
+        }
+
+        array_push($this->virtual_fields, $vfield);
         return true;
     }
 }
