@@ -298,7 +298,7 @@ class RpcController extends DefaultController
                 $this->raiseError(__METHOD__ ."(), '{$field}' isn't set in POST request!");
                 return false;
             }
-            if (empty($_POST[$field])) {
+            if (empty($_POST[$field]) && $field != 'value') {
                 $this->raiseError(__METHOD__ ."(), '{$field}' is empty!");
                 return false;
             }
