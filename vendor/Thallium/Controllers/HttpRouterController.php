@@ -271,7 +271,6 @@ class HttpRouterController extends DefaultController
                 'list',
                 'new',
                 'edit',
-                'about',
                 'rpc.html',
                 );
 
