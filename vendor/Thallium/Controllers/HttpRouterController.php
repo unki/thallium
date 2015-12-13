@@ -102,6 +102,16 @@ class HttpRouterController extends DefaultController
 
         // remove empty array elements
         $this->query_parts = array_filter($this->query_parts);
+        $last_element = count($this->query_parts)-1;
+
+        if (strpos($this->query_parts[$last_element], '?') !== false) {
+            if (($query_parts_params = explode('?', $this->query_parts[$last_element], 2)) === false) {
+                $this->raiseError(__METHOD__ .'(), explode() returned false!');
+                return false;
+            }
+            $this->query_parts[$last_element] = $query_parts_params[0];
+            unset($query_parts_params[0]);
+        }
 
         /* for requests to the root page (config item base_web_path), select MainView */
         if (!isset($this->query_parts[0]) &&
@@ -159,6 +169,14 @@ class HttpRouterController extends DefaultController
         for ($i = 1; $i < count($this->query_parts); $i++) {
             array_push($this->query->params, $this->query_parts[$i]);
         }
+
+        if (isset($query_parts_params)) {
+            foreach ($query_parts_params as $param) {
+                array_push($this->query->params, $param);
+            }
+        }
+
+        return true;
     }
 
     public function select()
