@@ -45,7 +45,9 @@ abstract class DefaultView
         ) {
             $mode = "list";
         } elseif (isset($params) && !empty($params)) {
-            if (isset($params[0]) && $this->isKnownMode($params[0])) {
+            if (isset($params[0]) && !empty($params[0]) &&
+                $this->isKnownMode($params[0])
+            ) {
                 $mode = $params[0];
             }
         } elseif ($this->default_mode == "show") {
@@ -53,8 +55,7 @@ abstract class DefaultView
         }
 
         if (!isset($mode)) {
-            $thallium->raiseError("\$mode not set - do not know how to proceed!");
-            return false;
+            $mode = $this->default_mode;
         }
 
         if ($mode == "list" && $tmpl->templateExists($this->class_name ."_list.tpl")) {
