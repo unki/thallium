@@ -24,7 +24,6 @@ class PagingController extends DefaultController
     protected $pagingData = array();
     protected $pagingParameters = array();
     protected $currentPage;
-    protected $totalPages;
     protected $currentItemsLimit;
     protected $itemsPerPageLimits = array(
         10, 25, 50, 100, 0
@@ -122,10 +121,6 @@ class PagingController extends DefaultController
 
     public function getNumberOfPages()
     {
-        if (isset($this->totalPages) && !empty($this->totalPages)) {
-            return $this->totalPages;
-        }
-
         if (!$this->isPagingDataSet()) {
             $this->raiseError(__METHOD__ .'(), paging data has not been set yet!');
             return false;
@@ -136,7 +131,7 @@ class PagingController extends DefaultController
             return false;
         }
 
-        if (!isset($items_per_page) || empty($items_per_page) ||
+        if (!isset($items_per_page) || is_null($items_per_page) ||
             !is_numeric($items_per_page) || $items_per_page < 0
         ) {
             $this->raiseError(__METHOD__ .'(), $items_per_page not correctly defined!');
@@ -149,7 +144,11 @@ class PagingController extends DefaultController
             return 1;
         }
 
-        $totalPages = ceil($totalItems/$items_per_page);
+        if ($items_per_page > 0) {
+            $totalPages = ceil($totalItems/$items_per_page);
+        } else {
+            $totalPages = 1;
+        }
 
         if (!isset($totalPages) ||
             empty($totalPages) ||
@@ -169,6 +168,10 @@ class PagingController extends DefaultController
             empty($this->currentPage)
         ) {
             return false;
+        }
+
+        if ($this->currentPage > $this->getNumberOfPages()) {
+            $this->currentPage = 1;
         }
 
         return $this->currentPage;
@@ -216,7 +219,7 @@ class PagingController extends DefaultController
 
     public function getPageData()
     {
-        if (!($page = $this->getCurrentPage())) {
+        if (($page = $this->getCurrentPage()) === false) {
             $page = 1;
         }
 
@@ -236,7 +239,15 @@ class PagingController extends DefaultController
         }
 
         if ($page > $total) {
-            return false;
+            $page = 1;
+        }
+
+        if (count($this->pagingData) > $items_per_page) {
+            $page = 1;
+        }
+
+        if ($items_per_page < 1) {
+            return $this->pagingData;
         }
 
         $data = array_slice(
@@ -343,7 +354,7 @@ class PagingController extends DefaultController
             $this->raiseError(__CLASS__ .'::getNumberOfPages() returned invalid data!');
             return false;
         }
-        
+
         $pages = array();
         for ($i = 1; $i <= $total; $i++) {
             $pages[] = $i;
@@ -360,7 +371,7 @@ class PagingController extends DefaultController
         }
 
         if (($delta = $this->getParameter('delta')) === false) {
-            $this->raiseError(__METHOD__ .'(), $items_per_page has not been set!');
+            $this->raiseError(__METHOD__ .'(), $delta has not been set!');
             return false;
         }
 
@@ -386,7 +397,7 @@ class PagingController extends DefaultController
 
         if ($page <= $delta) {
             $start = 1;
-            $end = $page+$delta;
+            $end = ($page+$delta) >= count($pages) ? count($pages) : ($page+$delta) ;
         } elseif ($page+$delta >= count($pages)) {
             $start = $page-$delta;
             $end = count($pages);
