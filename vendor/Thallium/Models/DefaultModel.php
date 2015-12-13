@@ -23,14 +23,14 @@ use \PDO;
 
 abstract class DefaultModel
 {
-    public $table_name;
-    public $column_name;
-    public $child_names;
-    public $ignore_child_on_clone;
-    public $fields;
-    public $virtual_fields = array();
-    public $id;
-    public $init_values;
+    protected $table_name;
+    protected $column_name;
+    protected $child_names;
+    protected $ignore_child_on_clone;
+    protected $fields;
+    protected $virtual_fields = array();
+    protected $id;
+    protected $init_values;
     protected $permit_rpc_updates = false;
     protected $rpc_allowed_fields = array();
     protected $rpc_allowed_actions = array();
@@ -457,7 +457,7 @@ abstract class DefaultModel
         return $value;
     }
 
-    final public function save()
+    public function save()
     {
         global $thallium, $db;
 
@@ -1078,7 +1078,7 @@ abstract class DefaultModel
         return true;
     }
 
-    public function hasVirtualFields()
+    final public function hasVirtualFields()
     {
         if (empty($this->virtual_fields)) {
             return true;
@@ -1087,7 +1087,7 @@ abstract class DefaultModel
         return true;
     }
 
-    public function hasVirtualField($vfield)
+    final public function hasVirtualField($vfield)
     {
         if (!isset($vfield) || empty($vfield) || !is_string($vfield)) {
             $this->raiseError(__METHOD__ .'(), $vfield parameter is invalid!');
@@ -1101,7 +1101,7 @@ abstract class DefaultModel
         return true;
     }
 
-    public function addVirtualField($vfield)
+    final public function addVirtualField($vfield)
     {
         if (!isset($vfield) || empty($vfield) || !is_string($vfield)) {
             $this->raiseError(__METHOD__ .'(), $vfield parameter is invalid!');
