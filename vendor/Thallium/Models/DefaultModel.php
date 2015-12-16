@@ -1156,11 +1156,6 @@ abstract class DefaultModel
             return false;
         }
 
-        if (!isset($value)) {
-            $this->raiseError(__METHOD__ .'(), $value parameter is invalid!');
-            return false;
-        }
-
         if (!$this->hasField($field)) {
             $this->raiseError(__METHOD__ .'(), invalid field specified!');
             return false;
