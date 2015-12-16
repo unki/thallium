@@ -994,6 +994,26 @@ abstract class DefaultModel
         return $this->$guid_field;
     }
 
+    final public function setGuid($guid)
+    {
+        global $thallium;
+
+        if (!isset($guid) || empty($guid) || !is_string($guid)) {
+            $this->raiseError(__METHOD__ .'(), $guid parameter is invalid!');
+            return false;
+        }
+
+        if (!$thallium->isValidGuidSyntax($guid)) {
+            $this->raiseError(get_class($thallium) .'::isValidGuidSyntax() returned false!');
+            return false;
+        }
+
+        $guid_field = $this->column_name .'_guid';
+
+        $this->$guid_field = $guid;
+        return true;
+    }
+
     final public function getFields()
     {
         if (!isset($this->fields) ||
