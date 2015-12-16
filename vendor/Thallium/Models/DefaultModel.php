@@ -450,7 +450,7 @@ abstract class DefaultModel
             return null;
         }
 
-        if (($value = $this->$method_name($value)) === false) {
+        if (($value = $this->$method_name()) === false) {
             return null;
         }
 
