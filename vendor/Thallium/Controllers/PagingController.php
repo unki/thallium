@@ -242,7 +242,7 @@ class PagingController extends DefaultController
             $page = 1;
         }
 
-        if (count($this->pagingData) > $items_per_page) {
+        if (count($this->pagingData) <= $items_per_page) {
             $page = 1;
         }
 
@@ -256,10 +256,7 @@ class PagingController extends DefaultController
             $items_per_page
         );
 
-        if (!isset($data) ||
-            empty($data) ||
-            !is_array($data)
-        ) {
+        if (!isset($data) || empty($data) || !is_array($data)) {
             $this->raiseError(__METHOD__ .'(), slicing paging data failed!');
             return false;
         }
