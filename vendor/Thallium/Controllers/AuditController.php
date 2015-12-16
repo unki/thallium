@@ -35,8 +35,8 @@ class AuditController extends DefaultController
             return false;
         }
 
-        if (!empty($guid) && !$entry->setGuid($guid)) {
-            $this->raiseError("AuditEntryModel::setGuid() returned false!");
+        if (!empty($guid) && !$entry->setEntryGuid($guid)) {
+            $this->raiseError("AuditEntryModel::setEntryGuid() returned false!");
             return false;
         }
 

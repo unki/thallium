@@ -109,7 +109,7 @@ class AuditEntryModel extends DefaultModel
         return true;
     }
 
-    public function setGuid($guid)
+    public function setEntryGuid($guid)
     {
         global $thallium;
 
