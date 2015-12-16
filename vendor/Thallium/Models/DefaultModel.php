@@ -1032,7 +1032,20 @@ abstract class DefaultModel
                 'value' => $this->$field,
                 'privacy' => $sec,
             );
-            array_push($fields, $field_ary);
+            $fields[$field] = $field_ary;
+        }
+
+        if (!$this->hasVirtualFields()) {
+            return $fields;
+        }
+
+        foreach ($this->virtual_fields as $field) {
+            $field_ary = array(
+                'name' => $field,
+                'value' => $this->$field,
+                'privacy' => 'public'
+            );
+            $fields[$field] = $field_ary;
         }
 
         return $fields;
@@ -1133,6 +1146,27 @@ abstract class DefaultModel
         }
 
         array_push($this->virtual_fields, $vfield);
+        return true;
+    }
+
+    final public function setField($field, $value)
+    {
+        if (!isset($field) || empty($field) || !is_string($field)) {
+            $this->raiseError(__METHOD__ .'(), $field parameter is invalid!');
+            return false;
+        }
+
+        if (!isset($value)) {
+            $this->raiseError(__METHOD__ .'(), $value parameter is invalid!');
+            return false;
+        }
+
+        if (!$this->hasField($field)) {
+            $this->raiseError(__METHOD__ .'(), invalid field specified!');
+            return false;
+        }
+
+        $this->$field = $value;
         return true;
     }
 }
