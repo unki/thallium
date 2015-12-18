@@ -274,7 +274,10 @@ abstract class DefaultModel
         }
 
         // record the parent objects GUID
-        if (isset($srcobj->$guid_field) && !empty($srcobj->$guid_field)) {
+        if (isset($srcobj->$guid_field) &&
+            !empty($srcobj->$guid_field) &&
+            $this->hasField($pguid)
+        ) {
             $this->$pguid = $srcobj->$guid_field;
         }
 
