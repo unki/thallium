@@ -24,6 +24,7 @@ abstract class DefaultController
     const CONFIG_DIRECTORY = APP_BASE ."/config";
     const CACHE_DIRECTORY = APP_BASE ."/cache";
     const LOG_LEVEL = LOG_WARNING;
+    protected $last_error;
 
     final public function sendMessage($command, $body, $value = null)
     {
@@ -53,8 +54,8 @@ abstract class DefaultController
 
     public function raiseError($string, $stop_execution = false, $exception = null)
     {
+        $this->last_error = $string;
         if (defined('DB_NOERROR')) {
-            $this->last_error = $string;
             return;
         }
 
@@ -75,7 +76,6 @@ abstract class DefaultController
             die;
         }
 
-        $this->last_error = $string;
         return true;
     }
 
