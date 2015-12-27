@@ -20,7 +20,7 @@
 {include "header.tpl"}
 </head>
 <body>
-  <div class="ui main container">
+  <div>
 {$page_content}
   </div>
 {include "footer.tpl"}
