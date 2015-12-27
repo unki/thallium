@@ -32,5 +32,5 @@ Thallium Database Schema: {$framework_schema_version}</br>
 Your Thallium installation bundles further software and libraries:<br />
 <div class="ui bulleted list">
 <div class="item">jQuery,&nbsp;<a href="http://www.jquery.com" target="_blank">http://www.jquery.com</a></div>
-<div class="item">Semantic UI,&nbsp;<a href="http://semantic-ui.com" target="_blank">http://semantic-ui.com</a></div>
+<div class="item">Forge,&nbsp;<a href="https://github.com/digitalbazaar/forge" target="_blank">https://github.com/digitalbazaar/forge</a></div>
 </div>
