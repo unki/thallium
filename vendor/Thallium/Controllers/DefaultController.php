@@ -66,7 +66,7 @@ abstract class DefaultController
         }
 
         if ($stop_execution) {
-            exit("Execution stopped.");
+            exit(1);
         }
 
         return true;
