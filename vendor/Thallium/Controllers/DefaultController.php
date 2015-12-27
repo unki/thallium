@@ -52,28 +52,21 @@ abstract class DefaultController
         return true;
     }
 
-    public function raiseError($string, $stop_execution = false, $exception = null)
+    public function raiseError($text, $stop_execution = false, $catched_exception = null)
     {
-        $this->last_error = $string;
+        $this->last_error = $text;
         if (defined('DB_NOERROR')) {
             return;
         }
 
-        print "<br /><br />". $string ."<br /><br />\n";
-
         try {
-            throw new ExceptionController;
+            throw new ExceptionController($text, $catched_exception);
         } catch (ExceptionController $e) {
-            print "<br /><br />\n";
             $this->write($e, LOG_WARNING);
-            if (isset($exception) && !empty($exception) && method_exists($exception, 'getMessage')) {
-                print "<br /><br />\n";
-                $this->write($exception->getMessage());
-            }
         }
 
         if ($stop_execution) {
-            die;
+            exit("Execution stopped.");
         }
 
         return true;
