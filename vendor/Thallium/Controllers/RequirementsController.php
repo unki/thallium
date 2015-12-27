@@ -78,7 +78,7 @@ class RequirementsController extends DefaultController
 
     public function checkDatabaseSupport()
     {
-        global $thallium, $config;
+        global $config;
 
         $missing = false;
 
@@ -104,18 +104,18 @@ class RequirementsController extends DefaultController
         }
 
         if (!$db_class_name) {
-            $thallium->write("Error - unsupported database configuration, can not check requirements!", LOG_ERR);
+            $this->write("Error - unsupported database configuration, can not check requirements!", LOG_ERR);
             $missing = true;
         }
 
         if (!class_exists($db_class_name)) {
-            $thallium->write("PHP {$dbtype} extension is missing!", LOG_ERR);
+            $this->write("PHP {$dbtype} extension is missing!", LOG_ERR);
             $missing = true;
         }
 
         // check for PDO database support support
         if ((array_search($db_pdo_name, PDO::getAvailableDrivers())) === false) {
-            $thallium->write("PDO {$db_pdo_name} support not available", LOG_ERR);
+            $this->write("PDO {$db_pdo_name} support not available", LOG_ERR);
             $missing = true;
         }
 
@@ -128,7 +128,7 @@ class RequirementsController extends DefaultController
 
     public function checkExternalLibraries()
     {
-        global $thallium, $config;
+        global $config;
 
         $missing = false;
 
@@ -142,7 +142,7 @@ class RequirementsController extends DefaultController
         }*/
         @include_once 'smarty3/Smarty.class.php';
         if (isset($php_errormsg) && preg_match('/Failed opening.*for inclusion/i', $php_errormsg)) {
-            $thallium->write("Smarty3 template engine is missing!", LOG_ERR);
+            $this->write("Smarty3 template engine is missing!", LOG_ERR);
             $missing = true;
             unset($php_errormsg);
         }
@@ -178,19 +178,19 @@ class RequirementsController extends DefaultController
 
         foreach ($directories as $dir => $perm) {
             if (!file_exists($dir) && !mkdir($dir, 0700)) {
-                $thallium->write("failed to create {$dir} directory!", LOG_ERR);
+                $this->write("failed to create {$dir} directory!", LOG_ERR);
                 $missing = true;
                 continue;
             }
 
             if (file_exists($dir) && !is_readable($dir)) {
-                $thallium->write("{$dir} is not readable for {$uid}:{$gid}!", LOG_ERR);
+                $this->write("{$dir} is not readable for {$uid}:{$gid}!", LOG_ERR);
                 $missing = true;
                 continue;
             }
 
             if (file_exists($dir) && $perm == 'w' && !is_writeable($dir)) {
-                $thallium->write("{$dir} is not writeable for {$uid}:{$gid}!", LOG_ERR);
+                $this->write("{$dir} is not writeable for {$uid}:{$gid}!", LOG_ERR);
                 $missing = true;
                 continue;
             }
