@@ -104,7 +104,7 @@ class HttpRouterController extends DefaultController
         $this->query_parts = array_filter($this->query_parts);
         $last_element = count($this->query_parts)-1;
 
-        if (strpos($this->query_parts[$last_element], '?') !== false) {
+        if ($last_element >= 0 && strpos($this->query_parts[$last_element], '?') !== false) {
             if (($query_parts_params = explode('?', $this->query_parts[$last_element], 2)) === false) {
                 $this->raiseError(__METHOD__ .'(), explode() returned false!');
                 return false;
