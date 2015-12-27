@@ -18,12 +18,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>{$page_title}</title>
   <!-- jQuery -->
-  <script type="text/javascript" src="{$web_path}/resources/jQuery/jquery-2.1.4.min.js"></script>
+  <script type="text/javascript" src="{$app_web_path}/resources/jQuery/jquery-2.1.4.min.js"></script>
   <!-- Thallium JavaScript -->
-  <script type="text/javascript" src="{$web_path}/resources/thallium.js"></script>
-  <script type="text/javascript" src="{$web_path}/resources/thallium_rpc.js"></script>
-  <script type="text/javascript" src="{$web_path}/resources/thallium_editable.js"></script>
-  <script type="text/javascript" src="{$web_path}/resources/thallium_messagebus.js"></script>
-  <script type="text/javascript" src="{$web_path}/resources/thallium_message.js"></script>
+  <script type="text/javascript" src="{$app_web_path}/resources/thallium.js"></script>
+  <script type="text/javascript" src="{$app_web_path}/resources/thallium_rpc.js"></script>
+  <script type="text/javascript" src="{$app_web_path}/resources/thallium_editable.js"></script>
+  <script type="text/javascript" src="{$app_web_path}/resources/thallium_messagebus.js"></script>
+  <script type="text/javascript" src="{$app_web_path}/resources/thallium_message.js"></script>
   <!-- Thallium CSS -->
-  <link type="text/css" href="{$web_path}/resources/thallium.css" rel="Stylesheet" />
+  <link type="text/css" href="{$app_web_path}/resources/thallium.css" rel="Stylesheet" />
+  <!-- forge crypto -->
+  <script type="text/javascript" src="{$app_web_path}/resources/forge/js/forge.js"></script>
+  <script type="text/javascript" src="{$app_web_path}/resources/forge/js/util.js"></script>
+  <script type="text/javascript" src="{$app_web_path}/resources/forge/js/sha1.js"></script>
