@@ -133,13 +133,25 @@ class DatabaseController extends DefaultController
          * some resource because nothing has to be allocated for results.
          */
         if (preg_match('/^(update|insert|create|replace|truncate|delete)/i', $query)) {
-            if (($result = $this->db->exec($query)) === false) {
+            try {
+                $result = $this->db->exec($query);
+            } catch (\PDOException $e) {
+                $this->raiseError(__METHOD__ .'(), query failed!', false, $e);
+            }
+
+            if (!isset($result) || $result === false) {
                 return false;
             }
             return $result;
         }
 
-        if (($result = $this->db->query($query, $mode)) === false) {
+        try {
+            $result = $this->db->query($query, $mode);
+        } catch (\PDOException $e) {
+            $this->raiseError(__METHOD__ .'(), query failed!', false, $e);
+        }
+
+        if (!isset($result) || $result === false) {
             return false;
         }
 
