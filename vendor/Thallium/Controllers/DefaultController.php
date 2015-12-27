@@ -62,7 +62,7 @@ abstract class DefaultController
         try {
             throw new ExceptionController($text, $catched_exception);
         } catch (ExceptionController $e) {
-            $this->write($e, LOG_WARNING);
+            print $e;
         }
 
         if ($stop_execution) {
