@@ -34,6 +34,7 @@ class MainController extends DefaultController
         'messagemodel' => 'MessageModel',
     );
     protected $registeredHandlers = array();
+    protected $backgroundJobsRunning;
 
     public function __construct($mode = null)
     {
@@ -124,7 +125,10 @@ class MainController extends DefaultController
 
     public function startup()
     {
-        ob_start();
+        if (!ob_start()) {
+            $this->raiseError(__METHOD__ .'(), internal error, ob_start() returned false!', true);
+            return false;
+        }
 
         if (!$this->callHandlers()) {
             $this->raiseError(__CLASS__ .'::callHandlers() returned false!');
@@ -145,29 +149,18 @@ class MainController extends DefaultController
             session_write_close();
         }
 
-        ob_start();
+        register_shutdown_function(array($this, 'flushOutputBufferToLog'));
+
+        if (!ob_start()) {
+            $this->raiseError(__METHOD__ .'(), internal error, ob_start() returned false!', true);
+            return false;
+        }
 
         if (!$this->runBackgroundJobs()) {
             $this->raiseError(__CLASS__ .'::runBackgroundJobs() returned false!');
             return false;
         }
 
-        if (($size = ob_get_length()) === false || empty($size)) {
-            return true;
-        }
-
-        if (($buffer = ob_get_contents()) === false || empty($buffer)) {
-            return true;
-        }
-
-        if (($reval = ob_end_clean()) === false) {
-            error_log(__METHOD__ .'(), ob_end_clean() returned false!');
-        }
-        ob_flush();
-        flush();
-
-        error_log(__METHOD__ .'(), background job issued output!');
-        error_log(__METHOD__ .'(), '. $buffer);
         return true;
     }
 
@@ -177,6 +170,8 @@ class MainController extends DefaultController
 
         ignore_user_abort(true);
         set_time_limit(30);
+
+        $this->backgroundJobsRunning = true;
 
         if (!$jobs->runJobs()) {
             $this->raiseError(get_class($jobs) .'::runJobs() returned false!');
@@ -903,6 +898,28 @@ class MainController extends DefaultController
             return false;
         }
 
+        return true;
+    }
+
+    public function flushOutputBufferToLog()
+    {
+        if (($size = ob_get_length()) === false || empty($size)) {
+            return true;
+        }
+
+        if (($buffer = ob_get_contents()) === false || empty($buffer)) {
+            return true;
+        }
+
+        if (($reval = ob_end_clean()) === false) {
+            error_log(__METHOD__ .'(), ob_end_clean() returned false!');
+        }
+
+        ob_flush();
+        flush();
+
+        error_log(__METHOD__ .'(), background jobs issued output!');
+        error_log(__METHOD__ .'(), '. $buffer);
         return true;
     }
 }
