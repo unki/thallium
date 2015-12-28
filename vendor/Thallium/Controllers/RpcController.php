@@ -53,10 +53,7 @@ class RpcController extends DefaultController
                 break;
             case 'alter-position':
                 $this->rpc_alter_position();
-                break;
-            case 'get-sub-menu':
-                $this->rpc_get_sub_menu();
-                break;*/
+                break; */
             case 'get-content':
                 $this->rpcGetContent();
                 break;
