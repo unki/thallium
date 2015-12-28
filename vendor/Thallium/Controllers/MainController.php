@@ -132,18 +132,42 @@ class MainController extends DefaultController
         }
 
         $size = ob_get_length();
-        header("Content-Length: {$size}");
-        header('Connection: close');
-        ob_end_flush();
-        ob_flush();
-        flush();
-        session_write_close();
+
+        if ($size !== false) {
+            header("Content-Length: {$size}");
+            header('Connection: close');
+
+            if (($reval = ob_end_flush()) === false) {
+                error_log(__METHOD__ .'(), ob_end_flush() returned false!');
+            }
+            ob_flush();
+            flush();
+            session_write_close();
+        }
+
+        ob_start();
 
         if (!$this->runBackgroundJobs()) {
             $this->raiseError(__CLASS__ .'::runBackgroundJobs() returned false!');
             return false;
         }
 
+        if (($size = ob_get_length()) === false || empty($size)) {
+            return true;
+        }
+
+        if (($buffer = ob_get_contents()) === false || empty($buffer)) {
+            return true;
+        }
+
+        if (($reval = ob_end_clean()) === false) {
+            error_log(__METHOD__ .'(), ob_end_clean() returned false!');
+        }
+        ob_flush();
+        flush();
+
+        error_log(__METHOD__ .'(), background job issued output!');
+        error_log(__METHOD__ .'(), '. $buffer);
         return true;
     }
 
