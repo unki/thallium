@@ -136,12 +136,20 @@ ThalliumMessageBus.prototype.send = function (messages) {
         global: false,
         type: 'POST',
         url: 'rpc.html',
+        retries: 0,
         data: ({
             type : 'rpc',
             action : 'submit-messages',
             messages : submitmsg
         }),
         error: function (XMLHttpRequest, textStatus, errorThrown) {
+            if (textStatus == 'timeout') {
+                this.retries++;
+                if (this.retries <= 3) {
+                    $.ajax(this);
+                    return;
+                }
+            }
             throw 'Failed to contact server! ' + textStatus;
             return false;
         },
@@ -162,11 +170,19 @@ ThalliumMessageBus.prototype.poll = function () {
         global: false,
         type: 'POST',
         url: 'rpc.html',
+        retries: 0,
         data: ({
             type : 'rpc',
             action : 'retrieve-messages',
         }),
         error: function (XMLHttpRequest, textStatus, errorThrown) {
+            if (textStatus == 'timeout') {
+                this.retries++;
+                if (this.retries <= 3) {
+                    $.ajax(this);
+                    return;
+                }
+            }
             throw 'Failed to contact server! ' + textStatus;
         },
         success: function (data) {
