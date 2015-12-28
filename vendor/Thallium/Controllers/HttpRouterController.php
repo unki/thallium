@@ -72,13 +72,13 @@ class HttpRouterController extends DefaultController
 
         // just to check if someone may fools us.
         if (substr_count($uri, '/') > 10) {
-            $this->raiseError("Request looks strange - are you try to fooling us?");
-            exit(1);
+            $this->raiseError(__METHOD__ .'(), request looks strange - are you try to fooling us?', true);
+            return false;
         }
 
         if (!($webpath = $config->getWebPath())) {
-            $this->raiseErrro("ConfigController::getWebPath() returned false!", true);
-            exit(1);
+            $this->raiseErrro(get_class($config) .'::getWebPath() returned false!', true);
+            return false;
         }
 
         // strip off our known base path (e.g. /thallium)
@@ -96,8 +96,8 @@ class HttpRouterController extends DefaultController
             empty($this->query_parts) ||
             count($this->query_parts) < 1
         ) {
-            $this->raiseError("Unable to parse request URI - nothing to be found.");
-            exit(1);
+            $this->raiseError(__METHOD__ .'(), unable to parse request URI - nothing to be found.', true);
+            return false;
         }
 
         // remove empty array elements
