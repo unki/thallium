@@ -63,9 +63,11 @@ class ExceptionController extends \Exception
 
     public function __toString()
     {
-        global $router;
+        global $thallium, $router;
 
-        if ($router->isRpcCall()) {
+        if ($router->isRpcCall() and
+            (!isset($thallium->backgroundJobsRunning) or empty($thallium->backgroundJobsRunning))
+        ) {
             return $this->getJson();
         }
 
