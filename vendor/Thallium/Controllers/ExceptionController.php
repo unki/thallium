@@ -54,7 +54,7 @@ class ExceptionController extends \Exception
             $trace = parent::getTraceAsString();
         }
 
-        if (($json = json_encode(array('text' => $text, 'trace' => $trace))) === false) {
+        if (($json = json_encode(array('error' => 1, 'text' => $text, 'trace' => $trace))) === false) {
             exit("json_encode() failed!");
         }
 
