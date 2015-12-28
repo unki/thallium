@@ -43,7 +43,7 @@ class MainController extends DefaultController
         global $config;
 
         if ($config->inMaintenanceMode()) {
-            print "This application is in maintenance mode. Please try again later!";
+            print "This application is currently in maintenance mode. Please try again later!";
             exit(0);
         }
 
