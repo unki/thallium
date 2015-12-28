@@ -203,20 +203,6 @@ class JobsController extends DefaultController
             return false;
         }
 
-        if ($job->isProcessing()) {
-            return true;
-        }
-
-        if (!$job->setProcessingFlag()) {
-            $this->raiseError(get_class($job) .'::setProcessingFlag() returned false!');
-            return false;
-        }
-
-        if (!$job->save()) {
-            $this->raiseError(get_class($job) .'::save() returned false!');
-            return false;
-        }
-
         if (($command = $job->getCommand()) === false) {
             $this->raiseError(get_class($job) .'::getCommand() returned false!');
             return false;
@@ -290,6 +276,20 @@ class JobsController extends DefaultController
         }
 
         foreach ($pending as $job) {
+            if ($job->isProcessing()) {
+                return true;
+            }
+
+            if (!$job->setProcessingFlag()) {
+                $this->raiseError(get_class($job) .'::setProcessingFlag() returned false!');
+                return false;
+            }
+
+            if (!$job->save()) {
+                $this->raiseError(get_class($job) .'::save() returned false!');
+                return false;
+            }
+
             if (!$this->setCurrentJob($job->getGuid())) {
                 $this->raiseError(__CLASS__ .'::setCurrentJob() returned false!');
                 return false;
