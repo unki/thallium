@@ -37,7 +37,7 @@ var ThalliumMessageBus = function (id) {
 
 ThalliumMessageBus.prototype.add = function (message) {
     if (!message) {
-        throw 'No message to send provided!';
+        throw 'No message to add provided!';
         return false;
     }
 
@@ -50,8 +50,15 @@ ThalliumMessageBus.prototype.add = function (message) {
     return true;
 }
 
-ThalliumMessageBus.prototype.getMessages = function () {
-    return this.messages;
+ThalliumMessageBus.prototype.fetchMessages = function () {
+    var fetched_messages = new Array;
+    var message;
+
+    while ((message = this.messages.shift())) {
+        fetched_messages.push(message);
+    }
+
+    return fetched_messages;
 }
 
 ThalliumMessageBus.prototype.getMessagesCount = function () {
@@ -77,8 +84,15 @@ ThalliumMessageBus.prototype.send = function (messages) {
         return true;
     }
 
+    var messages;
+
+    if ((messages = this.fetchMessages()) === undefined) {
+        throw "fetchMessages() failed!";
+        return false;
+    }
+
     try {
-        var messages = JSON.stringify(this.getMessages());
+        json_str = JSON.stringify(messages);
     } catch (e) {
         throw 'Failed to convert messages to JSON string! '+ e;
         return false;
@@ -89,16 +103,16 @@ ThalliumMessageBus.prototype.send = function (messages) {
         return false;
     }
 
-    if (!md.update(messages)) {
+    if (!md.update(json_str)) {
         throw 'forge SHA1 failed on json input!';
         return false;
     }
 
     var json = new Object;
-    json.count = this.getMessagesCount();
-    json.size = messages.length;
+    json.count = messages.length;
+    json.size = json_str.length;
     json.hash = md.digest().toHex();
-    json.json = messages;
+    json.json = json_str;
 
     try {
         var submitmsg = JSON.stringify(json);
@@ -250,8 +264,8 @@ ThalliumMessageBus.prototype.subscribe = function (name, category, handler) {
     }
 
     if (this.subscribers[name]) {
-        throw 'A subscriber named '+ name +' has already been registered!';
-        return false;
+        throw 'A subscriber named '+ name +' has already been registered. It has been unsubscribed now!';
+        this.unsubscribe(name);
     }
 
     this.subscribers[name] = new Object;
