@@ -26,8 +26,8 @@ class RequirementsController extends DefaultController
     public function __construct()
     {
         if (!constant('APP_BASE')) {
-            print "Erorr - APP_BASE is not defined!";
-            exit(1);
+            $this->raiseError(__METHOD__ .'(), APP_BASE is not defined!', true);
+            return false;
         }
     }
 
@@ -203,6 +203,5 @@ class RequirementsController extends DefaultController
         return true;
     }
 }
-
 
 // vim: set filetype=php expandtab softtabstop=4 tabstop=4 shiftwidth=4:
