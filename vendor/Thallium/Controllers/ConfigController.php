@@ -29,21 +29,24 @@ class ConfigController extends DefaultController
     {
         if (!file_exists(self::CONFIG_DIRECTORY)) {
             $this->raiseError(
-                "Error - configuration directory ". self::CONFIG_DIRECTORY ." does not exist!"
+                __METHOD__ ."(), configuration directory ". self::CONFIG_DIRECTORY ." does not exist!",
+                true
             );
             return false;
         }
 
         if (!is_executable(self::CONFIG_DIRECTORY)) {
             $this->raiseError(
-                "Error - unable to enter config directory ". self::CONFIG_DIRECTORY ." - please check permissions!"
+                __METHOD__ ."(), unable to enter config directory ". self::CONFIG_DIRECTORY ."!",
+                true
             );
             return false;
         }
 
         if (!function_exists("parse_ini_file")) {
             $this->raiseError(
-                "Error - this PHP installation does not provide required parse_ini_file() function!"
+                __METHOD__ .'(), PHP does not provide required parse_ini_file() function!',
+                true
             );
             return false;
         }
@@ -52,7 +55,7 @@ class ConfigController extends DefaultController
 
         foreach (array('dist', 'local') as $config) {
             if (!($config_pure[$config] = $this->readConfig($config))) {
-                $this->raiseError("readConfig({$config}) returned false!", true);
+                $this->raiseError(__METHOD__ ."(), readConfig({$config}) returned false!", true);
                 return false;
             }
         }
@@ -61,7 +64,7 @@ class ConfigController extends DefaultController
             empty($config_pure['dist']) ||
             !is_array($config_pure['dist'])
         ) {
-            $this->raiseError("no valid config.ini.dist available!", true);
+            $this->raiseError(__METHOD__ .'(), no valid config.ini.dist available!', true);
             return false;
         }
 
@@ -72,7 +75,9 @@ class ConfigController extends DefaultController
         }
 
         if (!($this->config = array_replace_recursive($config_pure['dist'], $config_pure['local']))) {
-            $this->raiseError("Failed to merge {$this->config_file_local} with {$this->config_file_dist}.");
+            $this->raiseError(
+                __METHOD__ ."(), failed to merge {$this->config_file_local} with {$this->config_file_dist}."
+            );
             return false;
         }
 
@@ -90,13 +95,13 @@ class ConfigController extends DefaultController
         }
 
         if (!file_exists($config_fqpn)) {
-            $this->raiseError("Error - configuration file {$config_fqpn} does not exist!", true);
+            $this->raiseError(__METHOD__ ."(), configuration file {$config_fqpn} does not exist!", true);
             return false;
         }
 
         if (!is_readable($config_fqpn)) {
             $this->raiseError(
-                "Error - unable to read configuration file {$config_fqpn} - please check permissions!",
+                __METHOD__ ."(), unable to read configuration file {$config_fqpn}!",
                 true
             );
             return false;
@@ -104,7 +109,7 @@ class ConfigController extends DefaultController
 
         if (($config_ary = parse_ini_file($config_fqpn, true)) === false) {
             $this->raiseError(
-                "Error - parse_ini_file() function failed on {$config_fqpn} - please check syntax!",
+                __METHOD__ ."(), parse_ini_file() function failed on {$config_fqpn} - please check syntax!",
                 true
             );
             return false;
@@ -112,15 +117,15 @@ class ConfigController extends DefaultController
 
         if (empty($config_ary) || !is_array($config_ary)) {
             $this->raiseError(
-                "Error - invalid configuration retrieved from {$config_fqpn} - please check syntax!",
+                __METHOD__ ."(), invalid configuration retrieved from {$config_fqpn} - please check syntax!",
                 true
             );
-            exit(1);
+            return false;
         }
 
         if (!isset($config_ary['app']) || empty($config_ary['app']) || !array($config_ary['app'])) {
-            $this->raiseError("Mandatory config section [app] is not configured!", true);
-            exit(1);
+            $this->raiseError(__METHOD__.'(), mandatory config section [app] is not configured!', true);
+            return false;
         }
 
         // remove trailing slash from base_web_path if any, but not if base_web_path = /
