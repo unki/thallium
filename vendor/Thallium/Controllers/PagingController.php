@@ -303,7 +303,7 @@ class PagingController extends DefaultController
         return $page+1;
     }
 
-    public function getPreviousePageNumber()
+    public function getPreviousPageNumber()
     {
         if (($page = $this->getCurrentPage()) === false) {
             $this->raiseError(__CLASS__ .'::getCurrentPage() returned false!');
