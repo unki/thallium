@@ -17,7 +17,7 @@
 
 function rpc_object_delete(element, del_id)
 {
-    if (del_id == undefined || del_id == '') {
+    if (typeof del_id === 'undefined' || del_id == '') {
         alert('invalid "del_id" parameter found!');
         return;
     }
@@ -67,7 +67,7 @@ function rpc_object_update(element)
 
     var target = element.attr('data-target');
 
-    if (target == undefined || target == '') {
+    if (typeof target === 'undefined' || target == '') {
         alert('no attribute "data-target" found!');
         return false;
     }
@@ -109,7 +109,7 @@ function rpc_object_update(element)
     value = safe_string(value);
 
     if (
-        window.location.pathname != undefined &&
+        typeof window.location.pathname !== 'undefined' &&
         window.location.pathname != '' &&
         !window.location.pathname.match(/\/$/)
     ) {
@@ -177,7 +177,7 @@ function rpc_object_delete2(element)
     guid = safe_string(guid);
 
     if (
-        window.location.pathname != undefined &&
+        typeof window.location.pathname !== 'undefined' &&
         window.location.pathname != '' &&
         !window.location.pathname.match(/\/$/)
     ) {
