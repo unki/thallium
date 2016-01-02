@@ -86,7 +86,7 @@ ThalliumMessageBus.prototype.send = function (messages) {
 
     var messages;
 
-    if ((messages = this.fetchMessages()) === undefined) {
+    if (typeof (messages = this.fetchMessages()) === 'undefined') {
         throw "fetchMessages() failed!";
         return false;
     }
@@ -208,10 +208,10 @@ ThalliumMessageBus.prototype.parseResponse = function (data) {
     }
 
     if (
-        json.hash == undefined ||
-        json.size == undefined ||
-        json.json == undefined ||
-        json.count == undefined
+        typeof json.hash === 'undefined' ||
+        typeof json.size === 'undefined' ||
+        typeof json.json === 'undefined' ||
+        typeof json.count === 'undefined'
     ) {
         throw 'Response is invalid!';
         return false;
