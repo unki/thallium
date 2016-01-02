@@ -19,7 +19,7 @@ function show_preview(element)
 {
     var obj_id = element.attr("id");
 
-    if (obj_id == undefined || obj_id == "") {
+    if (typeof obj_id === 'undefined' || obj_id == "") {
         alert('no attribute "id" found!');
         return;
     }
@@ -58,7 +58,7 @@ function open_preview_window(obj_id)
             }).modal('show');
 
             var preview_src = $(".ui.modal img[name=preview_image]").attr("data-src");
-            if (preview_src == undefined || preview_src == '') {
+            if (typeof preview_src === 'undefined' || preview_src == '') {
                 alert('found no image source to load:' + preview_src);
                 return;
             }
@@ -139,7 +139,7 @@ function change_preview(direction)
 {
     var img = $('.ui.modal img[name=previewimg]');
 
-    if (img == undefined || img == "") {
+    if (typeof img === 'undefined' || img == "") {
         return false;
     }
 
@@ -164,7 +164,7 @@ function change_preview(direction)
         },
         success: function (obj_id) {
             /*var previewimg = $(".ui.modal img[name=previewimg]").attr("load");
-            if (previewimg == undefined || previewimg == '') {
+            if (typeof previewimg === 'undefined' || previewimg == '') {
                 alert('found no image to load:' + previewimg);
                 return;
             }
@@ -214,7 +214,7 @@ function show_modal(settings, do_function, modalclass)
         $(modalclass + ' .image.content .description p').html(settings.content);
     }
 
-    if (settings.closeable == undefined) {
+    if (typeof settings.closeable === 'undefined') {
         settings.closeable = true;
     }
 
@@ -224,11 +224,11 @@ function show_modal(settings, do_function, modalclass)
         $(modalclass + ' i.close.icon').appendTo('.ui.basic.modal');
     }
 
-    if (settings.hasActions == undefined) {
+    if (typeof settings.hasActions === 'undefined') {
         settings.hasActions = true;
     }
 
-    if (settings.blurring == undefined) {
+    if (typeof settings.blurring === 'undefined') {
         settings.blurring = true;
     }
 
@@ -278,7 +278,7 @@ function delete_object(element)
 {
     var del_id = element.attr("id");
 
-    if (del_id == undefined || del_id == "") {
+    if (typeof del_id === 'undefined' || del_id == "") {
         alert('no attribute "id" found!');
         return false;
     }
@@ -309,7 +309,7 @@ function archive_object(element)
 {
     var obj_id = element.attr("id");
 
-    if (obj_id == undefined || obj_id == "") {
+    if (typeof obj_id === 'undefined' || obj_id == "") {
         alert('no attribute "id" found!');
         return;
     }
