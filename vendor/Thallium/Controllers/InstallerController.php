@@ -131,7 +131,7 @@ class InstallerController extends DefaultController
                 `msg_submit_time` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
                 `msg_scope` varchar(255) DEFAULT NULL,
                 `msg_command` varchar(255) NOT NULL,
-                `msg_body` varchar(255) NOT NULL,
+                `msg_body` varchar(4096) NOT NULL,
                 `msg_value` varchar(255) DEFAULT NULL,
                 `msg_in_processing` varchar(1) DEFAULT NULL,
                 PRIMARY KEY (`msg_idx`)
@@ -148,7 +148,7 @@ class InstallerController extends DefaultController
                 `job_idx` int(11) NOT NULL AUTO_INCREMENT,
                 `job_guid` varchar(255) DEFAULT NULL,
                 `job_command` varchar(255) NOT NULL,
-                `job_parameters` varchar(255) DEFAULT NULL,
+                `job_parameters` varchar(4096) DEFAULT NULL,
                 `job_session_id` varchar(255) NOT NULL,
                 `job_request_guid` varchar(255) DEFAULT NULL,
                 `job_time` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
@@ -340,6 +340,34 @@ class InstallerController extends DefaultController
         }
 
         $db->setDatabaseSchemaVersion(2, 'framework');
+        return true;
+    }
+
+    protected function upgradeFrameworkDatabaseSchemaV3()
+    {
+        global $db;
+
+        $result = $db->query(
+            "ALTER TABLE
+                TABLEPREFIXmessage_bus
+            MODIFY COLUMN
+                `msg_body` varchar(4096) DEFAULT NULL"
+        );
+
+        if ($result === false) {
+            $this->raiseError(__METHOD__ ." failed!");
+            return false;
+        }
+
+        $result = $db->query(
+            "ALTER TABLE
+                TABLEPREFIXjobs
+            MODIFY COLUMN
+                `job_parameters` varchar(4096) DEFAULT NULL"
+        );
+
+
+        $db->setDatabaseSchemaVersion(3, 'framework');
         return true;
     }
 }
