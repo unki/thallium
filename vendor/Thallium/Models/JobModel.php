@@ -220,21 +220,32 @@ class JobModel extends DefaultModel
 
     public function getParameters()
     {
-        if (!isset($this->job_parameters)) {
+        if (!$this->hasParameters()) {
+            $this->raiseError(__CLASS__ .'::hasParameters() returned false!');
             return false;
         }
 
-        return $this->job_parameters;
+        if (($params = base64_decode($this->job_parameters)) === false) {
+            $this->raiseError(__METHOD__ .'(), base64_decode() failed on job_parameters!');
+            return false;
+        }
+
+        if (($params = unserialize($params)) === false) {
+            $this->raiseError(__METHOD__ .'(), unserialize() job_parameters failed!');
+            return false;
+        }
+
+        return $params;
     }
 
     public function setParameters($parameters)
     {
-        if (!isset($parameters) || empty($parameters) || !is_string($parameters)) {
+        if (!isset($parameters) || empty($parameters)) {
             $this->raiseError(__METHOD__ .'(), $parameters parameter needs to be set!');
             return false;
         }
 
-        $this->job_parameters = $parameters;
+        $this->job_parameters = base64_encode(serialize($parameters));
         return true;
     }
 
