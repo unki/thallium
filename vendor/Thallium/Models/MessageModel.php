@@ -38,12 +38,12 @@ class MessageModel extends DefaultModel
     public function setCommand($command)
     {
         if (empty($command)) {
-            $this->raiseError(__METHOD__ .', an empty command is not allowed!');
+            $this->raiseError(__METHOD__ .'(), an empty command is not allowed!');
             return false;
         }
 
         if (!is_string($command)) {
-            $this->raiseError(__METHOD__ .', parameter has to be a string!');
+            $this->raiseError(__METHOD__ .'(), parameter has to be a string!');
             return false;
         }
 
@@ -54,12 +54,12 @@ class MessageModel extends DefaultModel
     public function setSessionId($sessionid)
     {
         if (empty($sessionid)) {
-            $this->raiseError(__METHOD__ .', an empty session id is not allowed!');
+            $this->raiseError(__METHOD__ .'(), an empty session id is not allowed!');
             return false;
         }
 
         if (!is_string($sessionid)) {
-            $this->raiseError(__METHOD__ .', parameter has to be a string!');
+            $this->raiseError(__METHOD__ .'(), parameter has to be a string!');
             return false;
         }
 
@@ -70,7 +70,7 @@ class MessageModel extends DefaultModel
     public function getSessionId()
     {
         if (!isset($this->msg_session_id)) {
-            $this->raiseError(__METHOD__ .', \$msg_session_id has not been set yet!');
+            $this->raiseError(__METHOD__ .'(), \$msg_session_id has not been set yet!');
             return false;
         }
 
@@ -80,7 +80,7 @@ class MessageModel extends DefaultModel
     public function getCommand()
     {
         if (!isset($this->msg_command)) {
-            $this->raiseError(__METHOD__ .', \$msg_command has not been set yet!');
+            $this->raiseError(__METHOD__ .'(), \$msg_command has not been set yet!');
             return false;
         }
 
@@ -90,12 +90,12 @@ class MessageModel extends DefaultModel
     public function setBody($body)
     {
         if (!isset($body) || empty($body)) {
-            $this->raiseError(__METHOD__ .', $body parameter needs to be set!');
+            $this->raiseError(__METHOD__ .'(), $body parameter needs to be set!');
             return false;
         }
 
         if (is_string($body)) {
-            $this->msg_body = $body;
+            $this->msg_body = base64_encode(serialize($body));
             return true;
         }
 
@@ -106,7 +106,7 @@ class MessageModel extends DefaultModel
                 }
                 return false;
             });
-            $this->msg_body = serialize($filtered_body);
+            $this->msg_body = base64_encode(serialize($filtered_body));
             return true;
         }
 
@@ -140,7 +140,7 @@ class MessageModel extends DefaultModel
             $filtered_body->$key = $value;
         }
 
-        $this->msg_body = serialize($filtered_body);
+        $this->msg_body = base64_encode(serialize($filtered_body));
         return true;
     }
 
@@ -156,7 +156,27 @@ class MessageModel extends DefaultModel
     public function getBody()
     {
         if (!isset($this->msg_body)) {
-            $this->raiseError(__METHOD__ .', \$msg_body has not been set yet!');
+            $this->raiseError(__METHOD__ .'(), \$msg_body has not been set yet!');
+            return false;
+        }
+
+        if (($body = base64_decode($this->msg_body)) === false) {
+            $this->raiseError(__METHOD__ .'(), base64_decode() failed on msg_body!');
+            return false;
+        }
+
+        if (($body = unserialize($body)) === false) {
+            $this->raiseError(__METHOD__ .'(), unserialize() msg_body failed!');
+            return false;
+        }
+
+        return $body;
+    }
+
+    public function getBodyRaw()
+    {
+        if (!isset($this->msg_body)) {
+            $this->raiseError(__METHOD__ .'(), \$msg_body has not been set yet!');
             return false;
         }
 
@@ -166,12 +186,12 @@ class MessageModel extends DefaultModel
     public function setScope($scope)
     {
         if (!is_string($scope)) {
-            $this->raiseError(__METHOD__ .', parameter has to be a string!');
+            $this->raiseError(__METHOD__ .'(), parameter has to be a string!');
             return false;
         }
 
         if (!in_array($scope, array('inbound', 'outbound'))) {
-            $this->raiseError(__METHOD__ .', allowed values for scope are "inbound" and "outbound" only!');
+            $this->raiseError(__METHOD__ .'(), allowed values for scope are "inbound" and "outbound" only!');
             return false;
         }
 
@@ -182,7 +202,7 @@ class MessageModel extends DefaultModel
     public function getScope()
     {
         if (!isset($this->msg_scope)) {
-            $this->raiseError(__METHOD__ .', \$msg_scope has not been set yet!');
+            $this->raiseError(__METHOD__ .'(), \$msg_scope has not been set yet!');
             return false;
         }
 
@@ -253,7 +273,7 @@ class MessageModel extends DefaultModel
     public function setValue($value)
     {
         if (!isset($value) || empty($value) || !is_string($value)) {
-            $this->raiseError(__METHOD__ .', first parameter \$value has to be a string!');
+            $this->raiseError(__METHOD__ .'(), first parameter \$value has to be a string!');
             return false;
         }
 
