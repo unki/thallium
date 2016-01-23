@@ -15,6 +15,8 @@
  * GNU Affero General Public License for more details.
  */
 
+'use strict';
+
 var ThalliumMessage = function () {
     return true;
 
