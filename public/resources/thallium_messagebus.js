@@ -15,6 +15,8 @@
  * GNU Affero General Public License for more details.
  */
 
+'use strict';
+
 var ThalliumMessageBus = function (id) {
     this.element = id;
     this.messages = new Array;
@@ -67,6 +69,7 @@ ThalliumMessageBus.prototype.getMessagesCount = function () {
 
 ThalliumMessageBus.prototype.getReceivedMessages = function () {
     var _messages = new Array;
+    var message;
 
     while (message = this.recvMessages.shift()) {
         _messages.push(message);
@@ -84,7 +87,7 @@ ThalliumMessageBus.prototype.send = function (messages) {
         return true;
     }
 
-    var messages;
+    var messages, md;
 
     if (typeof (messages = this.fetchMessages()) === 'undefined') {
         throw "fetchMessages() failed!";
@@ -92,7 +95,7 @@ ThalliumMessageBus.prototype.send = function (messages) {
     }
 
     try {
-        json_str = JSON.stringify(messages);
+        var json_str = JSON.stringify(messages);
     } catch (e) {
         throw 'Failed to convert messages to JSON string! '+ e;
         return false;
@@ -194,13 +197,15 @@ ThalliumMessageBus.prototype.poll = function () {
 }
 
 ThalliumMessageBus.prototype.parseResponse = function (data) {
+    var md;
+
     if (!data) {
         throw 'Requires data to be set!';
         return false;
     }
 
     try {
-        json = JSON.parse(data);
+        var json = JSON.parse(data);
     } catch (e) {
         console.log(data);
         throw 'Failed to parse response! ' + e;
@@ -243,7 +248,7 @@ ThalliumMessageBus.prototype.parseResponse = function (data) {
     }
 
     try {
-        messages = JSON.parse(json.json);
+        var messages = JSON.parse(json.json);
     } catch (e) {
         console.log(data);
         throw 'Failed to parse JSON field!' + e;
@@ -263,7 +268,7 @@ ThalliumMessageBus.prototype.parseResponse = function (data) {
     return true;
 };
 
-ThalliumMessageBus.prototype.subscribe = function (name, category, handler) {
+ThalliumMessageBus.prototype.subscribe = function (name, category, handler, data) {
     if (!name) {
         throw 'No name provided!';
         return false;
@@ -279,6 +284,10 @@ ThalliumMessageBus.prototype.subscribe = function (name, category, handler) {
         return false;
     }
 
+    if (typeof data === 'undefined') {
+        data = null;
+    }
+
     if (this.subscribers[name]) {
         throw 'A subscriber named '+ name +' has already been registered. It has been unsubscribed now!';
         this.unsubscribe(name);
@@ -287,6 +296,7 @@ ThalliumMessageBus.prototype.subscribe = function (name, category, handler) {
     this.subscribers[name] = new Object;
     this.subscribers[name].category = category;
     this.subscribers[name].handler = handler;
+    this.subscribers[name].data = data;
     return true;
 }
 
@@ -304,7 +314,7 @@ ThalliumMessageBus.prototype.getSubscribers = function (category) {
         return this.subscribers;
     }
 
-    subscribers = new Array;
+    var subscribers = new Array;
     for (var subname in this.subscribers) {
         if (this.subscribers[subname].category != category) {
             continue;
@@ -316,8 +326,7 @@ ThalliumMessageBus.prototype.getSubscribers = function (category) {
 }
 
 ThalliumMessageBus.prototype.notifySubscribers = function () {
-    var subscribers;
-    var messages;
+    var subscribers, messages, cnt;
 
     // if there are no messages pending, we do not bother our
     // subscribers.
@@ -337,7 +346,7 @@ ThalliumMessageBus.prototype.notifySubscribers = function () {
         }
 
         for (var subid in subscribers) {
-            if (!subscribers[subid].handler(messages[msgid])) {
+            if (!subscribers[subid].handler(messages[msgid], subscribers[subid].data)) {
                 throw 'Subscriber "'+ subid +'" returned false!';
                 return false;
             }
