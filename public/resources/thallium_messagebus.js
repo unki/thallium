@@ -22,6 +22,7 @@ var ThalliumMessageBus = function (id) {
     this.messages = new Array;
     this.recvMessages = new Array;
     this.subscribers = new Object;
+    this.ajaxRequests = new Array;
     this.pollerId;
     this.rpcEnabled = true;
 
@@ -34,6 +35,16 @@ var ThalliumMessageBus = function (id) {
         this.notifySubscribers();
     }.bind(this));
 
+    $(window).unload(function () {
+        this.ajaxRequests.forEach(function (req) {
+            if (typeof req.abort !== 'function') {
+                return true;
+            }
+            req.abort();
+            return true;
+        });
+        return true;
+    }.bind(this));
     return true;
 };
 
@@ -145,16 +156,41 @@ ThalliumMessageBus.prototype.send = function (messages) {
             action : 'submit-messages',
             messages : submitmsg
         }),
-        error: function (XMLHttpRequest, textStatus, errorThrown) {
-            if (textStatus == 'timeout') {
-                this.retries++;
-                if (this.retries <= 3) {
+        beforeSend: function (jqXHR) {
+            this.ajaxRequests.push(jqXHR);
+            return true;
+        },
+        complete: function (jqXHR) {
+            var idx;
+            if (!(idx = $.inArray(jqXHR, this.ajaxRequests))) {
+                return true;
+            }
+            this.ajaxRequests.splice(idx, 1);
+            return true;
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            var error_text = 'An error occured during AJAX operation.';
+            if (textStatus == 'timeout' || (
+                textStatus == 'error' &&
+                (typeof errorThrown === 'undefined' || !errorThrown)
+            )) {
+                if (typeof jqXHR.retries === 'undefined') {
+                    jqXHR.retries = 0;
+                }
+                jqXHR.retries++;
+                if (jqXHR.retries <= 3) {
                     $.ajax(this);
                     return;
                 }
             }
-            throw 'Failed to contact server! ' + textStatus;
-            return false;
+            error_text+= 'Retries: '+ jqXHR.retries +'.';
+            if (typeof textStatus !== 'undefined' && textStatus) {
+                error_text+= ' Type: ' + textStatus + '.';
+            }
+            if (typeof errorThrown !== 'undefined' && errorThrown) {
+                error_text+= ' Message: ' + errorThrown + '.';
+            }
+            throw error_text;
         },
         success: function (data) {
             if (data != "ok") {
@@ -178,15 +214,41 @@ ThalliumMessageBus.prototype.poll = function () {
             type : 'rpc',
             action : 'retrieve-messages',
         }),
-        error: function (XMLHttpRequest, textStatus, errorThrown) {
-            if (textStatus == 'timeout') {
-                this.retries++;
-                if (this.retries <= 3) {
+        beforeSend: function (jqXHR) {
+            this.ajaxRequests.push(jqXHR);
+            return true;
+        },
+        complete: function (jqXHR) {
+            var idx;
+            if (!(idx = $.inArray(jqXHR, this.ajaxRequests))) {
+                return true;
+            }
+            this.ajaxRequests.splice(idx, 1);
+            return true;
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            var error_text = 'An error occured during AJAX operation.';
+            if (textStatus == 'timeout' || (
+                textStatus == 'error' &&
+                (typeof errorThrown === 'undefined' || !errorThrown)
+            )) {
+                if (typeof jqXHR.retries === 'undefined') {
+                    jqXHR.retries = 0;
+                }
+                jqXHR.retries++;
+                if (jqXHR.retries <= 3) {
                     $.ajax(this);
                     return;
                 }
             }
-            throw 'Failed to contact server! ' + textStatus;
+            error_text+= 'Retries: '+ jqXHR.retries +'.';
+            if (typeof textStatus !== 'undefined' && textStatus) {
+                error_text+= ' Type: ' + textStatus + '.';
+            }
+            if (typeof errorThrown !== 'undefined' && errorThrown) {
+                error_text+= ' Message: ' + errorThrown + '.';
+            }
+            throw error_text;
         },
         success: function (data) {
             this.parseResponse(data);
