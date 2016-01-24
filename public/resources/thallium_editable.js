@@ -15,6 +15,8 @@
  * GNU Affero General Public License for more details.
  */
 
+'use strict';
+
 var ThalliumInlineEditable = function (id) {
 
     this.element = id;
@@ -88,6 +90,8 @@ ThalliumInlineEditable.prototype.validate = function () {
 
 ThalliumInlineEditable.prototype.prepare = function () {
 
+    var origval;
+
     if (typeof (origval = this.getContentAttribute('data-orig-value')) === 'undefined') {
         throw "getContentAttribute() returned false!";
         return false;
@@ -125,6 +129,8 @@ ThalliumInlineEditable.prototype.getOriginalValue = function () {
 
 ThalliumInlineEditable.prototype.getContentAttribute = function (attr) {
 
+    var content_select, value;
+
     if (typeof (content_select = this.getContentSelector()) === 'undefined') {
         throw "Can not continue without knowning the name!";
         return false;
@@ -160,6 +166,8 @@ ThalliumInlineEditable.prototype.getDomReference = function () {
 
 ThalliumInlineEditable.prototype.getNameSelector = function () {
 
+    var name;
+
     if (typeof (name = this.getDomReference()) === 'undefined') {
         throw "Can not continue without knowning the name!";
         return false;
@@ -170,6 +178,8 @@ ThalliumInlineEditable.prototype.getNameSelector = function () {
 
 ThalliumInlineEditable.prototype.getContentSelector = function () {
 
+    var name;
+
     if (typeof (name = this.getNameSelector()) === 'undefined') {
         throw "getNameSelector() returned false!";
         return false;
@@ -179,6 +189,8 @@ ThalliumInlineEditable.prototype.getContentSelector = function () {
 }
 
 ThalliumInlineEditable.prototype.getContentValue = function () {
+
+    var content_select, cur_val;
 
     if (typeof (content_select = this.getContentSelector()) === 'undefined') {
         throw "Can not continue without knowning the name!";
@@ -199,6 +211,8 @@ ThalliumInlineEditable.prototype.getLastUsedValue = function () {
 
 ThalliumInlineEditable.prototype.toggle = function () {
 
+    var name_select;
+
     if (typeof (name_select = this.getNameSelector()) === 'undefined') {
         throw "Can not continue without knowning the name!";
         return false;
@@ -217,6 +231,8 @@ ThalliumInlineEditable.prototype.toggle = function () {
 };
 
 ThalliumInlineEditable.prototype.showForm = function () {
+
+    var name_select, content_select, cur_val, form_src, content;
 
     if (typeof (name_select = this.getNameSelector()) === 'undefined') {
         throw "Can not continue without knowning the name!";
@@ -285,6 +301,8 @@ ThalliumInlineEditable.prototype.showForm = function () {
 
 ThalliumInlineEditable.prototype.showContent = function () {
 
+    var name_select, content_select, value, content;
+
     if (typeof (name_select = this.getNameSelector()) === 'undefined') {
         throw "Can not continue without knowning the name!";
         return false;
@@ -330,6 +348,8 @@ ThalliumInlineEditable.prototype.showContent = function () {
 
 ThalliumInlineEditable.prototype.touch = function () {
 
+    var content_select, input, savebutton;
+
     if (typeof (content_select = this.getContentSelector()) === 'undefined') {
         throw "Can not continue without knowning the name!";
         return false;
@@ -365,6 +385,8 @@ ThalliumInlineEditable.prototype.touch = function () {
 };
 
 ThalliumInlineEditable.prototype.untouch = function () {
+
+    var content_select, savebutton;
 
     if (typeof (content_select = this.getContentSelector()) === 'undefined') {
         throw "Can not continue without knowning the name!";
@@ -423,6 +445,8 @@ ThalliumInlineEditable.prototype.isSaved = function () {
 };
 
 ThalliumInlineEditable.prototype.save = function () {
+
+    var content_select, input, action, model, key, id, value, url;
 
     /* if data hasn't change, just swap views */
     if (this.getContentValue() == this.getLastUsedValue()) {
