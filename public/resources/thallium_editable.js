@@ -197,6 +197,10 @@ ThalliumInlineEditable.prototype.getContentValue = function () {
         return false;
     }
 
+    if (typeof (cur_val = $(content_select).attr('data-current-value')) !== 'undefined') {
+        return cur_val;
+    }
+
     if (typeof (cur_val = $(content_select).html()) === 'undefined') {
         throw new Error("Can not read the current value!");
         return false;
@@ -340,6 +344,7 @@ ThalliumInlineEditable.prototype.showContent = function () {
         return false;
     }
 
+    content.attr('data-current-value', value);
     content.html(value);
     content.show();
 
