@@ -24,6 +24,9 @@ $(document).ready(function () {
     }
 
     /* RPC handlers */
+    $("table tr td a.delete").click(function () {
+        delete_object($(this));
+    })
     $("form.ui.form.add").on('submit', function () {
         rpc_object_update($(this));
     });
