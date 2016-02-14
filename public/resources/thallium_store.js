@@ -25,7 +25,7 @@ var ThalliumStore = function () {
     this._identifier;
     this._uuid = this.generateUUID();
     if (typeof this._uuid === 'undefined' || this._uuid == '') {
-        throw 'ThalliumStore, failed to generate a UUID!';
+        throw new Error('ThalliumStore, failed to generate a UUID!');
         return false;
     }
     return true;
@@ -33,7 +33,7 @@ var ThalliumStore = function () {
 
 ThalliumStore.prototype.set = function (key, value, store) {
     if (typeof key === 'undefined' || typeof value === 'undefined' || key === '') {
-        throw 'set(), key parameter is invalid!';
+        throw new Error('set(), key parameter is invalid!');
         return false;
     }
     if (typeof store === 'undefined' || store == '') {
@@ -43,7 +43,7 @@ ThalliumStore.prototype.set = function (key, value, store) {
 
     var substore;
     if (!(substore = this.getSubStore(store))) {
-        throw 'set(), getSubStore() returned false!';
+        throw new Error('set(), getSubStore() returned false!');
         return false;
     }
 
@@ -52,11 +52,11 @@ ThalliumStore.prototype.set = function (key, value, store) {
 
 ThalliumStore.prototype.get = function (key, store) {
     if (typeof key === 'undefined' || key === '') {
-        throw 'get(), key parameter is invalid!';
+        throw new Error('get(), key parameter is invalid!');
         return false;
     }
     if (!this.has(key)) {
-        throw 'get(), '+ key +' value not set!';
+        throw new Error('get(), '+ key +' value not set!');
         return false;
     }
     return this._store[key];
@@ -64,7 +64,7 @@ ThalliumStore.prototype.get = function (key, store) {
 
 ThalliumStore.prototype.has = function (key) {
     if (typeof key === 'undefined' || key === '') {
-        throw 'has(), key parameter is invalid!';
+        throw new Error('has(), key parameter is invalid!');
         return false;
     }
     if (typeof this._store[key] === 'undefined') {
@@ -75,11 +75,11 @@ ThalliumStore.prototype.has = function (key) {
 
 ThalliumStore.prototype.del = function (key) {
     if (typeof key === 'undefined' || key === '') {
-        throw 'del(), key parameter is invalid!';
+        throw new Error('del(), key parameter is invalid!');
         return false;
     }
     if (!this.has(key)) {
-        throw 'del(), no such value named ' + key + '!';
+        throw new Error('del(), no such value named ' + key + '!');
         return false;
     }
     delete this._store[key];
@@ -89,24 +89,24 @@ ThalliumStore.prototype.del = function (key) {
 ThalliumStore.prototype.createSubStore = function (key) {
     var substore = new ThalliumStore;
     if (typeof substore === 'undefined' || ! substore) {
-        throw 'createSubStore(), failed to initalize ThalliumStore!';
+        throw new Error('createSubStore(), failed to initalize ThalliumStore!');
         return false;
     }
     if (typeof key === 'undefined') {
-        throw 'createSubStore(), key parameter is mandatory!';
+        throw new Error('createSubStore(), key parameter is mandatory!');
         return false;
     }
     if (!substore.setIdentifier(key)) {
-        throw 'createSubStore(), failed to set identifier!';
+        throw new Error('createSubStore(), failed to set identifier!');
         return false;
     }
     var uuid;
     if (!(uuid = substore.getUUID())) {
-        throw 'createSubStore(), failed to fetch substore\'s UUID!';
+        throw new Error('createSubStore(), failed to fetch substore\'s UUID!');
         return false;
     }
     if (typeof this._substores[uuid] !== 'undefined') {
-        throw 'createSubStore(), a substore with the same UUID is already set!';
+        throw new Error('createSubStore(), a substore with the same UUID is already set!');
         return false;
     }
     this._substores[uuid] = substore;
@@ -116,19 +116,19 @@ ThalliumStore.prototype.createSubStore = function (key) {
 
 ThalliumStore.prototype.getSubStore = function (key) {
     if (typeof key === 'undefined' || key === '') {
-        throw 'getSubStore(), key parameter is invalid!';
+        throw new Error('getSubStore(), key parameter is invalid!');
         return false;
     }
     if (typeof this._substores[key] !== 'undefined') {
         return this._substores[key];
     }
     if (typeof this._substore_lookup[key] === 'undefined') {
-        throw 'getSubStore(), no such identifier known!';
+        throw new Error('getSubStore(), no such identifier known!');
         return false;
     }
     var uuid = this._substore_lookup[key];
     if (typeof this._substores[uuid] === 'undefined') {
-        throw 'getSubStore(), no such substore!';
+        throw new Error('getSubStore(), no such substore!');
         return false;
     }
     return this._substores[uuid];
@@ -136,7 +136,7 @@ ThalliumStore.prototype.getSubStore = function (key) {
 
 ThalliumStore.prototype.removeSubStore = function (key) {
     if (typeof key === 'undefined' || key === '') {
-        throw 'getSubStore(), key parameter is invalid!';
+        throw new Error('getSubStore(), key parameter is invalid!');
         return false;
     }
     if (typeof this._substores[key] !== 'undefined') {
@@ -144,12 +144,12 @@ ThalliumStore.prototype.removeSubStore = function (key) {
         return true;
     }
     if (typeof this._substore_lookup[key] === 'undefined') {
-        throw 'getSubStore(), no such identifier known!';
+        throw new Error('getSubStore(), no such identifier known!');
         return false;
     }
     var uuid = this._substore_lookup[key];
     if (typeof this._substores[uuid] === 'undefined') {
-        throw 'getSubStore(), no such substore!';
+        throw new Error('getSubStore(), no such substore!');
         return false;
     }
     delete this._substores[uuid];
@@ -168,7 +168,7 @@ ThalliumStore.prototype.generateUUID = function () {
 
 ThalliumStore.prototype.getUUID = function () {
     if (typeof this._uuid === 'undefined' || this._uuid == '') {
-        throw 'getUUID(), no UUID available!';
+        throw new Error('getUUID(), no UUID available!');
         return false;
     }
     return this._uuid;
@@ -176,7 +176,7 @@ ThalliumStore.prototype.getUUID = function () {
 
 ThalliumStore.prototype.setIdentifier = function (id) {
     if (typeof id === 'undefined' || id == '') {
-        throw 'setIdentifier(), id parameter is invalid!';
+        throw new Error('setIdentifier(), id parameter is invalid!');
         return false;
     }
     this._identifier = id;
