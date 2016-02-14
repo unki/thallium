@@ -15,63 +15,110 @@
  * GNU Affero General Public License for more details.
  */
 
+'use strict';
+
+var mbus;
+var store;
+
 $(document).ready(function () {
     try {
         mbus = new ThalliumMessageBus;
     } catch (e) {
-        throw new Error('Failed to load ThalliumMessageBus! '+ e);
+        throw 'Failed to load ThalliumMessageBus! '+ e;
+        return false;
+    }
+
+    try {
+        store = new ThalliumStore;
+    } catch (e) {
+        throw 'Failed to load ThalliumStore! ' + e;
         return false;
     }
 
     /* RPC handlers */
+    $("form.ui.form.add").on('submit', function () {
+        rpc_object_update($(this), function (element, data) {
+            if (data != "ok") {
+                return true;
+            }
+            var savebutton = element.find('button.save');
+            savebutton.transition('tada').removeClass('red shape');
+            return true;
+        });
+        return false;
+    });
+    $('.inline.editable.edit.link').click(function () {
+        var inlineobj = new ThalliumInlineEditable($(this));
+        inlineobj.toggle();
+    });
+    /* RPC handlers */
     $("table tr td a.delete").click(function () {
         delete_object($(this));
     })
-    $("form.ui.form.add").on('submit', function () {
-        rpc_object_update($(this));
-    });
     $('.inline.editable.edit.link').click(function () {
         inlineobj = new ThalliumInlineEditable($(this));
         inlineobj.toggle();
     });
 });
 
-function show_modal(settings, do_function, modalclass)
+function show_modal(type, settings, id, do_function, modalclass)
 {
-    if (!modalclass) {
-        modalclass = '.ui.basic.modal';
+    if (typeof type === 'undefined' || !type) {
+        throw 'show_modal(), mandatory type parameter is missing!';
+        return false;
     }
 
-    var modal_settings = {};
-
-    if (settings.header) {
-        $(modalclass + ' .header').html(settings.header);
+    if (type == 'progress') {
+        var wnd = $('#progress_template').clone();
+    } else if (type == 'confirm') {
+        var wnd = $('#confirm_template').clone();
+    } else {
+        throw 'show_modal(), unsupported type!';
+        return false;
     }
 
-    if (settings.icon) {
-        $(modalclass + ' .image.content i.icon').removeClass().addClass(settings.icon);
+    if (typeof wnd === 'undefined' || !wnd) {
+        throw 'show_modal(), unable to clone progress_template!';
+        return false;
+    }
+
+    wnd.removeAttr('id');
+
+    if (typeof id !== 'undefined' && id) {
+        wnd.attr('id', id);
+    }
+
+    if (typeof settings === 'undefined') {
+        var settings = {};
+    }
+
+    if (typeof settings.header !== 'undefined') {
+        wnd.find('.header').html(settings.header);
+    }
+    if (typeof settings.icon !== 'undefined') {
+        wnd.find('.image.content i.icon').removeClass().addClass(settings.icon);
     } else {
         settings.icon = 'icon';
     }
 
-    if (settings.iconHtml) {
-        $(modalclass + ' .image.content i.' + settings.icon).html(settings.iconHtml);
+    if (typeof settings.iconHtml !== 'undefined') {
+        wnd.find('.image.content i.' + settings.icon).html(settings.iconHtml);
     } else {
-        $(modalclass + ' .image.content i.' + settings.icon).html('');
+        wnd.find('.image.content i.' + settings.icon).html('');
     }
 
-    if (settings.content) {
-        $(modalclass + ' .image.content .description p').html(settings.content);
+    if (typeof settings.content !== 'undefined') {
+        wnd.find('.image.content .description p').html(settings.content);
     }
 
-    if (typeof settings.closeable === 'undefined') {
-        settings.closeable = true;
+    if (typeof settings.closable === 'undefined') {
+        settings.closable = true;
     }
 
-    if (!settings.closeable) {
-        $(modalclass + ' i.close.icon').detach();
+    if (typeof settings.closable !== 'undefined' && !settings.closable) {
+        wnd.find('i.close.icon').detach();
     } else {
-        $(modalclass + ' i.close.icon').appendTo('.ui.basic.modal');
+        wnd.find('i.close.icon').appendTo(wnd);
     }
 
     if (typeof settings.hasActions === 'undefined') {
@@ -82,41 +129,62 @@ function show_modal(settings, do_function, modalclass)
         settings.blurring = true;
     }
 
-    if (!settings.hasActions) {
-        $(modalclass + ' .actions').detach();
+    if (typeof settings.hasActions === 'undefined') {
+        wnd.find('.actions').detach();
     } else {
-        $(modalclass + ' .actions').appendTo('.ui.basic.modal');
+        wnd.find('.actions').appendTo(wnd);
     }
 
-    if (!settings.onDeny) {
+    if (typeof settings.onDeny === 'undefined') {
         settings.onDeny = function () {
             return true;
         };
     }
 
-    if (!settings.onApprove) {
+    if (typeof settings.onApprove === 'undefined') {
         settings.onApprove = function () {
+            $(this).modal('hide');
             return true;
         };
     }
 
-    if (!do_function) {
-        do_function = function () {
+    if (typeof settings.onHidden === 'undefined') {
+        settings.onHidden = function () {
             return true;
         };
     }
 
-    modal = $(modalclass)
-        .modal({
-            closable  : settings.closeable,
-            onDeny    : settings.onDeny,
-            onApprove : settings.onApprove,
-            blurring  : settings.blurring
-        })
-        .modal('show')
-        .on('click.modal', do_function);
+    if (typeof settings.detachable === 'undefined') {
+        settings.detachable = true;
+    }
 
-        return modal;
+    if (typeof settings.observeChanges === 'undefined') {
+        settings.observeChanges = false;
+    }
+
+    if (typeof settings.allowMultiple === 'undefined') {
+        settings.allowMultiple = false;
+    }
+
+    if (typeof do_function === 'undefined') {
+        var do_function = function () {
+            return true;
+        };
+    }
+
+    var modal = wnd.modal({
+        closable   : settings.closable,
+        onDeny     : settings.onDeny,
+        onApprove  : settings.onApprove,
+        onHidden   : settings.onHidden,
+        blurring   : settings.blurring,
+        detachable : settings.detachable,
+        observeChanges : settings.observeChanges,
+        allowMultiple : settings.allowMultiple,
+    })
+    modal.modal('show').on('click.modal', do_function);
+
+    return modal;
 }
 
 function safe_string(input)
