@@ -126,33 +126,95 @@ function safe_string(input)
 
 function delete_object(element)
 {
-    var del_id = element.attr("id");
+    var id = element.attr("data-id");
 
-    if (typeof del_id === 'undefined' || del_id == "") {
-        alert('no attribute "id" found!');
+    if (typeof id === 'undefined' || id == "") {
+        throw new Error('no attribute "data-id" found!');
+        return;
+    }
+
+    id = safe_string(id);
+
+    if (id == 'selected') {
+        id = new Array;
+        $('.checkbox.item.select[id!="select_all"]').each(function () {
+            if (!($(this).checkbox('is checked'))) {
+                return true;
+            }
+            var item = $(this).attr('id')
+            if (typeof item === 'undefined' || !item || item == '') {
+                return false;
+            }
+            item = item.match(/^select_(\d+)$/);
+            if (typeof item === 'undefined' || !item || !item[1] || item[1] == '') {
+                return false;
+            }
+            var item_id = item[1];
+            id.push(item_id);
+        });
+        if (id.length == 0) {
+            return true;
+        }
+    }
+
+    var title = element.attr("data-modal-title");
+
+    if (typeof title === 'undefined' || title === "") {
+        throw 'No attribute "data-modal-title" found!';
         return false;
     }
 
-    del_id = safe_string(del_id);
+    var text = element.attr("data-modal-text");
 
-    // for single objects
-    if (!del_id.match(/-flush$/)) {
-        return rpc_object_delete(element, del_id);
+    if (typeof text === 'undefined' || text === "") {
+        if (id instanceof String && !id.match(/-all$/)) {
+            text = "Do you really want to delete this item?";
+        } else {
+            text = "Do you really want to delete all items?";
+        }
     }
 
-    // for all objects
-    show_modal({
-        closeable : false,
-        header : 'Flush Queue',
-        icon : 'wait icon',
-        content : 'This will delete all items from Queue! Are you sure?\nThere is NO undo',
+    var elements = new Array;
+    if (id instanceof Array) {
+        id.forEach(function (value) {
+            elements.push($('#delete_link_'+value));
+        });
+    } else {
+        elements.push(element);
+    }
+
+    show_modal('confirm', {
+        header : title,
+        icon : 'red remove icon',
+        content : text,
         onDeny : function () {
             return true;
         },
         onApprove : function () {
-            return rpc_object_delete(element, del_id);
-        }
+            $(this).modal('hide');
+            return rpc_object_delete(elements, function () {
+                if (typeof elements === 'undefined') {
+                    return true;
+                }
+                if (typeof id !== 'undefined' && id == 'all') {
+                    $('table#datatable tbody tr').each(function () {
+                        $(this).hide(400, function () {
+                            $(value).remove();
+                        });
+                    });
+                    return true;
+                }
+                elements.forEach(function (value) {
+                    $(value).closest('tr').hide(400, function () {
+                        $(value).remove();
+                    });
+                });
+                return true;
+            });
+        },
     });
+
+    return true;
 }
 
 // vim: set filetype=javascript expandtab softtabstop=4 tabstop=4 shiftwidth=4:
