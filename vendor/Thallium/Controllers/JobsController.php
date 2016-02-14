@@ -24,6 +24,7 @@ class JobsController extends DefaultController
     const EXPIRE_TIMEOUT = 300;
     protected $currentJobGuid;
     protected $registeredHandlers = array();
+    protected $json_errors;
 
     public function __construct()
     {
@@ -32,6 +33,24 @@ class JobsController extends DefaultController
             return false;
         }
 
+
+        try {
+            $this->registerHandler('delete-request', array($this, 'handleDeleteRequest'));
+        } catch (\Exception $e) {
+            $this->raiseError(__METHOD__ .'(), failed to register handlers!', true);
+            return false;
+        }
+
+        // Define the JSON errors.
+        $constants = get_defined_constants(true);
+        $this->json_errors = array();
+        foreach ($constants["json"] as $name => $value) {
+            if (!strncmp($name, "JSON_ERROR_", 11)) {
+                $this->json_errors[$value] = $name;
+            }
+        }
+
+        parent::__construct();
         return true;
     }
 
@@ -388,6 +407,111 @@ class JobsController extends DefaultController
         }
 
         return $this->registeredHandlers[$job_name];
+    }
+
+    protected function handleDeleteRequest($job)
+    {
+        global $thallium, $mbus;
+
+        if (!$mbus->sendMessageToClient('delete-reply', 'Preparing', '10%')) {
+            $this->raiseError(get_class($mbus) .'::sendMessageToClient() returned false!');
+            return false;
+        }
+
+        if (empty($job) || !is_a($job, 'Thallium\Models\JobModel')) {
+            $this->raiseError(__METHOD__ .'() requires a JobModel reference as parameter!');
+            return false;
+        }
+
+        if (!$job->hasParameters() || ($delete_request = $job->getParameters()) === false) {
+            $this->raiseError(get_class($job) .'::getParameters() returned false!');
+            return false;
+        }
+
+        if (!is_object($delete_request)) {
+            $this->raiseError(get_class($job) .'::getParameters() returned invalid data!');
+            return false;
+        }
+
+        if (!isset($delete_request->id) || empty($delete_request->id) ||
+            !isset($delete_request->guid) || empty($delete_request->guid)
+        ) {
+            $this->raiseError(__METHOD__ .'() delete-request is incomplete!');
+            return false;
+        }
+
+        if ($delete_request->id != 'all' &&
+            !$thallium->isValidId($delete_request->id)
+        ) {
+            $this->raiseError(__METHOD__ .'() \$id is invalid!');
+            return false;
+
+        }
+
+        if ($delete_request->guid != 'all' &&
+            !$thallium->isValidGuidSyntax($delete_request->guid)
+        ) {
+            $this->raiseError(__METHOD__ .'() \$guid is invalid!');
+            return false;
+        }
+
+        if (!$mbus->sendMessageToClient('delete-reply', 'Deleting...', '20%')) {
+            $this->raiseError(get_class($mbus) .'::sendMessageToClient() returned false!');
+            return false;
+        }
+
+        if (!isset($delete_request->model) || empty($delete_request->model)) {
+            $this->raiseError(__METHOD__ .'(), delete-request does not contain model information!');
+            return false;
+        }
+
+        if (!$thallium->isRegisteredModel($delete_request->model)) {
+            $this->raiseError(__METHOD__ .'(), delete-request contains an unsupported model!');
+            return false;
+        }
+
+        $model = $delete_request->model;
+        $id = $delete_request->id;
+        $guid = $delete_request->guid;
+
+        if (($obj = $thallium->loadModel($model, $id, $guid)) === false) {
+            $this->raiseError(get_class($thallium) .'::loadModel() returned false!');
+            return false;
+        }
+
+        if (!$obj->permitsRpcActions('delete')) {
+            $this->raiseError(__METHOD__ ."(), {$obj_name} does not permit 'delete' action!");
+            return false;
+        }
+
+        if ($id == 'all' && $guid == 'all') {
+            if (method_exists($obj, 'flush')) {
+                $rm_method = 'flush';
+            } else {
+                $rm_method = 'delete';
+            }
+            if (!$obj->$rm_method()) {
+                $this->raiseError(get_class($obj) ."::${rm_method}() returned false!");
+                return false;
+            }
+            if (!$mbus->sendMessageToClient('delete-reply', 'Done', '100%')) {
+                $this->raiseError(get_class($mbus) .'::sendMessageToClient() returned false!');
+                return false;
+            }
+            return true;
+        }
+
+        if (!$obj->delete()) {
+            $this->raiseError(get_class($obj) .'::delete() returned false!');
+            return false;
+        }
+
+        if (!$mbus->sendMessageToClient('delete-reply', 'Done', '100%')) {
+            $this->raiseError(get_class($mbus) .'::sendMessageToClient() returned false!');
+            return false;
+        }
+
+        return true;
     }
 }
 
