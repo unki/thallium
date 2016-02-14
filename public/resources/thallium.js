@@ -19,7 +19,7 @@ $(document).ready(function () {
     try {
         mbus = new ThalliumMessageBus;
     } catch (e) {
-        throw 'Failed to load ThalliumMessageBus! '+ e;
+        throw new Error('Failed to load ThalliumMessageBus! '+ e);
         return false;
     }
 
