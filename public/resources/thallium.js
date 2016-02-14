@@ -15,75 +15,6 @@
  * GNU Affero General Public License for more details.
  */
 
-function show_preview(element)
-{
-    var obj_id = element.attr("id");
-
-    if (typeof obj_id === 'undefined' || obj_id == "") {
-        alert('no attribute "id" found!');
-        return;
-    }
-
-    open_preview_window(obj_id);
-}
-
-function open_preview_window(obj_id)
-{
-    $.ajax({
-        type: "POST",
-        url: "rpc.html",
-        data: ({
-            type      : 'rpc',
-            action    : 'get-content',
-            content   : 'preview',
-            model     : 'queueitem',
-            id        : obj_id
-        }),
-        error: function (XMLHttpRequest, textStatus, errorThrown) {
-            alert('Failed to contact server! ' + textStatus);
-        },
-        success: function (data) {
-            if (!data) {
-                window.alert("no data received from server!");
-                return false;
-            }
-            if (document.getElementsByClassName('ui modal').length) {
-                $('.ui.modal').replaceWith(data);
-            } else {
-                $('body').append(data);
-            }
-            $(".ui.modal .ui.loader").removeClass('disabled');
-            $('.ui.modal').modal('setting', {
-                observeChanges : true
-            }).modal('show');
-
-            var preview_src = $(".ui.modal img[name=preview_image]").attr("data-src");
-            if (typeof preview_src === 'undefined' || preview_src == '') {
-                alert('found no image source to load:' + preview_src);
-                return;
-            }
-            var preview = new Image;
-            preview.src = preview_src;
-            if (preview.complete) {
-                $(".ui.modal img[name=preview_image]").attr('src', preview_src);
-                preview.onload = function () {
-                    $(".ui.modal .ui.loader").addClass('disabled');
-                };
-            } else {
-                preview.onload = function () {
-                    $(".ui.modal img[name=preview_image]").attr('src', this.src);
-                    $(".ui.modal .ui.loader").addClass('disabled');
-                    $(".ui.segment .ui.active.dimmer").removeClass('active').addClass('disabled');
-                    $('.ui.modal').modal('show');
-                    // for IE
-                    preview.onload=function () {};
-                };
-            }
-            return true;
-        }
-    });
-}
-
 $(document).ready(function () {
     try {
         mbus = new ThalliumMessageBus;
@@ -93,98 +24,14 @@ $(document).ready(function () {
     }
 
     /* RPC handlers */
-    $("table tr td a.delete, #queueitem-flush").click(function () {
-        delete_object($(this));
-    });
-    $("table tr td a.archive, table tr th a.archive").click(function () {
-        archive_object($(this));
-    });
-    $("table tr td a.preview").click(function () {
-        show_preview($(this));
-    });
     $("form.ui.form.add").on('submit', function () {
         rpc_object_update($(this));
-    });
-    $("a.sign.document").click(function () {
-        rpc_object_sign($(this));
-    });
-    $("a.scan.document").click(function () {
-        rpc_object_scan($(this));
-    });
-    $("a.delete.document").click(function () {
-        rpc_object_delete2($(this));
     });
     $('.inline.editable.edit.link').click(function () {
         inlineobj = new ThalliumInlineEditable($(this));
         inlineobj.toggle();
     });
-   /*$("table td a.clone").click(function () {
-      obj_clone($(this));
-   });
-   $("table td div a.toggle-off, table td div a.toggle-on").click(function () {
-      obj_toggle_status($(this));
-   });
-   */
-    $('img.change_to').hover(
-        function () {
-            $(this).css('cursor','pointer');
-        },
-        function () {
-            $(this).css('cursor','auto');
-        }
-    );
 });
-
-function change_preview(direction)
-{
-    var img = $('.ui.modal img[name=previewimg]');
-
-    if (typeof img === 'undefined' || img == "") {
-        return false;
-    }
-
-    var imgid = img.attr('data-image-id');
-
-    if (!imgid) {
-        return false;
-    }
-
-    $.ajax({
-        type: "POST",
-        url: "rpc.html",
-        data: ({
-            type      : 'rpc',
-            action    : 'find-prev-next',
-            model     : 'queueitem',
-            id        : imgid,
-            direction : direction
-        }),
-        error: function (XMLHttpRequest, textStatus, errorThrown) {
-            alert('Failed to contact server! ' + textStatus);
-        },
-        success: function (obj_id) {
-            /*var previewimg = $(".ui.modal img[name=previewimg]").attr("load");
-            if (typeof previewimg === 'undefined' || previewimg == '') {
-                alert('found no image to load:' + previewimg);
-                return;
-            }
-            var preview = new Image;
-            preview.src = previewimg;
-            if (preview.complete) {
-                $("#dialog img[name=previewimg]").attr('src', previewimg);
-                preview.onload=function () {};
-            } else{
-                preview.onload = function () {
-                    $("#dialog img[name=previewimg]").attr('src', this.src);
-                    //    clear onLoad, IE behaves irratically with animated gifs otherwise
-                    preview.onload=function () {};
-                }
-            }*/
-        }
-    });
-
-    return true;
-}
 
 function show_modal(settings, do_function, modalclass)
 {
@@ -301,42 +148,6 @@ function delete_object(element)
         },
         onApprove : function () {
             return rpc_object_delete(element, del_id);
-        }
-    });
-}
-
-function archive_object(element)
-{
-    var obj_id = element.attr("id");
-
-    if (typeof obj_id === 'undefined' || obj_id == "") {
-        alert('no attribute "id" found!');
-        return;
-    }
-
-    obj_id = safe_string(obj_id);
-
-    var state = $("#"+obj_id+".state");
-    if (state && state.text() == 'new') {
-        state.text('Processing');
-    }
-
-    // for single objects
-    if (!obj_id.match(/-all$/)) {
-        return rpc_object_archive(element, obj_id, state);
-    }
-
-    // for all objects
-    show_modal({
-        closeable : false,
-        header : 'Archive all queue items',
-        icon : 'archive icon',
-        content : 'This will archive all items! Are you sure?',
-        onDeny : function () {
-            return true;
-        },
-        onApprove : function () {
-            return rpc_object_archive(element, obj_id, state);
         }
     });
 }
