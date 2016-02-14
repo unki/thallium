@@ -67,7 +67,7 @@ ThalliumInlineEditable.prototype.validate = function () {
     var ref = this.element.attr('data-inline-name');
 
     if (typeof ref === 'undefined' || ref == '') {
-        alert('no attribute "data-inline-name" found!');
+        throw new Error('no attribute "data-inline-name" found!');
         return false;
     }
 
@@ -81,7 +81,7 @@ ThalliumInlineEditable.prototype.validate = function () {
     var type = this.element.attr('data-type');
 
     if (typeof type === 'undefined' || type == '') {
-        alert('no attribute "data-type" found!');
+        throw new Error('no attribute "data-type" found!');
         return false;
     }
 
@@ -518,11 +518,11 @@ ThalliumInlineEditable.prototype.save = function () {
             value  : value
         }),
         error: function (XMLHttpRequest, textStatus, errorThrown) {
-            alert('Failed to contact server! ' + textStatus);
+            throw new Error('Failed to contact server! ' + textStatus);
         },
         success: function (data) {
             if (data != 'ok') {
-                alert('Server returned: ' + data + ', length ' + data.length);
+                throw new Error('Server returned: ' + data + ', length ' + data.length);
                 return;
             }
             this.setSaved();
