@@ -93,15 +93,15 @@ class RpcController extends DefaultController
 
         foreach ($input_fields as $field) {
             if (!isset($_POST[$field])) {
-                $this->raiseError(__METHOD__ ."'{$field}' isn't set in POST request!");
+                $this->raiseError(__METHOD__ ."(), '{$field}' isn't set in POST request!");
                 return false;
             }
             if (empty($_POST[$field])) {
-                $this->raiseError(__METHOD__ ."'{$field}' is empty!");
+                $this->raiseError(__METHOD__ ."(), '{$field}' is empty!");
                 return false;
             }
             if (!is_string($_POST[$field]) && !is_numeric($_POST[$field])) {
-                $this->raiseError(__METHOD__ ."'{$field}' is not from a valid type!");
+                $this->raiseError(__METHOD__ ."(), '{$field}' is not from a valid type!");
                 return false;
             }
         }
@@ -111,12 +111,12 @@ class RpcController extends DefaultController
         $model = $_POST['model'];
 
         if (!$thallium->isValidId($id) && $id != 'flush') {
-            $this->raiseError(__METHOD__ .', \$id is invalid!');
+            $this->raiseError(__METHOD__ .'(), \$id is invalid!');
             return false;
         }
 
         if (!$thallium->isValidGuidSyntax($guid) && $guid != 'flush') {
-            $this->raiseError(__METHOD__ .', \$guid is invalid!');
+            $this->raiseError(__METHOD__ .'(), \$guid is invalid!');
             return false;
         }
 
