@@ -15,65 +15,178 @@
  * GNU Affero General Public License for more details.
  */
 
-function rpc_object_delete(element, del_id)
+function rpc_object_delete(elements, successMethod)
 {
-    if (typeof del_id === 'undefined' || del_id == '') {
-        throw new Error('invalid "del_id" parameter found!');
-        return;
+    if (typeof elements === 'undefined') {
+        throw new Error('elements parameter is not defined!');
+        return false;
+    }
+    if (!(elements instanceof Array)) {
+        throw new Error('elements is not an Array!');
+        return false;
     }
 
-    $.ajax({
-        type: 'POST',
-        url: 'rpc.html',
-        data: ({
-            type : 'rpc',
-            action : 'delete',
-            id : del_id
-        }),
-        beforeSend: function () {
-            // change row color to red
-            element.parent().parent().animate({backgroundColor: '#fbc7c7' }, 'fast');
-        },
-        error: function (XMLHttpRequest, textStatus, errorThrown) {
-            throw new Error('Failed to contact server! ' + textStatus);
-        },
-        success: function (data) {
-            if (data == 'ok') {
-                // on flushing, reload the page
-                if (del_id.match(/-flush$/)) {
-                    location.reload();
-                    return;
-                }
-                element.parent().parent().animate({ opacity: 'hide' }, 'fast');
-                return;
-            }
-            // change row color back to white
-            element.parent().parent().animate({backgroundColor: '#ffffff' }, 'fast');
-            throw new Error('Server returned: ' + data + ', length ' + data.length);
-            return;
+    var ids = new Array;
+    var guids = new Array;
+    var models = new Array;
+    var titles = new Array;
+    var substore;
+
+    elements.forEach(function (element) {
+        var id, guid, model, title;
+        if (!(element instanceof jQuery) ) {
+            throw new Error("element is not a jQuery object!");
+            return false;
+        }
+
+        if (!(id = element.attr('data-id'))) {
+            throw new Error('no attribute "data-id" found!');
+            return false;
+        }
+
+        ids.push(id);
+
+        if (!(guid = element.attr('data-guid'))) {
+            throw new Error('no attribute "data-guid" found!');
+            return false;
+        }
+
+        guids[id] = guid;
+
+        if (!(model = element.attr('data-model'))) {
+            throw new Error('no attribute "data-model" found!');
+            return false;
+        }
+
+        models[id] = model;
+
+        if (!(title = element.attr('data-action-title'))) {
+            throw new Error('no attribute "data-action-title" found!');
+            return false;
+        }
+
+        titles[id] = title;
+    });
+
+    if (!(substore = store.createSubStore('delete'))) {
+        throw new Error('failed to allocate a ThalliumStore for this action!');
+        return false;
+    }
+
+    var del_wnd = substore.set('progresswnd', show_modal('progress', {
+        header : 'Deleting...',
+        icon : 'remove icon',
+        hasActions : false,
+        content : 'Please wait a moment.',
+        onShow : rpc_fetch_jobstatus()
+    }));
+
+    var progressbar = substore.set('progressbar', del_wnd.find('.description .ui.indicating.progress'));
+
+    if (!progressbar) {
+        throw new Error('Can not find the progress bar in the modal window!');
+        return false;
+    }
+
+    ids.forEach(function (id) {
+        var msg_body = new Object;
+        msg_body.id = safe_string(id);
+        msg_body.guid = safe_string(guids[id]);
+        msg_body.model = safe_string(models[id]);
+
+        var msg = new ThalliumMessage;
+        msg.setCommand('delete-request');
+        msg.setMessage(msg_body);
+        if (!mbus.add(msg)) {
+            throw new Error('ThalliumMessageBus.add() returned false!');
+            return false;
         }
     });
 
+    mbus.subscribe('delete-replies-handler', 'delete-reply', function (reply, substore) {
+        var newData, value, del_wnd, progressbar;
+
+        if (typeof reply === 'undefined' || !reply) {
+            throw new Error('reply is empty!');
+            return false;
+        }
+        if (typeof substore === 'undefined' || !substore) {
+            throw new Error('substore is not provided!');
+            return false;
+        }
+
+        if (!(del_wnd = substore.get('progresswnd'))) {
+            throw new Error('Have no reference to the modal window!');
+            return false;
+        }
+        if (!(progressbar = substore.get('progressbar'))) {
+            throw new Error('Have no reference to the progressbar!');
+            return false;
+        }
+
+        newData = new Object;
+
+        if (reply.value && (value = reply.value.match(/([0-9]+)%$/))) {
+            newData.percent = value[1];
+        }
+        if (reply.body) {
+            newData.text = {
+                active : reply.body,
+                success: reply.body
+            };
+        }
+        if (!progressbar.hasClass('active')) {
+            progressbar.addClass('active');
+        }
+
+        progressbar.progress(newData);
+        del_wnd.modal('refresh');
+
+        if (reply.value != '100%') {
+            return true;
+        }
+
+        progressbar.removeClass('active').addClass('success');
+
+        del_wnd.modal('hide');
+        mbus.unsubscribe('delete-replies-handler');
+
+        store.removeSubStore(substore.getUUID());
+
+        if (typeof successMethod !== 'undefined') {
+            return successMethod();
+        }
+
+        location.reload();
+        return true;
+
+    }.bind(this), substore);
+
+    if (!mbus.send()) {
+        throw new Error('ThalliumMessageBus.send() returned false!');
+        return false;
+    }
+
     return true;
+}
 
-} // rpc_object_delete()
-
-function rpc_object_update(element)
+function rpc_object_update(element, successMethod)
 {
+    var target, input, action, model, key, id, value, url;
+
     if (!(element instanceof jQuery) ) {
         throw new Error("element is not a jQuery object!");
         return false;
     }
 
-    var target = element.attr('data-target');
+    target = element.attr('data-target');
 
     if (typeof target === 'undefined' || target == '') {
         throw new Error('no attribute "data-target" found!');
         return false;
     }
 
-
-    if (!(input = element.find('input[name="'+target+'"]'))) {
+    if (!(input = element.find('input[name="'+target+'"], textarea[name="'+target+'"]'))) {
         throw new Error("Failed to get input element!");
         return false;
     }
@@ -98,7 +211,7 @@ function rpc_object_update(element)
         return false;
     }
 
-    if (!(value = input.val())) {
+    if (typeof (value = input.val()) === 'undefined') {
         return false;
     }
 
@@ -108,8 +221,7 @@ function rpc_object_update(element)
     id = safe_string(id);
     value = safe_string(value);
 
-    if (
-        typeof window.location.pathname !== 'undefined' &&
+    if (typeof window.location.pathname !== 'undefined' &&
         window.location.pathname != '' &&
         !window.location.pathname.match(/\/$/)
     ) {
@@ -121,6 +233,7 @@ function rpc_object_update(element)
     $.ajax({
         type: 'POST',
         url: url,
+        retries: 0,
         data: ({
             type   : 'rpc',
             action : action,
@@ -130,6 +243,13 @@ function rpc_object_update(element)
             value  : value
         }),
         error: function (XMLHttpRequest, textStatus, errorThrown) {
+            if (textStatus == 'timeout') {
+                this.retries++;
+                if (this.retries <= 3) {
+                    $.ajax(this);
+                    return;
+                }
+            }
             throw new Error('Failed to contact server! ' + textStatus);
         },
         success: function (data) {
@@ -141,6 +261,10 @@ function rpc_object_update(element)
                 location.reload();
                 return;
             }
+            if (typeof successMethod === 'undefined') {
+                return;
+            }
+            successMethod(element, data);
             return;
         }
     });
