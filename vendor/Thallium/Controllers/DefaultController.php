@@ -26,6 +26,11 @@ abstract class DefaultController
     const LOG_LEVEL = LOG_WARNING;
     protected $last_error;
 
+    public function __construct()
+    {
+
+    }
+
     final public function sendMessage($command, $body, $value = null)
     {
         global $mbus;
