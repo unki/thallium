@@ -15,6 +15,8 @@
  * GNU Affero General Public License for more details.
  */
 
+'use strict';
+
 function rpc_object_delete(elements, successMethod)
 {
     if (typeof elements === 'undefined') {
