@@ -27,7 +27,7 @@ var ThalliumMessageBus = function (id) {
     this.rpcEnabled = true;
 
     if (!(this.pollerId = setInterval("mbus.poll()", 1000))) {
-        throw 'Failed to start ThalliumMessageBus.poll()!';
+        throw new Error('Failed to start ThalliumMessageBus.poll()!');
         return false;
     }
 
@@ -50,12 +50,12 @@ var ThalliumMessageBus = function (id) {
 
 ThalliumMessageBus.prototype.add = function (message) {
     if (!message) {
-        throw 'No message to add provided!';
+        throw new Error('No message to add provided!');
         return false;
     }
 
     if (typeof(message) != 'object') {
-        throw 'parameter is not an object!';
+        throw new Error('parameter is not an object!');
         return false;
     }
 
@@ -101,24 +101,24 @@ ThalliumMessageBus.prototype.send = function (messages) {
     var messages, md;
 
     if (typeof (messages = this.fetchMessages()) === 'undefined') {
-        throw "fetchMessages() failed!";
+        throw new Error("fetchMessages() failed!");
         return false;
     }
 
     try {
         var json_str = JSON.stringify(messages);
     } catch (e) {
-        throw 'Failed to convert messages to JSON string! '+ e;
+        throw new Error('Failed to convert messages to JSON string! '+ e);
         return false;
     }
 
     if (!(md = forge.md.sha1.create())) {
-        throw 'Failed to initialize forge SHA1 message digest!';
+        throw new Error('Failed to initialize forge SHA1 message digest!');
         return false;
     }
 
     if (!md.update(json_str)) {
-        throw 'forge SHA1 failed on json input!';
+        throw new Error('forge SHA1 failed on json input!');
         return false;
     }
 
@@ -131,17 +131,17 @@ ThalliumMessageBus.prototype.send = function (messages) {
     try {
         var submitmsg = JSON.stringify(json);
     } catch (e) {
-        throw 'Failed to convert messages to JSON string! '+ e;
+        throw new Error('Failed to convert messages to JSON string! '+ e);
         return false;
     }
 
     if (!submitmsg) {
-        throw 'No message to send provided!';
+        throw new Error('No message to send provided!');
         return false;
     }
 
     if (typeof(submitmsg) != 'string') {
-        throw 'parameter is not a string!';
+        throw new Error('parameter is not a string!');
         return false;
     }
 
@@ -190,11 +190,11 @@ ThalliumMessageBus.prototype.send = function (messages) {
             if (typeof errorThrown !== 'undefined' && errorThrown) {
                 error_text+= ' Message: ' + errorThrown + '.';
             }
-            throw error_text;
+            throw new Error(error_text);
         },
         success: function (data) {
             if (data != "ok") {
-                throw 'Failed to submit messages! ' + data;
+                throw new Error('Failed to submit messages! ' + data);
                 return false;
             }
         }.bind(this)
@@ -248,7 +248,7 @@ ThalliumMessageBus.prototype.poll = function () {
             if (typeof errorThrown !== 'undefined' && errorThrown) {
                 error_text+= ' Message: ' + errorThrown + '.';
             }
-            throw error_text;
+            throw new Error(error_text);
         },
         success: function (data) {
             this.parseResponse(data);
@@ -262,7 +262,7 @@ ThalliumMessageBus.prototype.parseResponse = function (data) {
     var md;
 
     if (!data) {
-        throw 'Requires data to be set!';
+        throw new Error('Requires data to be set!');
         return false;
     }
 
@@ -270,7 +270,7 @@ ThalliumMessageBus.prototype.parseResponse = function (data) {
         var json = JSON.parse(data);
     } catch (e) {
         console.log(data);
-        throw 'Failed to parse response! ' + e;
+        throw new Error('Failed to parse response! ' + e);
         return false;
     }
 
@@ -280,27 +280,27 @@ ThalliumMessageBus.prototype.parseResponse = function (data) {
         typeof json.json === 'undefined' ||
         typeof json.count === 'undefined'
     ) {
-        throw 'Response is invalid!';
+        throw new Error('Response is invalid!')
         return false;
     }
 
     if (json.json.length != json.size) {
-        throw 'Response size does not match!';
+        throw new Error('Response size does not match!');
         return false;
     }
 
     if (!(md = forge.md.sha1.create())) {
-        throw 'Failed to initialize forge SHA1 message digest!';
+        throw new Error('Failed to initialize forge SHA1 message digest!');
         return false;
     }
 
     if (!md.update(json.json)) {
-        throw 'forge SHA1 failed on json input!';
+        throw new Error('forge SHA1 failed on json input!');
         return false;
     }
 
     if (json.hash != md.digest().toHex()) {
-        throw 'Hash does not match!';
+        throw new Error('Hash does not match!');
         return false;
     }
 
@@ -313,12 +313,12 @@ ThalliumMessageBus.prototype.parseResponse = function (data) {
         var messages = JSON.parse(json.json);
     } catch (e) {
         console.log(data);
-        throw 'Failed to parse JSON field!' + e;
+        throw new Error('Failed to parse JSON field!' + e);
         return false;
     }
 
     if (messages.length != json.count) {
-        throw 'Response meta data stat '+ json.count +' message(s) but only found '+ messages.length +'!';
+        throw new Error('Response meta data stat '+ json.count +' message(s) but only found '+ messages.length +'!');
         return false;
     }
 
@@ -332,17 +332,17 @@ ThalliumMessageBus.prototype.parseResponse = function (data) {
 
 ThalliumMessageBus.prototype.subscribe = function (name, category, handler, data) {
     if (!name) {
-        throw 'No name provided!';
+        throw new Error('No name provided!');
         return false;
     }
 
     if (!category) {
-        throw 'No category provided!';
+        throw new Error('No category provided!');
         return false;
     }
 
     if (!handler) {
-        throw 'No handler provided!';
+        throw new Error('No handler provided!');
         return false;
     }
 
@@ -351,7 +351,7 @@ ThalliumMessageBus.prototype.subscribe = function (name, category, handler, data
     }
 
     if (this.subscribers[name]) {
-        throw 'A subscriber named '+ name +' has already been registered. It has been unsubscribed now!';
+        throw new Error('A subscriber named '+ name +' has already been registered. It has been unsubscribed now!');
         this.unsubscribe(name);
     }
 
@@ -397,19 +397,19 @@ ThalliumMessageBus.prototype.notifySubscribers = function () {
     }
 
     if (!(messages = this.getReceivedMessages())) {
-        throw 'Failed to query received messages!';
+        throw new Error('Failed to query received messages!');
         return false;
     }
 
     for (var msgid in messages) {
         if (!(subscribers = this.getSubscribers(messages[msgid].command))) {
-            throw 'Failed to retrieve subscribers list!';
+            throw new Error('Failed to retrieve subscribers list!');
             return false;
         }
 
         for (var subid in subscribers) {
             if (!subscribers[subid].handler(messages[msgid], subscribers[subid].data)) {
-                throw 'Subscriber "'+ subid +'" returned false!';
+                throw new Error('Subscriber "'+ subid +'" returned false!');
                 return false;
             }
         }
