@@ -18,7 +18,7 @@
 function rpc_object_delete(element, del_id)
 {
     if (typeof del_id === 'undefined' || del_id == '') {
-        alert('invalid "del_id" parameter found!');
+        throw new Error('invalid "del_id" parameter found!');
         return;
     }
 
@@ -35,7 +35,7 @@ function rpc_object_delete(element, del_id)
             element.parent().parent().animate({backgroundColor: '#fbc7c7' }, 'fast');
         },
         error: function (XMLHttpRequest, textStatus, errorThrown) {
-            alert('Failed to contact server! ' + textStatus);
+            throw new Error('Failed to contact server! ' + textStatus);
         },
         success: function (data) {
             if (data == 'ok') {
@@ -49,7 +49,7 @@ function rpc_object_delete(element, del_id)
             }
             // change row color back to white
             element.parent().parent().animate({backgroundColor: '#ffffff' }, 'fast');
-            alert('Server returned: ' + data + ', length ' + data.length);
+            throw new Error('Server returned: ' + data + ', length ' + data.length);
             return;
         }
     });
@@ -61,40 +61,40 @@ function rpc_object_delete(element, del_id)
 function rpc_object_update(element)
 {
     if (!(element instanceof jQuery) ) {
-        throw "element is not a jQuery object!";
+        throw new Error("element is not a jQuery object!");
         return false;
     }
 
     var target = element.attr('data-target');
 
     if (typeof target === 'undefined' || target == '') {
-        alert('no attribute "data-target" found!');
+        throw new Error('no attribute "data-target" found!');
         return false;
     }
 
 
     if (!(input = element.find('input[name="'+target+'"]'))) {
-        throw "Failed to get input element!";
+        throw new Error("Failed to get input element!");
         return false;
     }
 
     if (!(action = input.attr('data-action'))) {
-        throw "Unable to locate 'data-action' attribute!";
+        throw new Error("Unable to locate 'data-action' attribute!");
         return false;
     }
 
     if (!(model = input.attr('data-model'))) {
-        throw "Unable to locate 'data-model' attribute!";
+        throw new Error("Unable to locate 'data-model' attribute!");
         return false;
     }
 
     if (!(key = input.attr('data-key'))) {
-        throw "Unable to locate 'data-key' attribute!";
+        throw new Error("Unable to locate 'data-key' attribute!");
         return false;
     }
 
     if (!(id = input.attr('data-id'))) {
-        throw "Unable to locate 'data-id' attribute!";
+        throw new Error("Unable to locate 'data-id' attribute!");
         return false;
     }
 
@@ -130,11 +130,11 @@ function rpc_object_update(element)
             value  : value
         }),
         error: function (XMLHttpRequest, textStatus, errorThrown) {
-            alert('Failed to contact server! ' + textStatus);
+            throw new Error('Failed to contact server! ' + textStatus);
         },
         success: function (data) {
             if (data != 'ok') {
-                alert('Server returned: ' + data + ', length ' + data.length);
+                throw new Error('Server returned: ' + data + ', length ' + data.length);
                 return;
             }
             if (action == 'add') {
@@ -151,7 +151,7 @@ function rpc_object_update(element)
 function rpc_fetch_jobstatus()
 {
     if (!mbus.poll()) {
-        throw 'MessageBus.poll() returned false!';
+        throw new Error('MessageBus.poll() returned false!');
         return false;
     }
 }
@@ -159,17 +159,17 @@ function rpc_fetch_jobstatus()
 function rpc_object_delete2(element)
 {
     if (!(element instanceof jQuery) ) {
-        throw "element is not a jQuery object!";
+        throw new Error("element is not a jQuery object!");
         return false;
     }
 
     if (!(id = element.attr('data-id'))) {
-        alert('no attribute "data-id" found!');
+        throw new Error('no attribute "data-id" found!');
         return false;
     }
 
     if (!(guid = element.attr('data-guid'))) {
-        alert('no attribute "data-guid" found!');
+        throw new Error('no attribute "data-guid" found!');
         return false;
     }
 
@@ -196,11 +196,11 @@ function rpc_object_delete2(element)
             guid   : guid
         }),
         error: function (XMLHttpRequest, textStatus, errorThrown) {
-            alert('Failed to contact server! ' + textStatus);
+            throw new Error('Failed to contact server! ' + textStatus);
         },
         success: function (data) {
             if (data != 'ok') {
-                alert('Server returned: ' + data + ', length ' + data.length);
+                throw new Error('Server returned: ' + data + ', length ' + data.length);
                 return;
             }
             location.reload();
