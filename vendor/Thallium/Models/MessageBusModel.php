@@ -21,13 +21,13 @@ namespace Thallium\Models ;
 
 class MessageBusModel extends DefaultModel
 {
-    public $table_name = 'message_bus';
-    public $column_name = 'msg';
-    public $fields = array(
+    protected $table_name = 'message_bus';
+    protected $column_name = 'msg';
+    protected $fields = array(
             'msg_idx' => 'integer',
             );
-    public $avail_items = array();
-    public $items = array();
+    protected $avail_items = array();
+    protected $items = array();
 
     public function getMessagesForSession($session_id)
     {
