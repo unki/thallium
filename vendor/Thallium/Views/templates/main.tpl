@@ -17,7 +17,7 @@
 <h1>Welcome to Thallium!</h1>
 <h2>About</h1>
 <h4>Thallium - PHP framework.</h4>
-&copy; 2015 Andreas Unterkircher &lt;unki@netshadow.net&gt;
+&copy; 2015-{'Y'|date} Andreas Unterkircher &lt;unki@netshadow.net&gt;
 <br />
 <a href="https://oss.netshadow.net/redmine/projects/thallium" target="_blank">https://oss.netshadow.net/redmine/projects/thallium</a>
 <br /><br />
