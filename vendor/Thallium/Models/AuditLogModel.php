@@ -21,9 +21,9 @@ namespace Thallium\Models ;
 
 class AuditLogModel extends DefaultModel
 {
-    public $table_name = 'audit';
-    public $column_name = 'audit';
-    public $fields = array(
+    protected $table_name = 'audit';
+    protected $column_name = 'audit';
+    protected $fields = array(
         'audit_log' => 'array',
     );
 
