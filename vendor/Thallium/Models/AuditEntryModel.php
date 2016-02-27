@@ -21,9 +21,9 @@ namespace Thallium\Models ;
 
 class AuditEntryModel extends DefaultModel
 {
-    public $table_name = 'audit';
-    public $column_name = 'audit';
-    public $fields = array(
+    protected $table_name = 'audit';
+    protected $column_name = 'audit';
+    protected $fields = array(
             'audit_idx' => 'integer',
             'audit_guid' => 'string',
             'audit_type' => 'string',
@@ -97,7 +97,7 @@ class AuditEntryModel extends DefaultModel
         return true;
     }
 
-    public function preSave()
+    protected function preSave()
     {
         if (!($time = microtime(true))) {
             $this->raiseError("microtime() returned false!");
