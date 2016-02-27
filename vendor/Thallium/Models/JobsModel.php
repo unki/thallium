@@ -21,13 +21,13 @@ namespace Thallium\Models ;
 
 class JobsModel extends DefaultModel
 {
-    public $table_name = 'jobs';
-    public $column_name = 'job';
-    public $fields = array(
+    protected $table_name = 'jobs';
+    protected $column_name = 'job';
+    protected $fields = array(
             'job_idx' => 'integer',
             );
-    public $avail_items = array();
-    public $items = array();
+    protected $avail_items = array();
+    protected $items = array();
 
     public function deleteExpiredJobs($timeout)
     {
