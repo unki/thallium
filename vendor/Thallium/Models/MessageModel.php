@@ -21,9 +21,9 @@ namespace Thallium\Models ;
 
 class MessageModel extends DefaultModel
 {
-    public $table_name = 'message_bus';
-    public $column_name = 'msg';
-    public $fields = array(
+    protected $table_name = 'message_bus';
+    protected $column_name = 'msg';
+    protected $fields = array(
         'msg_idx' => 'integer',
         'msg_guid' => 'integer',
         'msg_scope' => 'string',
