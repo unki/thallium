@@ -24,7 +24,7 @@ class MessageBusModel extends DefaultModel
     public $table_name = 'message_bus';
     public $column_name = 'msg';
     public $fields = array(
-            'queue_idx' => 'integer',
+            'msg_idx' => 'integer',
             );
     public $avail_items = array();
     public $items = array();
