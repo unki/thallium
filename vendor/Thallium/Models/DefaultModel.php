@@ -37,24 +37,23 @@ abstract class DefaultModel
 
     public function __construct($id = null)
     {
-        if (!isset($this->table_name)) {
-            $this->raiseError(__METHOD__ .', missing key table_name', true);
+        if (!isset($this->table_name) || empty($this->table_name)) {
+            $this->raiseError(__METHOD__ .', missing property "table_name"', true);
             return false;
         }
 
-        if (!isset($this->column_name)) {
-            $this->raiseError(__METHOD__ .', missing key column_name', true);
+        if (!isset($this->column_name) || empty($this->column_name)) {
+            $this->raiseError(__METHOD__ .', missing property "column_name"', true);
             return false;
         }
 
-        if (!isset($this->fields)) {
-            $this->raiseError(__METHOD__ .', missing key fields', true);
+        if (!isset($this->fields) || empty($this->field)) {
+            $this->raiseError(__METHOD__ .', missing property "fields"', true);
             return false;
         }
 
         if (!isset($id) || empty($id)) {
-            $this->initFields();
-            return true;
+            return $this->initFields();
         }
 
         $this->init_values = array();
@@ -382,7 +381,7 @@ abstract class DefaultModel
     final protected function initFields($override = null)
     {
         if (!isset($this->fields) || !is_array($this->fields)) {
-            return;
+            return true;
         }
 
         foreach (array_keys($this->fields) as $field) {
@@ -398,6 +397,8 @@ abstract class DefaultModel
 
             $this->$field = null;
         }
+
+        return true;
 
     } // initFields()
 
@@ -1103,9 +1104,9 @@ abstract class DefaultModel
 
     public function raiseError($string, $stop_execution = false, $exception = null)
     {
-        global $mtlda;
+        global $thallium;
 
-        $mtlda->raiseError(
+        $thallium->raiseError(
             $string,
             $stop_execution,
             $exception
