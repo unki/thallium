@@ -47,7 +47,7 @@ abstract class DefaultModel
             return false;
         }
 
-        if (!isset($this->fields) || empty($this->field)) {
+        if (!isset($this->fields) || empty($this->fields)) {
             $this->raiseError(__METHOD__ .', missing property "fields"', true);
             return false;
         }
