@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>{$page_title}</title>
   <!-- jQuery -->
-  <script type="text/javascript" src="{$app_web_path}/resources/jQuery/jquery-2.1.4.min.js"></script>
+  <script type="text/javascript" src="{$app_web_path}/resources/jQuery/jquery-2.2.1.min.js"></script>
   <!-- Thallium JavaScript -->
   <script type="text/javascript" src="{$app_web_path}/resources/thallium.js"></script>
   <script type="text/javascript" src="{$app_web_path}/resources/thallium_rpc.js"></script>
