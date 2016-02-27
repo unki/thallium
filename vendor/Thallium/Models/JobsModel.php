@@ -24,7 +24,7 @@ class JobsModel extends DefaultModel
     public $table_name = 'jobs';
     public $column_name = 'job';
     public $fields = array(
-            'queue_idx' => 'integer',
+            'job_idx' => 'integer',
             );
     public $avail_items = array();
     public $items = array();
