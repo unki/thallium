@@ -329,8 +329,16 @@ class MainController extends DefaultController
 
         $model = $prefix .'\\Models\\'. $model;
 
+        $load_by = array();
+        if (isset($id) && !empty($id)) {
+            $load_by['idx'] = $id;
+        }
+        if (isset($guid) && !empty($guid)) {
+            $load_by['guid'] = $guid;
+        }
+
         try {
-            $obj = new $model($id, $guid);
+            $obj = new $model($load_by);
         } catch (\Exception $e) {
             $this->raiseError("Failed to load model {$object_name}! ". $e->getMessage());
             return false;
