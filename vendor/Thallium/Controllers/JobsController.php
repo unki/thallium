@@ -33,7 +33,6 @@ class JobsController extends DefaultController
             return false;
         }
 
-
         try {
             $this->registerHandler('delete-request', array($this, 'handleDeleteRequest'));
         } catch (\Exception $e) {
@@ -147,7 +146,9 @@ class JobsController extends DefaultController
         }
 
         try {
-            $job = new \Thallium\Models\JobModel(null, $job_guid);
+            $job = new \Thallium\Models\JobModel(array(
+                'guid' => $job_guid
+            ));
         } catch (\Exception $e) {
             $this->raiseError(__METHOD__ .", failed to load JobModel(null, {$job_guid})");
             return false;
@@ -210,7 +211,9 @@ class JobsController extends DefaultController
 
         if (is_string($job) && $thallium->isValidGuidSyntax($job)) {
             try {
-                $job = new \Thallium\Models\JobModel(null, $job);
+                $job = new \Thallium\Models\JobModel(array(
+                    'guid' => $job
+                ));
             } catch (\Exception $e) {
                 $this->raiseError(__METHOD__ .'(), failed to load JobModel!');
                 return false;
