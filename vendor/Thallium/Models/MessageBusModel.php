@@ -21,13 +21,10 @@ namespace Thallium\Models ;
 
 class MessageBusModel extends DefaultModel
 {
-    protected $table_name = 'message_bus';
-    protected $column_name = 'msg';
-    protected $fields = array(
-            'msg_idx' => 'integer',
-            );
-    protected $avail_items = array();
-    protected $items = array();
+    protected static $model_table_name = 'message_bus';
+    protected static $model_column_prefix = 'msg';
+    protected static $model_has_items = true;
+    protected static $model_items_model = 'MessageModel';
 
     public function getMessagesForSession($session_id)
     {
@@ -36,18 +33,18 @@ class MessageBusModel extends DefaultModel
         $messages = array();
 
         if (empty($session_id)) {
-            $this->raiseError(__METHOD__ .', \$session_id can not be empty!');
+            static::raiseError(__METHOD__ .', \$session_id can not be empty!');
             return false;
         }
 
-        $idx_field = $this->column_name ."_idx";
+        $idx_field = static::$model_column_prefix ."_idx";
 
-        $sql =
+        $sql = sprintf(
             "SELECT
                 msg_idx,
                 msg_guid
             FROM
-                TABLEPREFIX{$this->table_name}
+                TABLEPREFIX%s
             WHERE
                 msg_scope
             LIKE
@@ -57,16 +54,18 @@ class MessageBusModel extends DefaultModel
             LIKE
                 ?
             ORDER BY
-                msg_submit_time ASC";
+                msg_submit_time ASC",
+            static::$model_table_name
+        );
 
         if (!($sth = $db->prepare($sql))) {
-            $this->raiseError(__METHOD__ .', failed to prepare query!');
+            static::raiseError(__METHOD__ .', failed to prepare query!');
             return false;
         };
 
         if (!$db->execute($sth, array($session_id))) {
             $db->freeStatement($sth);
-            $this->raiseError(__METHOD__ .', failed to execute query!');
+            static::raiseError(__METHOD__ .', failed to execute query!');
             return false;
         }
 
@@ -75,14 +74,17 @@ class MessageBusModel extends DefaultModel
                 !isset($row->msg_guid) || empty($row->msg_guid)
             ) {
                 $db->freeStatement($sth);
-                $this->raiseError(__METHOD__ .', message returned from query is incomplete!');
+                static::raiseError(__METHOD__ .', message returned from query is incomplete!');
             }
 
             try {
-                $message = new MessageModel($row->msg_idx, $row->msg_guid);
+                $message = new MessageModel(array(
+                    'idx' => $row->msg_idx,
+                    'guid' => $row->msg_guid
+                ));
             } catch (\Exception $e) {
                 $db->freeStatement($sth);
-                $this->raiseError('Failed to load MessageModel!');
+                static::raiseError('Failed to load MessageModel!');
                 return false;
             }
 
@@ -99,23 +101,25 @@ class MessageBusModel extends DefaultModel
 
         $messages = array();
 
-        $idx_field = $this->column_name ."_idx";
+        $idx_field = static::column('idx');
 
-        $sql =
+        $sql = sprintf(
             "SELECT
                 msg_idx,
                 msg_guid
             FROM
-                TABLEPREFIX{$this->table_name}
+                TABLEPREFIX%s
             WHERE
                 msg_scope
             LIKE
                 'inbound'
             AND
-                msg_in_processing <> 'Y'";
+                msg_in_processing <> 'Y'",
+            static::$model_table_name
+        );
 
         if (!($result = $db->query($sql))) {
-            $this->raiseError(__METHOD__ .', failed to query database!');
+            static::raiseError(__METHOD__ .', failed to query database!');
             return false;
         };
 
@@ -124,13 +128,16 @@ class MessageBusModel extends DefaultModel
                 !isset($row->msg_guid) || empty($row->msg_guid)
             ) {
                 $db->freeStatement($sth);
-                $this->raiseError(__METHOD__ .', message returned from query is incomplete!');
+                static::raiseError(__METHOD__ .', message returned from query is incomplete!');
             }
 
             try {
-                $message = new MessageModel($row->msg_idx, $row->msg_guid);
+                $message = new MessageModel(array(
+                    'idx' => $row->msg_idx,
+                    'guid' => $row->msg_guid
+                ));
             } catch (\Exception $e) {
-                $this->raiseError('Failed to load MessageModel!');
+                static::raiseError('Failed to load MessageModel!');
                 return false;
             }
 
@@ -145,7 +152,7 @@ class MessageBusModel extends DefaultModel
         global $db;
 
         if (!isset($timeout) || empty($timeout) || !is_numeric($timeout)) {
-            $this->raiseError(__METHOD__ .', parameter needs to be an integer!');
+            static::raiseError(__METHOD__ .', parameter needs to be an integer!');
             return false;
         }
 
@@ -159,12 +166,12 @@ class MessageBusModel extends DefaultModel
                 UNIX_TIMESTAMP(msg_submit_time) < ?";
 
         if (!($sth = $db->prepare($sql))) {
-            $this->raiseError(__METHOD__ .', failed to prepare query!');
+            static::raiseError(__METHOD__ .', failed to prepare query!');
             return false;
         }
 
         if (!($db->execute($sth, array($oldest)))) {
-            $this->raiseError(__METHOD__ .', failed to execute query!');
+            static::raiseError(__METHOD__ .', failed to execute query!');
             return false;
         }
 
