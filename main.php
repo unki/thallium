@@ -17,7 +17,7 @@
  * GNU Affero General Public License for more details.
  */
 
-require_once 'static.php';
+require_once 'vendor/Thallium/static.php';
 require_once 'vendor/autoload.php';
 
 spl_autoload_register("autoload");

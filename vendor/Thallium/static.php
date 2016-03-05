@@ -19,15 +19,14 @@
 
 define('APP_BASE', __DIR__);
 
-define('SIGN_TOP_LEFT', 1);
-define('SIGN_TOP_CENTER', 2);
-define('SIGN_TOP_RIGHT', 3);
-define('SIGN_MIDDLE_LEFT', 4);
-define('SIGN_MIDDLE_CENTER', 5);
-define('SIGN_MIDDLE_RIGHT', 6);
-define('SIGN_BOTTOM_LEFT', 7);
-define('SIGN_BOTTOM_CENTER', 8);
-define('SIGN_BOTTOM_RIGHT', 9);
+define('FIELD_TYPE', 'type');
+define('FIELD_INT', 'int');
+define('FIELD_STRING', 'string');
+define('FIELD_BOOL', 'bool');
+define('FIELD_TIMESTAMP', 'timestamp');
+define('FIELD_YESNO', 'yesno');
+define('FIELD_DATE', 'date');
+define('FIELD_GUID', 'guid');
 
 if (!constant('LOG_ERR')) {
     define('LOG_ERR', 1);
