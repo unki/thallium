@@ -257,7 +257,10 @@ class RpcController extends DefaultController
 
         switch ($id->model) {
             case 'queueitem':
-                $model = new \Thallium\Models\QueueItemModel($id->id, $id->guid);
+                $model = new \Thallium\Models\QueueItemModel(array(
+                    'idx' => $id->id,
+                    'guid' => $id->guid
+                ));
                 break;
         }
 
@@ -288,7 +291,12 @@ class RpcController extends DefaultController
     {
         global $thallium;
 
-        $input_fields = array('key', 'id', 'value', 'model');
+        $input_fields = array(
+            'key',
+            'id',
+            'value',
+            'model'
+        );
 
         foreach ($input_fields as $field) {
             if (!isset($_POST[$field])) {
