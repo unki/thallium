@@ -17,7 +17,7 @@
  * GNU Affero General Public License for more details.
  */
 
-define('APP_BASE', __DIR__);
+define('APP_BASE', realpath(__DIR__ .'/../../'));
 
 define('FIELD_TYPE', 'type');
 define('FIELD_INT', 'int');
