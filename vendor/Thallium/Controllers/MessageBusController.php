@@ -348,7 +348,9 @@ class MessageBusController extends DefaultController
         }
 
         try {
-            $job = new \Thallium\Models\JobModel(null, $job_guid);
+            $job = new \Thallium\Models\JobModel(array(
+                'guid' => $job_guid
+            ));
         } catch (\Exception $e) {
             $this->raiseError(__METHOD__ .', failed to load JobModel(null, {$job})!');
             return false;
