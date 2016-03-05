@@ -21,20 +21,17 @@ namespace Thallium\Models ;
 
 class JobsModel extends DefaultModel
 {
-    protected $table_name = 'jobs';
-    protected $column_name = 'job';
-    protected $fields = array(
-            'job_idx' => 'integer',
-            );
-    protected $avail_items = array();
-    protected $items = array();
+    protected static $model_table_name = 'jobs';
+    protected static $model_column_prefix = 'job';
+    protected static $model_has_items = true;
+    protected static $model_items_model = 'JobModel';
 
     public function deleteExpiredJobs($timeout)
     {
         global $db;
 
         if (!isset($timeout) || empty($timeout) || !is_numeric($timeout)) {
-            $this->raiseError(__METHOD__ .', parameter needs to be an integer!');
+            static::raiseError(__METHOD__ .', parameter needs to be an integer!');
             return false;
         }
 
@@ -48,12 +45,12 @@ class JobsModel extends DefaultModel
                 UNIX_TIMESTAMP(job_time) < ?";
 
         if (!($sth = $db->prepare($sql))) {
-            $this->raiseError(__METHOD__ .', failed to prepare query!');
+            static::raiseError(__METHOD__ .', failed to prepare query!');
             return false;
         }
 
         if (!($db->execute($sth, array($oldest)))) {
-            $this->raiseError(__METHOD__ .', failed to execute query!');
+            static::raiseError(__METHOD__ .', failed to execute query!');
             return false;
         }
 
@@ -64,21 +61,23 @@ class JobsModel extends DefaultModel
     {
         global $db;
 
-        $sql =
+        $sql = sprintf(
             "SELECT
                 job_idx
             FROM
-                TABLEPREFIX{$this->table_name}
+                TABLEPREFIX%s
             WHERE
-                job_in_processing <> 'Y'";
+                job_in_processing <> 'Y'",
+            static::$model_table_name
+        );
 
         if (($sth = $db->prepare($sql)) === false) {
-            $this->raiseError(get_class($db) .'::prepare() returned false!');
+            static::raiseError(get_class($db) .'::prepare() returned false!');
             return false;
         }
 
         if (!$db->execute($sth)) {
-            $this->raiseError(get_class($db) .'::execute() returned false!');
+            static::raiseError(get_class($db) .'::execute() returned false!');
             return false;
         }
 
@@ -89,9 +88,11 @@ class JobsModel extends DefaultModel
 
         while ($row = $sth->fetch()) {
             try {
-                $job = new \Thallium\Models\JobModel($row->job_idx);
+                $job = new \Thallium\Models\JobModel(array(
+                    'idx' => $row->job_idx
+                ));
             } catch (\Exception $e) {
-                $this->raiseError(__METHOD__ .'(), failed to load JobModel!');
+                static::raiseError(__METHOD__ .'(), failed to load JobModel!');
                 return false;
             }
             array_push($jobs, $job);
