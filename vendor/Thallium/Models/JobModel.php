@@ -21,92 +21,47 @@ namespace Thallium\Models ;
 
 class JobModel extends DefaultModel
 {
-    public $table_name = 'jobs';
-    public $column_name = 'job';
-    public $fields = array(
-        'job_idx' => 'integer',
-        'job_guid' => 'integer',
-        'job_command' => 'string',
-        'job_parameters' => 'string',
-        'job_session_id' => 'string',
-        'job_request_guid' => 'string',
-        'job_time' => 'timestamp',
-        'job_in_processing' => 'string',
+    protected static $model_table_name = 'jobs';
+    protected static $model_column_prefix = 'job';
+    protected static $model_fields = array(
+        'idx' => array(
+            FIELD_TYPE => FIELD_INT,
+        ),
+        'guid' => array(
+            FIELD_TYPE => FIELD_GUID,
+        ),
+        'command' => array(
+            FIELD_TYPE => FIELD_STRING,
+        ),
+        'command' => array(
+            FIELD_TYPE => FIELD_STRING,
+        ),
+        'parameters' => array(
+            FIELD_TYPE => FIELD_STRING,
+        ),
+        'session_id' => array(
+            FIELD_TYPE => FIELD_STRING,
+        ),
+        'request_guid' => array(
+            FIELD_TYPE => FIELD_GUID,
+        ),
+        'time' => array(
+            FIELD_TYPE => FIELD_TIMESTAMP,
+        ),
+        'in_processing' => array(
+            FIELD_TYPE => FIELD_YESNO,
+        ),
     );
-
-    public function __construct($id = null, $guid = null)
-    {
-        global $db;
-
-        // are we creating a new item?
-        if (!isset($id) && !isset($guid)) {
-            parent::__construct(null);
-            return true;
-        }
-
-        // get $id from db
-        $sql = "
-            SELECT
-                job_idx
-            FROM
-                TABLEPREFIX{$this->table_name}
-            WHERE
-        ";
-
-        $arr_query = array();
-        if (isset($id)) {
-            $sql.= "
-                job_idx LIKE ?
-            ";
-            $arr_query[] = $id;
-        }
-        if (isset($id) && isset($guid)) {
-            $sql.= "
-                AND
-            ";
-        }
-        if (isset($guid)) {
-            $sql.= "
-                job_guid LIKE ?
-            ";
-            $arr_query[] = $guid;
-        };
-
-        if (!($sth = $db->prepare($sql))) {
-            $this->raiseError("DatabaseController::prepare() returned false!");
-            return false;
-        }
-
-        if (!$db->execute($sth, $arr_query)) {
-            $this->raiseError("DatabaseController::execute() returned false!");
-            return false;
-        }
-
-        if (!($row = $sth->fetch())) {
-            $this->raiseError("Unable to find job with guid value {$guid}");
-            return false;
-        }
-
-        if (!isset($row->job_idx) || empty($row->job_idx)) {
-            $this->raiseError("Unable to find job with guid value {$guid}");
-            return false;
-        }
-
-        $db->freeStatement($sth);
-
-        parent::__construct($row->job_idx);
-        return true;
-    }
 
     public function setSessionId($sessionid)
     {
         if (empty($sessionid)) {
-            $this->raiseError(__METHOD__ .', an empty session id is not allowed!');
+            static::raiseError(__METHOD__ .', an empty session id is not allowed!');
             return false;
         }
 
         if (!is_string($sessionid)) {
-            $this->raiseError(__METHOD__ .', parameter has to be a string!');
+            static::raiseError(__METHOD__ .', parameter has to be a string!');
             return false;
         }
 
@@ -117,7 +72,7 @@ class JobModel extends DefaultModel
     public function getSessionId()
     {
         if (!isset($this->job_session_id)) {
-            $this->raiseError(__METHOD__ .', \$job_session_id has not been set yet!');
+            static::raiseError(__METHOD__ .', \$job_session_id has not been set yet!');
             return false;
         }
 
@@ -180,7 +135,7 @@ class JobModel extends DefaultModel
         global $thallium;
 
         if (empty($guid) || !$thallium->isValidGuidSyntax($guid)) {
-            $this->raiseError(__METHOD__ .', first parameter needs to be a valid GUID!');
+            static::raiseError(__METHOD__ .', first parameter needs to be a valid GUID!');
             return false;
         }
 
@@ -191,7 +146,7 @@ class JobModel extends DefaultModel
     public function getRequestGuid()
     {
         if (!isset($this->job_request_guid)) {
-            $this->raiseError(__METHOD__ .', \$job_request_guid has not been set yet!');
+            static::raiseError(__METHOD__ .', \$job_request_guid has not been set yet!');
             return false;
         }
 
@@ -210,7 +165,7 @@ class JobModel extends DefaultModel
     public function setCommand($command)
     {
         if (!isset($command) || empty($command) || !is_string($command)) {
-            $this->raiseError(__METHOD__ .'(), $command parameter needs to be set!');
+            static::raiseError(__METHOD__ .'(), $command parameter needs to be set!');
             return false;
         }
 
@@ -221,17 +176,17 @@ class JobModel extends DefaultModel
     public function getParameters()
     {
         if (!$this->hasParameters()) {
-            $this->raiseError(__CLASS__ .'::hasParameters() returned false!');
+            static::raiseError(__CLASS__ .'::hasParameters() returned false!');
             return false;
         }
 
         if (($params = base64_decode($this->job_parameters)) === false) {
-            $this->raiseError(__METHOD__ .'(), base64_decode() failed on job_parameters!');
+            static::raiseError(__METHOD__ .'(), base64_decode() failed on job_parameters!');
             return false;
         }
 
         if (($params = unserialize($params)) === false) {
-            $this->raiseError(__METHOD__ .'(), unserialize() job_parameters failed!');
+            static::raiseError(__METHOD__ .'(), unserialize() job_parameters failed!');
             return false;
         }
 
@@ -241,7 +196,7 @@ class JobModel extends DefaultModel
     public function setParameters($parameters)
     {
         if (!isset($parameters) || empty($parameters)) {
-            $this->raiseError(__METHOD__ .'(), $parameters parameter needs to be set!');
+            static::raiseError(__METHOD__ .'(), $parameters parameter needs to be set!');
             return false;
         }
 
