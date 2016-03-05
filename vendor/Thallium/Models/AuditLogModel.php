@@ -21,53 +21,13 @@ namespace Thallium\Models ;
 
 class AuditLogModel extends DefaultModel
 {
-    protected $table_name = 'audit';
-    protected $column_name = 'audit';
-    protected $fields = array(
-        'audit_log' => 'array',
+    protected static $model_table_name = 'audit';
+    protected static $model_column_prefix = 'audit';
+    protected static $model_fields = array(
+        'log' => array(
+            FIELD_TYPE => FIELD_ARRAY,
+        ),
     );
-
-    public function __construct($guid = null)
-    {
-        global $db;
-
-        // are we creating a new item?
-        if (!isset($guid) || empty($guid)) {
-            $this->raiseError('$guid parameter is missing!', true);
-            return false;
-        }
-
-        $this->audit_log = array();
-
-        // get $id from db
-        $sql = "
-            SELECT
-                *
-            FROM
-                TABLEPREFIX{$this->table_name}
-            WHERE
-                audit_guid
-            LIKE
-                ?
-        ";
-
-        if (!($sth = $db->prepare($sql))) {
-            $this->raiseError("DatabaseController::prepare() returned false!");
-            return false;
-        }
-
-        if (!$db->execute($sth, array($guid))) {
-            $this->raiseError("DatabaseController::execute() returned false!");
-            return false;
-        }
-
-        while ($row = $sth->fetch()) {
-            $this->audit_log[] = $row->audit_message;
-        }
-
-        $db->freeStatement($sth);
-        return true;
-    }
 
     public function getLog()
     {
