@@ -571,30 +571,44 @@ class DatabaseController extends DefaultController
         return false;
     }
 
-    public function buildQuery($type, $table_name, $query_columns = "*", $query_data = array(), &$bind_params = array())
-    {
+    public function buildQuery(
+        $type,
+        $table_name,
+        $query_columns = "*",
+        $query_data = array(),
+        &$bind_params = array(),
+        $extend_where_query = null
+    ) {
         if (!isset($type) || empty($type) || !is_string($type)) {
-            $this->raiseError(__METHOD__ .'(), "type" parameter is invalid!');
+            $this->raiseError(__METHOD__ .'(), $type parameter is invalid!');
             return false;
         }
 
         if (!isset($table_name) || empty($table_name) || !is_string($table_name)) {
-            $this->raiseError(__METHOD__ .'(), "table_name" parameter is invalid!');
+            $this->raiseError(__METHOD__ .'(), $table_name parameter is invalid!');
             return false;
         }
 
         if (!isset($query_columns) || (!is_array($query_columns) && !is_string($query_columns))) {
-            $this->raiseError(__METHOD__ .'(), "query_columns" parameter is invalid!');
+            $this->raiseError(__METHOD__ .'(), $query_columns parameter is invalid!');
             return false;
         }
 
         if (!isset($query_data) || !is_array($query_data)) {
-            $this->raiseError(__METHOD__ .'(), "query_data" parameter is invalid!');
+            $this->raiseError(__METHOD__ .'(), $query_data parameter is invalid!');
             return false;
         }
 
         if (!isset($bind_params) || !is_array($bind_params)) {
-            $this->raiseError(__METHOD__ .'(), "bind_params" parameter is invalid!');
+            $this->raiseError(__METHOD__ .'(), $bind_params parameter is invalid!');
+            return false;
+        }
+
+        if (isset($extend_where_query) &&
+            !empty($extend_where_query) &&
+            !is_string($extend_where_query)
+        ) {
+            $this->raiseError(__METHOD__ .'(), $extend_where_query is invalid!');
             return false;
         }
 
@@ -621,26 +635,29 @@ class DatabaseController extends DefaultController
         if (is_string($query_data)) {
             if (empty($query_data)) {
                 return sprintf(
-                    "%s %s FROM %s",
+                    "%s %s FROM %s %s",
                     $type,
                     $query_columns_str,
-                    $table_name
+                    $table_name,
+                    !empty($extend_where_query) ? "WHERE {$extend_where_query}" : null
                 );
             } else {
                 return sprintf(
-                    "%s %s FROM %s WHERE %s",
+                    "%s %s FROM %s WHERE %s %s",
                     $type,
                     $query_columns_str,
                     $table_names,
-                    $query_data
+                    $query_data,
+                    $extend_where_query
                 );
             }
         } elseif (is_array($query_data) && count($query_data) < 1) {
             return sprintf(
-                "%s %s FROM %s",
+                "%s %s FROM %s %s",
                 $type,
                 $query_columns_str,
-                $table_name
+                $table_name,
+                !empty($extend_where_query) ? "WHERE {$extend_where_query}" : null
             );
             return $sql;
         }
@@ -659,11 +676,12 @@ class DatabaseController extends DefaultController
         }
 
         $sql = sprintf(
-            "%s %s FROM %s WHERE %s",
+            "%s %s FROM %s WHERE %s %s",
             $type,
             $query_columns_str,
             $table_name,
-            $query_wheres_str
+            $query_wheres_str,
+            $extend_where_query
         );
 
         return $sql;
