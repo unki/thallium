@@ -47,11 +47,23 @@ abstract class DefaultModel
             return;
         }
 
+        if (!isset($sort_order) || (!is_array($sort_order) && !is_null($sort_order))) {
+            $this->raiseError(__METHOD__ .'(), parameter $sort_order has to be an array!', true);
+            return;
+        }
+
         $this->model_load_by = $load_by;
         $this->model_sort_order = $sort_order;
 
         if (!$this->validateModelSettings()) {
             return;
+        }
+
+        if (method_exists($this, '__init') && is_callable(array($this, '__init'))) {
+            if (!$this->__init()) {
+                $this->raiseError(__METHOD__ .'(), __init() returned false!', true);
+                return;
+            }
         }
 
         if ($this->isNewModel()) {
@@ -161,7 +173,6 @@ abstract class DefaultModel
                 if (!isset($field) ||
                     empty($field) ||
                     !is_string($field) ||
-                    !ctype_alnum($field) ||
                     !$this->hasField($field)
                 ) {
                     $this->raiseError(__METHOD__ .'(), $model_load_by contains an invalid field!', true);
@@ -179,7 +190,6 @@ abstract class DefaultModel
                 if (!isset($field) ||
                     empty($field) ||
                     !is_string($field) ||
-                    !ctype_alnum($field) ||
                     !$this->hasField($field)
                 ) {
                     $this->raiseError(__METHOD__ .'(), $model_sort_order contains an invalid field!', true);
@@ -228,6 +238,14 @@ abstract class DefaultModel
             }
         }
 
+        if (isset($extend_query_where) &&
+            !empty($extend_query_where) &&
+            !is_string($extend_query_where)
+        ) {
+            $this->raiseError(__METHOD__ .'(), $extend_query_where parameter is invalid!');
+            return false;
+        }
+
         if (method_exists($this, 'preLoad') && is_callable($this, 'preLoad')) {
             if (!$this->preLoad()) {
                 $this->raiseError(get_called_class() ."::preLoad() method returned false!");
@@ -267,14 +285,6 @@ abstract class DefaultModel
         }
 
         foreach ($this->model_load_by as $field => $value) {
-            if (!$this->hasField($field)) {
-                $this->raiseError(__METHOD__ ."(), model has no field {$field}!");
-                return false;
-            }
-            if (!$this->validateField($field, $value)) {
-                $this->raiseError(__CLASS__ ."::validateField() returned false for field {$field}!");
-                return false;
-            }
             if (($column = $this->column($field)) === false) {
                 $this->raiseError(__CLASS__ .'::column() returned false!');
                 return false;
@@ -289,7 +299,8 @@ abstract class DefaultModel
             self::getTableName(),
             $sql_query_columns,
             $sql_query_data,
-            $bind_params
+            $bind_params,
+            $extend_query_where
         )) === false) {
             $this->raiseError(get_class($db) .'::buildQuery() returned false!');
             return false;
