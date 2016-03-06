@@ -1600,7 +1600,7 @@ abstract class DefaultModel
         return array_keys($this->model_items);
     }
 
-    public function getItemsData()
+    public function getItems()
     {
         if (!isset($this->model_items)) {
             $this->raiseError(__METHOD__ .'(), no items available!');
@@ -1636,7 +1636,10 @@ abstract class DefaultModel
             return false;
         }
 
-        if (!isset($this->model_items) || empty($this->model_items)) {
+        if (!isset($this->model_items) ||
+            empty($this->model_items) ||
+            !is_array($this->model_items)
+        ) {
             return false;
         }
 
