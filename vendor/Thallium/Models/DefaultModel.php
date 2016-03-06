@@ -24,11 +24,12 @@ use \PDO;
 abstract class DefaultModel
 {
     protected $model_load_by = array();
-    protected $model_table_name = '';
-    protected $model_column_prefix = '';
+    protected $model_table_name;
+    protected $model_column_prefix;
     protected $model_fields = array();
     protected $model_has_items = false;
     protected $model_items = array();
+    protected $model_items_model;
     protected $model_permit_rpc_updates = false;
     protected $model_rpc_allowed_fields = array();
     protected $model_rpc_allowed_actions = array();
@@ -69,6 +70,8 @@ abstract class DefaultModel
 
     protected function validateModelSettings()
     {
+        global $thallium;
+
         if (!isset($this->model_table_name) ||
             empty($this->model_table_name) ||
             !is_string($this->model_table_name)
@@ -83,6 +86,22 @@ abstract class DefaultModel
         ) {
             $this->raiseError(__METHOD__ .'(), missing property "model_column_prefix"', true);
             return false;
+        }
+
+        if ($this->hasFields() && $this->isHavingItems()) {
+            $this->raiseError(__METHOD__ .'(), model must no have fields and items at the same times!', true);
+            return false;
+        }
+
+        if ($this->isHavingItems()) {
+            if (!isset($this->model_items_model) ||
+                empty($this->model_items_model) ||
+                !is_string($this->model_items_model) ||
+                !$thallium->isRegisteredModel(null, $this->model_items_model)
+            ) {
+                $this->raiseError(__METHOD__ .'(), $model_items_model is invalid!', true);
+                return false;
+            }
         }
 
         if (!isset($this->model_fields) || !is_array($this->model_fields)) {
@@ -164,20 +183,15 @@ abstract class DefaultModel
     {
         global $db;
 
-        if (!$this->hasFields()) {
-            $this->raiseError(__METHOD__ .'(), "model_fields" property not set for class '. get_class($this));
-            return false;
+        if (!$this->hasFields() && !$this->isHavingItems()) {
+            return true;
         }
 
-        if (!isset($this->model_load_by) ||
-            empty($this->model_load_by) ||
-            !is_array($this->model_load_by)
-        ) {
-            $this->raiseError(__METHOD__ .'(), "model_load_by" property not set!');
-            return false;
+        if ($this->hasFields() && empty($this->model_load_by)) {
+            return true;
         }
 
-        if (method_exists($this, 'preLoad')) {
+        if (method_exists($this, 'preLoad') && is_callable($this, 'preLoad')) {
             if (!$this->preLoad()) {
                 $this->raiseError(get_called_class() ."::preLoad() method returned false!");
                 return false;
@@ -187,9 +201,20 @@ abstract class DefaultModel
         $sql_query_columns = array();
         $sql_query_data = array();
 
-        if (($fields = $this->getFieldNames()) === false) {
-            $this->raiseError(__CLASS__ .'::getFieldNames() returned false!');
-            return false;
+        if ($this->hasFields()) {
+            if (($fields = $this->getFieldNames()) === false) {
+                $this->raiseError(__CLASS__ .'::getFieldNames() returned false!');
+                return false;
+            }
+        } elseif ($this->isHavingItems()) {
+            $fields = array(
+                'idx',
+                'guid',
+            );
+        }
+
+        if (!isset($fields) || empty($fields)) {
+            return true;
         }
 
         foreach ($fields as $field) {
@@ -254,36 +279,83 @@ abstract class DefaultModel
             return false;
         }
 
-        if ($sth->rowCount() <= 0) {
+        $num_rows = $sth->rowCount();
+
+        if ($this->hasFields()) {
+            if ($num_rows < 1) {
+                $db->freeStatement($sth);
+                $this->raiseError(__METHOD__ ."(), no object with id {$this->id} found!");
+                return false;
+            } elseif ($num_rows > 1) {
+                $db->freeStatement($sth);
+                $this->raiseError(__METHOD__ ."(), more than one object with id {$this->id} found!");
+                return false;
+            }
+        }
+
+        if ($num_rows == 0) {
             $db->freeStatement($sth);
-            $this->raiseError(__METHOD__ ."(), No object with id {$this->id} found!");
+            return true;
         }
 
-        if (!$row = $sth->fetch(\PDO::FETCH_ASSOC)) {
+        if ($this->hasFields()) {
+            if (($row = $sth->fetch(\PDO::FETCH_ASSOC)) === false) {
+                $db->freeStatement($sth);
+                $this->raiseError(__METHOD__ ."(), unable to fetch SQL result for object id ". $this->id);
+                return true;
+            }
+
             $db->freeStatement($sth);
-            $this->raiseError(__METHOD__ ."(), unable to fetch SQL result for object id ". $this->id);
+
+            foreach ($row as $key => $value) {
+                if (($field = $this->getFieldNameFromColumn($key)) === false) {
+                    $this->raiseError(__CLASS__ .'() returned false!');
+                    return false;
+                }
+                if (!$this->hasField($field)) {
+                    $this->raiseError(__METHOD__ ."(), received data for unknown field '{$field}'!");
+                    return false;
+                }
+                if (!$this->validateField($field, $value)) {
+                    $this->raiseError(__CLASS__ ."::validateField() returned false for field {$field}!");
+                    return false;
+                }
+                $this->model_init_values[$key] = $value;
+                $this->$key = $value;
+            }
+        } elseif ($this->isHavingItems()) {
+            while (($row = $sth->fetch(\PDO::FETCH_ASSOC)) !== false) {
+                foreach ($row as $key => $value) {
+                    if (($field = $this->getFieldNameFromColumn($key)) === false) {
+                        $this->raiseError(__CLASS__ .'() returned false!');
+                        return false;
+                    }
+                    if (!in_array($field, array('idx', 'guid'))) {
+                        $this->raiseError(__METHOD__ ."(), received data for unknown field '{$field}'!");
+                        return false;
+                    }
+                    if (!$this->validateField($field, $value)) {
+                        $this->raiseError(__CLASS__ ."::validateField() returned false for field {$field}!");
+                        return false;
+                    }
+                }
+                try {
+                    $item = new $this->model_items_model(array(
+                        'idx' => $row['idx'],
+                        'guid' => $row['guid'],
+                    ));
+                } catch (\Exception $e) {
+                    $this->raiseError(__METHOD__ ."(), failed to load {$this->model_items_model}!");
+                    return false;
+                }
+                if (!$this->addItem($item)) {
+                    $this->raiseError(__CLASS__ .'::addItem() returned false!');
+                    return true;
+                }
+            }
         }
 
-        $db->freeStatement($sth);
-
-        foreach ($row as $key => $value) {
-            if (($field = $this->getFieldNameFromColumn($key)) === false) {
-                $this->raiseError(__CLASS__ .'() returned false!');
-                return false;
-            }
-            if (!$this->hasField($field)) {
-                $this->raiseError(__METHOD__ ."(), received data for unknown field '{$field}'!");
-                return false;
-            }
-            if (!$this->validateField($field, $value)) {
-                $this->raiseError(__CLASS__ ."::validateField() returned false for field {$field}!");
-                return false;
-            }
-            $this->model_init_values[$key] = $value;
-            $this->$key = $value;
-        }
-
-        if (method_exists($this, 'postLoad')) {
+        if (method_exists($this, 'postLoad') && is_callable($this, 'postLoad')) {
             if (!$this->postLoad()) {
                 $this->raiseError(get_called_class() ."::postLoad() method returned false!");
                 return false;
