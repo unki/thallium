@@ -237,7 +237,7 @@ class MainController extends DefaultController
             empty($model_name) ||
             !is_string($model_name)
         ) {
-            $this->raiseError(__METHOD__ .'(), \$model_name parameter is invalid!');
+            $this->raiseError(__METHOD__ .'(), $model_name parameter is invalid!');
             return false;
         }
 
@@ -402,7 +402,7 @@ class MainController extends DefaultController
     public function loadController($controller, $global_name)
     {
         if (empty($controller)) {
-            $this->raiseError("\$controller must not be empty!", true);
+            $this->raiseError(__METHOD__ .'(), $controller parameter is invalid!', true);
             return false;
         }
 
@@ -596,7 +596,7 @@ class MainController extends DefaultController
     final public function setNamespacePrefix($prefix)
     {
         if (!isset($prefix) || empty($prefix) || !is_string($prefix)) {
-            $this->raiseError(__METHOD__ .', \$prefix parameter is invalid!');
+            $this->raiseError(__METHOD__ .'(), $prefix parameter is invalid!');
             return false;
         }
 
@@ -623,22 +623,34 @@ class MainController extends DefaultController
             empty($this->registeredModels) ||
             !is_array($this->registeredModels)
         ) {
-            $this->raiseError(__METHOD__ .'(), registeredModels property is invalid!');
+            $this->raiseError(__METHOD__ .'(), registeredModels property is invalid!', true);
             return false;
         }
 
         if (!isset($nick) || empty($nick) || !is_string($nick)) {
-            $this->raiseError(__METHOD__ .'(), \$nick parameter is invalid!');
+            $this->raiseError(__METHOD__ .'(), $nick parameter is invalid!', true);
             return false;
         }
 
         if (!isset($model) || empty($model) || !is_string($model)) {
-            $this->raiseError(__METHOD__ .'(), \$model parameter is invalid!');
+            $this->raiseError(__METHOD__ .'(), $model parameter is invalid!', true);
             return false;
         }
 
         if ($this->isRegisteredModel($nick, $model)) {
             return true;
+        }
+
+        if (!($prefix = $this->getNamespacePrefix())) {
+            $this->raiseError(__METHOD__ .'(), failed to fetch namespace prefix!', true);
+            return false;
+        }
+
+        $full_model_name = "\\{$prefix}\\Models\\{$model}";
+
+        if (!class_exists($full_model_name, true)) {
+            $this->raiseError(__METHOD__ ."(), model {$model} class does not exist!", true);
+            return false;
         }
 
         $this->registeredModels[$nick] = $model;
@@ -710,7 +722,7 @@ class MainController extends DefaultController
     public function isBelowDirectory($dir, $topmost = null)
     {
         if (empty($dir)) {
-            $this->raiseError("\$dir can not be empty!");
+            $this->raiseError(__METHOD__ .'(), $dir parameter is invalid!');
             return false;
         }
 
@@ -929,6 +941,22 @@ class MainController extends DefaultController
         error_log(__METHOD__ .'(), background jobs issued output!');
         error_log(__METHOD__ .'(), '. $buffer);
         return true;
+    }
+
+    public function getFullModelName($model)
+    {
+        if (!$this->isRegisteredModel($model, $model)) {
+            $this->raiseError(__CLASS__ .'::isRegisteredModel() returned false!');
+            return false;
+        }
+
+        if (!($prefix = $this->getNamespacePrefix())) {
+            $this->raiseError(__METHOD__ .'(), failed to fetch namespace prefix!');
+            return false;
+        }
+
+        $full_model_name = "\\{$prefix}\\Models\\{$model}";
+        return $full_model_name;
     }
 }
 
