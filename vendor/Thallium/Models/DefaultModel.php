@@ -17,23 +17,24 @@
  * GNU Affero General Public License for more details.
  */
 
-namespace Thallium\Models ;
+namespace Thallium\Models;
 
 use \PDO;
 
 abstract class DefaultModel
 {
     protected $model_load_by = array();
-    protected $model_table_name;
-    protected $model_column_prefix;
-    protected $model_fields;
+    protected $model_table_name = '';
+    protected $model_column_prefix = '';
+    protected $model_fields = array();
     protected $model_has_items = false;
     protected $model_items = array();
     protected $model_permit_rpc_updates = false;
     protected $model_rpc_allowed_fields = array();
     protected $model_rpc_allowed_actions = array();
     protected $model_virtual_fields = array();
-    protected $model_init_values;
+    protected $model_init_values = array();
+
     protected $child_names;
     protected $ignore_child_on_clone;
 
@@ -84,17 +85,72 @@ abstract class DefaultModel
             return false;
         }
 
-        if (!isset($this->model_fields) ||
-            empty($this->model_fields) ||
-            !is_array($this->model_fields)
-        ) {
+        if (!isset($this->model_fields) || !is_array($this->model_fields)) {
             $this->raiseError(__METHOD__ .'(), missing property "model_fields"', true);
             return false;
+        }
+
+        if (!empty($this->model_fields)) {
+            $known_field_types = array(
+                FIELD_TYPE,
+                FIELD_INT,
+                FIELD_STRING,
+                FIELD_BOOL,
+                FIELD_TIMESTAMP,
+                FIELD_YESNO,
+                FIELD_DATE,
+                FIELD_GUID,
+            );
+
+            foreach ($this->model_fields as $field => $params) {
+                if (!isset($field) ||
+                    empty($field) ||
+                    !is_string($field) ||
+                    !preg_match('/^[a-zA-Z0-9_]+$/', $field)
+                ) {
+                    $this->raiseError(__METHOD__ .'(), invalid field entry (field name) found!', true);
+                    return false;
+                }
+                if (!isset($params) || empty($params) || !is_array($params)) {
+                    $this->raiseError(__METHOD__ .'(), invalid field params found!', true);
+                    return false;
+                }
+                if (!isset($params[FIELD_TYPE]) ||
+                    empty($params[FIELD_TYPE]) ||
+                    !is_string($params[FIELD_TYPE]) ||
+                    !ctype_alnum($params[FIELD_TYPE])
+                ) {
+                    $this->raiseError(__METHOD__ .'(), invalid field type found!', true);
+                    return false;
+                }
+                if (!in_array($params[FIELD_TYPE], $known_field_types)) {
+                    $this->raiseError(__METHOD__ .'(), unknown field type found!', true);
+                    return false;
+                }
+            }
         }
 
         if (!isset($this->model_load_by) || !is_array($this->model_load_by)) {
             $this->raiseError(__METHOD__ .'(), missing property "model_load_by"', true);
             return false;
+        }
+
+        if (!empty($this->model_load_by)) {
+            foreach ($this->model_load_by as $field => $value) {
+                if (!isset($field) ||
+                    empty($field) ||
+                    !is_string($field) ||
+                    !ctype_alnum($field) ||
+                    !$this->hasField($field)
+                ) {
+                    $this->raiseError(__METHOD__ .'(), $model_load_by contains an invalid field!', true);
+                    return false;
+                }
+                if (!$this->validateField($field, $value)) {
+                    $this->raiseError(__METHOD__ .'(), $model_load_by contains an invalid value!', true);
+                    return false;
+                }
+            }
         }
 
         return true;
@@ -1527,50 +1583,59 @@ abstract class DefaultModel
             return true;
         }
 
-        if ($type == FIELD_STRING) {
-            if (!is_string($value)) {
-                return false;
-            }
-        } elseif ($type == FIELD_INT) {
-            if (!is_numeric($value) || !is_int((int) $value)) {
-                return false;
-            }
-        } elseif ($type == FIELD_BOOL) {
-            if (!is_bool($value)) {
-                return false;
-            }
-        } elseif ($type == FIELD_YESNO) {
-            if (!in_array($value, array('yes', 'no', 'Y', 'N'))) {
-                return false;
-            }
-        } elseif ($type == FIELD_TIMESTAMP) {
-            if (is_float((float) $value)) {
-                if ((float) $value >= PHP_INT_MAX || (float) $value <= ~PHP_INT_MAX) {
+        switch ($type) {
+            case FIELD_STRING:
+                if (!is_string($value)) {
                     return false;
                 }
-            } elseif (is_int((int) $value)) {
-                if ((int) $value >= PHP_INT_MAX || (int) $value <= ~PHP_INT_MAX) {
+                break;
+            case FIELD_INT:
+                if (!is_numeric($value) || !is_int((int) $value)) {
                     return false;
                 }
-            } elseif (is_string($value)) {
+                break;
+            case FIELD_BOOL:
+                if (!is_bool($value)) {
+                    return false;
+                }
+                break;
+            case FIELD_YESNO:
+                if (!in_array($value, array('yes', 'no', 'Y', 'N'))) {
+                    return false;
+                }
+                break;
+            case FIELD_TIMESTAMP:
+                if (is_float((float) $value)) {
+                    if ((float) $value >= PHP_INT_MAX || (float) $value <= ~PHP_INT_MAX) {
+                        return false;
+                    }
+                } elseif (is_int((int) $value)) {
+                    if ((int) $value >= PHP_INT_MAX || (int) $value <= ~PHP_INT_MAX) {
+                        return false;
+                    }
+                } elseif (is_string($value)) {
+                    if (strtotime($value) === false) {
+                        return false;
+                    }
+                } else {
+                    $this->raiseError(__METHOD__ .'(), unsupported timestamp type found!');
+                    return false;
+                }
+                break;
+            case FIELD_DATE:
                 if (strtotime($value) === false) {
                     return false;
                 }
-            } else {
-                $this->raiseError(__METHOD__ .'(), unsupported timestamp type found!');
+                break;
+            case FIELD_GUID:
+                if (!$thallium->isValidGuidSyntax($value)) {
+                    return false;
+                }
+                break;
+            default:
+                $this->raiseError(__METHOD__ ."(), unsupported type {$type} received!");
                 return false;
-            }
-        } elseif ($type == FIELD_DATE) {
-            if (strtotime($value) === false) {
-                return false;
-            }
-        } elseif ($type == FIELD_GUID) {
-            if (!$thallium->isValidGuidSyntax($value)) {
-                return false;
-            }
-        } else {
-            $this->raiseError(__METHOD__ ."(), unsupported type {$type} received!");
-            return false;
+                break;
         }
 
         return true;
