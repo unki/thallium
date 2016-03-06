@@ -648,7 +648,7 @@ class MainController extends DefaultController
     final public function isRegisteredModel($nick = null, $model = null)
     {
         if ((!isset($nick) || empty($nick) || !is_string($nick)) &&
-            (!isset($model) || empty($model) || !is_string($nick))
+            (!isset($model) || empty($model) || !is_string($model))
         ) {
             $this->raiseError(__METHOD__ .'(), can not look for nothing!');
             return false;
