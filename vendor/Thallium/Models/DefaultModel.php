@@ -23,14 +23,14 @@ use \PDO;
 
 abstract class DefaultModel
 {
-    protected $model_load_by = array();
-    protected $model_sort_order = array();
     protected static $model_table_name;
     protected static $model_column_prefix;
     protected static $model_fields = array();
     protected static $model_has_items = false;
-    protected $model_items = array();
     protected static $model_items_model;
+    protected $model_load_by = array();
+    protected $model_sort_order = array();
+    protected $model_items = array();
     protected $model_permit_rpc_updates = false;
     protected $model_rpc_allowed_fields = array();
     protected $model_rpc_allowed_actions = array();
@@ -235,7 +235,7 @@ abstract class DefaultModel
         if (!empty($this->model_sort_order)) {
             $order_by = array();
             foreach ($this->model_sort_order as $field => $mode) {
-                if (($column = $this->column($field)) === false) {
+                if (($column = static::column($field)) === false) {
                     $this->raiseError(__CLASS__ .'::column() returned false!');
                     return false;
                 }
@@ -278,7 +278,7 @@ abstract class DefaultModel
         }
 
         foreach ($fields as $field) {
-            if (($column = $this->column($field)) === false) {
+            if (($column = static::column($field)) === false) {
                 $this->raiseError(__CLASS__ .'::column() returned false!');
                 return false;
             }
@@ -290,7 +290,7 @@ abstract class DefaultModel
         }
 
         foreach ($this->model_load_by as $field => $value) {
-            if (($column = $this->column($field)) === false) {
+            if (($column = static::column($field)) === false) {
                 $this->raiseError(__CLASS__ .'::column() returned false!');
                 return false;
             }
@@ -566,29 +566,29 @@ abstract class DefaultModel
         if (!is_numeric($srcobj->id)) {
             return false;
         }
-        if (!isset($srcobj->model_fields)) {
+        if (!isset($srcobj::$model_fields)) {
             return false;
         }
 
-        foreach (array_keys($srcobj->model_fields) as $field) {
+        foreach (array_keys($srcobj::model_fields) as $field) {
             // check for a matching key in clone's model_fields array
-            if (!in_array($field, array_keys(static::$model_fields))) {
+            if (!static::hasField($field)) {
                 continue;
             }
 
             $this->$field = $srcobj->$field;
         }
 
-        if (method_exists($this, 'preClone')) {
+        if (method_exists($this, 'preClone') && is_callable($this, 'preClone')) {
             if (!$this->preClone($srcobj)) {
                 $this->raiseError(get_called_class() ."::preClone() method returned false!");
                 return false;
             }
         }
 
-        $idx_field = static::$model_column_prefix.'_idx';
-        $guid_field = static::$model_column_prefix.'_guid';
-        $pguid = static::$model_column_prefix.'_derivation_guid';
+        $idx_field = static::column('idx');
+        $guid_field = static::column('guid');
+        $pguid = static::column('derivation_guid');
 
         $this->id = null;
         if (isset($this->$idx_field)) {
@@ -606,7 +606,10 @@ abstract class DefaultModel
             $this->$pguid = $srcobj->$guid_field;
         }
 
-        $this->save();
+        if (!$this->save()) {
+            $this->raiseError(__CLASS__ .'::save() returned false!');
+            return false;
+        }
 
         // if saving was successful, our new object should have an ID now
         if (!isset($this->id) || empty($this->id)) {
@@ -822,9 +825,9 @@ abstract class DefaultModel
             }
         }
 
-        $guid_field = $this->column('guid');
-        $idx_field = $this->column('idx');
-        $time_field = $this->column('time');
+        $guid_field = static::column('guid');
+        $idx_field = static::column('idx');
+        $time_field = static::column('time');
 
         if (!isset($this->$guid_field) || empty($this->$guid_field)) {
             $this->$guid_field = $thallium->createGuid();
@@ -909,7 +912,7 @@ abstract class DefaultModel
 
     } // save()
 
-    final public function toggleStatus($to)
+    /*final public function toggleStatus($to)
     {
         global $db;
 
@@ -960,9 +963,9 @@ abstract class DefaultModel
         $db->freeStatement($sth);
         return true;
 
-    } // toggleStatus()
+    } // toggleStatus()*/
 
-    final public function toggleChildStatus($to, $child_obj, $child_id)
+    /*final public function toggleChildStatus($to, $child_obj, $child_id)
     {
         global $db, $thallium;
 
@@ -1040,7 +1043,7 @@ abstract class DefaultModel
         $db->freeStatement($sth);
         return true;
 
-    } // toggleChildStatus()
+    } // toggleChildStatus() */
 
     final public function prev()
     {
@@ -1229,9 +1232,12 @@ abstract class DefaultModel
         return true;
     }
 
-    final protected function column($suffix)
+    final protected static function column($suffix)
     {
-        if (!isset(static::$model_column_prefix) || empty(static::$model_column_prefix)) {
+        if (!isset(static::$model_column_prefix) ||
+            empty(static::$model_column_prefix) ||
+            !is_string(static::$model_column_prefix)
+        ) {
             return $suffix;
         }
 
@@ -1592,7 +1598,7 @@ abstract class DefaultModel
             return false;
         }
 
-        if (!isset($this->model_items)) {
+        if (!isset($this->model_items) || !is_array($this->model_items)) {
             $this->raiseError(__METHOD__ .'(), no items available!');
             return false;
         }
