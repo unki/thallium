@@ -24,6 +24,7 @@ use \PDO;
 abstract class DefaultModel
 {
     protected $model_load_by = array();
+    protected $model_sort_order = array();
     protected $model_table_name;
     protected $model_column_prefix;
     protected $model_fields = array();
@@ -39,7 +40,7 @@ abstract class DefaultModel
     protected $child_names;
     protected $ignore_child_on_clone;
 
-    public function __construct($load_by = array())
+    public function __construct($load_by = array(), $sort_order = array())
     {
         if (!isset($load_by) || (!is_array($load_by) && !is_null($load_by))) {
             $this->raiseError(__METHOD__ .'(), parameter $load_by has to be an array!', true);
@@ -47,6 +48,7 @@ abstract class DefaultModel
         }
 
         $this->model_load_by = $load_by;
+        $this->model_sort_order = $sort_order;
 
         if (!$this->validateModelSettings()) {
             return;
@@ -172,6 +174,23 @@ abstract class DefaultModel
             }
         }
 
+        if (!empty($this->model_sort_order)) {
+            foreach ($this->model_sort_order as $field => $model) {
+                if (!isset($field) ||
+                    empty($field) ||
+                    !is_string($field) ||
+                    !ctype_alnum($field) ||
+                    !$this->hasField($field)
+                ) {
+                    $this->raiseError(__METHOD__ .'(), $model_sort_order contains an invalid field!', true);
+                    return false;
+                }
+                if (!in_array(strtoupper($mode), array('ASC', 'DESC'))) {
+                    $this->raiseError(__METHOD__ .'(), \$order is invalid!');
+                    return false;
+                }
+            }
+        }
         return true;
     }
 
@@ -179,7 +198,7 @@ abstract class DefaultModel
      * load
      *
      */
-    protected function load()
+    protected function load($extend_query_where = null)
     {
         global $db;
 
@@ -189,6 +208,24 @@ abstract class DefaultModel
 
         if ($this->hasFields() && empty($this->model_load_by)) {
             return true;
+        }
+
+        if (!isset($this->model_sort_order) ||
+            !is_array($this->model_sort_order)
+        ) {
+            $this->raiseError(__METHOD__ .'(), $model_sort_order is invalid!');
+            return false;
+        }
+
+        if (!empty($this->model_sort_order)) {
+            $order_by = array();
+            foreach ($this->model_sort_order as $field => $mode) {
+                if (($column = $this->column($field)) === false) {
+                    $this->raiseError(__CLASS__ .'::column() returned false!');
+                    return false;
+                }
+                array_push($order_by, "{$column} {$mode}");
+            }
         }
 
         if (method_exists($this, 'preLoad') && is_callable($this, 'preLoad')) {
@@ -256,6 +293,13 @@ abstract class DefaultModel
         )) === false) {
             $this->raiseError(get_class($db) .'::buildQuery() returned false!');
             return false;
+        }
+
+        if (isset($order_by) &&
+            !empty($order_by) &&
+            is_array($order_by)
+        ) {
+            $sql.= ' ORDER BY '. implode(', ', $oder_by);
         }
 
         try {
