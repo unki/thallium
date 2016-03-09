@@ -1307,7 +1307,11 @@ abstract class DefaultModel
         if (!isset($field) ||
             empty($field) ||
             !is_string($field) ||
-            !static::hasField($field)
+            (!static::hasField($field) &&
+            (!isset($this) ||
+            empty($this) ||
+            !$this->hasVirtualFields() ||
+            !$this->hasVirtualField($field)))
         ) {
             static::raiseError(__METHOD__ .'(), $field is invalid!', true);
             return false;
