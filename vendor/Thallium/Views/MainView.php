@@ -33,7 +33,7 @@ class MainView extends DefaultView
         $tmpl->assign("framework_schema_version", $db->getFrameworkDatabaseSchemaVersion());
 
         if (!$tmpl->templateExists('main.tpl')) {
-            $this->raiseError(__METHOD__ .'(), main.tpl does not exist!');
+            static::raiseError(__METHOD__ .'(), main.tpl does not exist!');
             return false;
         }
 
