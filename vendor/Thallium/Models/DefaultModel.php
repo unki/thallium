@@ -1576,7 +1576,7 @@ abstract class DefaultModel
     {
         global $thallium;
 
-        $thallium->raiseError(
+        $thallium::raiseError(
             $string,
             $stop_execution,
             $exception
