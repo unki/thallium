@@ -21,7 +21,7 @@ namespace Thallium\Controllers;
 
 class ViewsController extends DefaultController
 {
-    public $page_map = array(
+    protected static $page_map = array(
         '/^$/' => 'MainView',
         '/^main$/' => 'MainView',
         '/^about$/' => 'AboutView',
@@ -51,7 +51,7 @@ class ViewsController extends DefaultController
     {
         global $thallium;
 
-        foreach (array_keys($this->page_map) as $entry) {
+        foreach (array_keys(static::$page_map) as $entry) {
             if (($result = preg_match($entry, $view)) === false) {
                 static::raiseError(__METHOD__ ."(), unable to match ${entry} in ${view}");
                 return false;
@@ -66,12 +66,12 @@ class ViewsController extends DefaultController
                 return false;
             }
 
-            if (!class_exists('\\'. $prefix .'\\Views\\'.$this->page_map[$entry])) {
-                static::raiseError(__METHOD__ ."(), view class ". $this->page_map[$entry] ." does not exist!");
+            if (!class_exists('\\'. $prefix .'\\Views\\'.static::$page_map[$entry])) {
+                static::raiseError(__METHOD__ ."(), view class ". static::$page_map[$entry] ." does not exist!");
                 return false;
             }
 
-            return $this->page_map[$entry];
+            return static::$page_map[$entry];
         }
     }
 
@@ -84,12 +84,17 @@ class ViewsController extends DefaultController
             return false;
         }
 
+        if (!isset($view) || empty($view) || !is_string($view)) {
+            $this->raiseError(__METHOD__ .'(), $view parameter is invalid!');
+            return false;
+        }
+
         $view = '\\'. $prefix .'\\Views\\'.$view;
 
         try {
             $page = new $view;
         } catch (Exception $e) {
-            static::raiseError("Failed to load view {$view}!");
+            static::raiseError(__METHOD__ ."(), failed to load '{$view}'!");
             return false;
         }
 
