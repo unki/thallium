@@ -29,14 +29,14 @@ class JobsController extends DefaultController
     public function __construct()
     {
         if (!$this->removeExpiredJobs()) {
-            $this->raiseError('removeExpiredJobs() returned false!', true);
+            static::raiseError('removeExpiredJobs() returned false!', true);
             return false;
         }
 
         try {
             $this->registerHandler('delete-request', array($this, 'handleDeleteRequest'));
         } catch (\Exception $e) {
-            $this->raiseError(__METHOD__ .'(), failed to register handlers!', true);
+            static::raiseError(__METHOD__ .'(), failed to register handlers!', true);
             return false;
         }
 
@@ -58,12 +58,12 @@ class JobsController extends DefaultController
         try {
             $jobs = new \Thallium\Models\JobsModel;
         } catch (\Exception $e) {
-            $this->raiseError('Failed to load JobsModel!');
+            static::raiseError('Failed to load JobsModel!');
             return false;
         }
 
         if (!$jobs->deleteExpiredJobs(self::EXPIRE_TIMEOUT)) {
-            $this->raiseError(get_class($jobs) .'::deleteExpiredJobs() returned false!');
+            static::raiseError(get_class($jobs) .'::deleteExpiredJobs() returned false!');
             return false;
         }
 
@@ -75,53 +75,53 @@ class JobsController extends DefaultController
         global $thallium;
 
         if (!isset($command) || empty($command) || !is_string($command)) {
-            $this->raiseError(__METHOD__ .'(), parameter $commmand is required!');
+            static::raiseError(__METHOD__ .'(), parameter $commmand is required!');
             return false;
         }
 
         if (isset($sessionid) && (empty($sessionid) || !is_string($sessionid))) {
-            $this->raiseError(__METHOD__ .'(), parameter $sessionid has to be a string!');
+            static::raiseError(__METHOD__ .'(), parameter $sessionid has to be a string!');
             return false;
         }
 
         if (isset($request_guid) &&
            (empty($request_guid) || !$thallium->isValidGuidSyntax($request_guid))
         ) {
-            $this->raiseError(__METHOD__ .'(), parameter $request_guid is invalid!');
+            static::raiseError(__METHOD__ .'(), parameter $request_guid is invalid!');
             return false;
         }
 
         try {
             $job = new \Thallium\Models\JobModel;
         } catch (\Exception $e) {
-            $this->raiseError(__METHOD__ .'(), unable to load JobModel!');
+            static::raiseError(__METHOD__ .'(), unable to load JobModel!');
             return false;
         }
 
         if (isset($sessionid) && !$job->setSessionId($sessionid)) {
-            $this->raiseError(get_class($job) .'::setSessionId() returned false!');
+            static::raiseError(get_class($job) .'::setSessionId() returned false!');
             return false;
         }
 
         if (isset($request_guid) && !$job->setRequestGuid($request_guid)) {
-            $this->raiseError(get_class($job) .'::setRequestGuid() returned false!');
+            static::raiseError(get_class($job) .'::setRequestGuid() returned false!');
             return false;
         }
 
         if (!$job->setCommand($command)) {
-            $this->raiseError(get_class($job) .'::setCommand() returned false!');
+            static::raiseError(get_class($job) .'::setCommand() returned false!');
             return false;
         }
 
         if (isset($parameters) && !empty($parameters)) {
             if (!$job->setParameters($parameters)) {
-                $this->raiseError(get_class($job) .'::setParameters() returned false!');
+                static::raiseError(get_class($job) .'::setParameters() returned false!');
                 return false;
             }
         }
 
         if (!$job->save()) {
-            $this->raiseError(get_class($job) .'::save() returned false!');
+            static::raiseError(get_class($job) .'::save() returned false!');
             return false;
         }
 
@@ -129,7 +129,7 @@ class JobsController extends DefaultController
             empty($job->job_guid) ||
             !$thallium->isValidGuidSyntax($job->job_guid)
         ) {
-            $this->raiseError(get_class($job) .'::save() has not lead to a valid GUID!');
+            static::raiseError(get_class($job) .'::save() has not lead to a valid GUID!');
             return false;
         }
 
@@ -141,7 +141,7 @@ class JobsController extends DefaultController
         global $thallium;
 
         if (!isset($job_guid) || empty($job_guid) || !$thallium->isValidGuidSyntax($job_guid)) {
-            $this->raiseError(__METHOD__ .', first parameter has to be a valid GUID!');
+            static::raiseError(__METHOD__ .', first parameter has to be a valid GUID!');
             return false;
         }
 
@@ -150,12 +150,12 @@ class JobsController extends DefaultController
                 'guid' => $job_guid
             ));
         } catch (\Exception $e) {
-            $this->raiseError(__METHOD__ .", failed to load JobModel(null, {$job_guid})");
+            static::raiseError(__METHOD__ .", failed to load JobModel(null, {$job_guid})");
             return false;
         }
 
         if (!$job->delete()) {
-            $this->raiseError(get_class($job) .'::delete() returned false!');
+            static::raiseError(get_class($job) .'::delete() returned false!');
             return false;
         }
 
@@ -173,7 +173,7 @@ class JobsController extends DefaultController
         global $thallium;
 
         if (!isset($job_guid) || empty($job_guid) || !$thallium->isValidGuidSyntax($job_guid)) {
-            $this->raiseError(__METHOD__ .', first parameter has to be a valid GUID!');
+            static::raiseError(__METHOD__ .', first parameter has to be a valid GUID!');
             return false;
         }
 
@@ -215,33 +215,33 @@ class JobsController extends DefaultController
                     'guid' => $job
                 ));
             } catch (\Exception $e) {
-                $this->raiseError(__METHOD__ .'(), failed to load JobModel!');
+                static::raiseError(__METHOD__ .'(), failed to load JobModel!');
                 return false;
             }
         }
 
         if (!is_object($job)) {
-            $this->raiseError(__METHOD__ .'(), no valid JobModel provided!');
+            static::raiseError(__METHOD__ .'(), no valid JobModel provided!');
             return false;
         }
 
         if (($command = $job->getCommand()) === false) {
-            $this->raiseError(get_class($job) .'::getCommand() returned false!');
+            static::raiseError(get_class($job) .'::getCommand() returned false!');
             return false;
         }
 
         if (!isset($command) || empty($command) || !is_string($command)) {
-            $this->raiseError(get_class($job) .'::getCommand() returned invalid data!');
+            static::raiseError(get_class($job) .'::getCommand() returned invalid data!');
             return false;
         }
 
         if (!$this->isRegisteredHandler($command)) {
-            $this->raiseError(__METHOD__ ."(), there is no handler for {$command}!");
+            static::raiseError(__METHOD__ ."(), there is no handler for {$command}!");
             return false;
         }
 
         if (($handler = $this->getHandler($command)) === false) {
-            $this->raiseError(__CLASS__ .'::getHandler() returned false!');
+            static::raiseError(__CLASS__ .'::getHandler() returned false!');
             return false;
         }
 
@@ -249,12 +249,12 @@ class JobsController extends DefaultController
             !isset($handler[0]) || empty($handler[0]) || !is_object($handler[0]) ||
             !isset($handler[1]) || empty($handler[1]) || !is_string($handler[1])
         ) {
-            $this->raiseError(__CLASS__ .'::getHandler() returned invalid data!');
+            static::raiseError(__CLASS__ .'::getHandler() returned invalid data!');
             return false;
         }
 
         if (!is_callable($handler, true)) {
-            $this->raiseError(__METHOD__ .'(), handler is not callable!');
+            static::raiseError(__METHOD__ .'(), handler is not callable!');
             return false;
         }
 
@@ -263,7 +263,7 @@ class JobsController extends DefaultController
         }
 
         if (!call_user_func($handler, $job)) {
-            $this->raiseError(get_class($handler[0]) ."::{$handler[1]}() returned false!");
+            static::raiseError(get_class($handler[0]) ."::{$handler[1]}() returned false!");
             return false;
         }
 
@@ -279,17 +279,17 @@ class JobsController extends DefaultController
         try {
             $jobs = new \Thallium\Models\JobsModel;
         } catch (\Exception $e) {
-            $this->raiseError(__METHOD__ .'(), failed to load JobsModel!');
+            static::raiseError(__METHOD__ .'(), failed to load JobsModel!');
             return false;
         }
 
         if (($pending = $jobs->getPendingJobs()) === false) {
-            $this->raiseError(get_class($jobs) .'::getPendingJobs() returned false!');
+            static::raiseError(get_class($jobs) .'::getPendingJobs() returned false!');
             return false;
         }
 
         if (!isset($pending) || !is_array($pending)) {
-            $this->raiseError(get_class($jobs) .'::getPendingJobs() returned invalid data!');
+            static::raiseError(get_class($jobs) .'::getPendingJobs() returned invalid data!');
             return false;
         }
 
@@ -303,32 +303,32 @@ class JobsController extends DefaultController
             }
 
             if (!$job->setProcessingFlag()) {
-                $this->raiseError(get_class($job) .'::setProcessingFlag() returned false!');
+                static::raiseError(get_class($job) .'::setProcessingFlag() returned false!');
                 return false;
             }
 
             if (!$job->save()) {
-                $this->raiseError(get_class($job) .'::save() returned false!');
+                static::raiseError(get_class($job) .'::save() returned false!');
                 return false;
             }
 
             if (!$this->setCurrentJob($job->getGuid())) {
-                $this->raiseError(__CLASS__ .'::setCurrentJob() returned false!');
+                static::raiseError(__CLASS__ .'::setCurrentJob() returned false!');
                 return false;
             }
 
             if (!$this->runJob($job)) {
-                $this->raiseError(__CLASS__ .'::runJob() returned false!');
+                static::raiseError(__CLASS__ .'::runJob() returned false!');
                 return false;
             }
 
             if (!$job->delete()) {
-                $this->raiseError(get_class($job) .'::delete() returned false!');
+                static::raiseError(get_class($job) .'::delete() returned false!');
                 return false;
             }
 
             if (!$this->clearCurrentJob()) {
-                $this->raiseError(__CLASS__ .'::clearCurrentJob() returned false!');
+                static::raiseError(__CLASS__ .'::clearCurrentJob() returned false!');
                 return false;
             }
         }
@@ -339,12 +339,12 @@ class JobsController extends DefaultController
     public function registerHandler($job_name, $handler)
     {
         if (!isset($job_name) || empty($job_name) || !is_string($job_name)) {
-            $this->raiseError(__METHOD__ .'(), $job_name parameter is invalid!');
+            static::raiseError(__METHOD__ .'(), $job_name parameter is invalid!');
             return false;
         }
 
         if (!isset($handler) || empty($handler) || (!is_string($handler) && !is_array($handler))) {
-            $this->raiseError(__METHOD__ .'(), $handler parameter is invalid!');
+            static::raiseError(__METHOD__ .'(), $handler parameter is invalid!');
             return false;
         }
 
@@ -355,13 +355,13 @@ class JobsController extends DefaultController
                 !isset($handler[0]) || empty($handler[0]) || !is_object($handler[0]) ||
                 !isset($handler[1]) || empty($handler[1]) || !is_string($handler[1])
             ) {
-                $this->raiseError(__METHOD__ .'(), $handler parameter contains invalid data!');
+                static::raiseError(__METHOD__ .'(), $handler parameter contains invalid data!');
                 return false;
             }
         }
 
         if ($this->isRegisteredHandler($job_name)) {
-            $this->raiseError(__METHOD__ ."(), a handler for {$job_name} is already registered!");
+            static::raiseError(__METHOD__ ."(), a handler for {$job_name} is already registered!");
             return false;
         }
 
@@ -371,7 +371,7 @@ class JobsController extends DefaultController
     public function unregisterHandler($job_name)
     {
         if (!isset($job_name) || empty($job_name) || !is_string($job_name)) {
-            $this->raiseError(__METHOD__ .'(), $job_name parameter is invalid!');
+            static::raiseError(__METHOD__ .'(), $job_name parameter is invalid!');
             return false;
         }
 
@@ -386,7 +386,7 @@ class JobsController extends DefaultController
     public function isRegisteredHandler($job_name)
     {
         if (!isset($job_name) || empty($job_name) || !is_string($job_name)) {
-            $this->raiseError(__METHOD__ .'(), $job_name parameter is invalid!');
+            static::raiseError(__METHOD__ .'(), $job_name parameter is invalid!');
             return false;
         }
 
@@ -400,12 +400,12 @@ class JobsController extends DefaultController
     public function getHandler($job_name)
     {
         if (!isset($job_name) || empty($job_name) || !is_string($job_name)) {
-            $this->raiseError(__METHOD__ .'(), $job_name parameter is invalid!');
+            static::raiseError(__METHOD__ .'(), $job_name parameter is invalid!');
             return false;
         }
 
         if (!$this->isRegisteredHandler($job_name)) {
-            $this->raiseError(__METHOD__ .'(), no such handler!');
+            static::raiseError(__METHOD__ .'(), no such handler!');
             return false;
         }
 
@@ -417,36 +417,36 @@ class JobsController extends DefaultController
         global $thallium, $mbus;
 
         if (!$mbus->sendMessageToClient('delete-reply', 'Preparing', '10%')) {
-            $this->raiseError(get_class($mbus) .'::sendMessageToClient() returned false!');
+            static::raiseError(get_class($mbus) .'::sendMessageToClient() returned false!');
             return false;
         }
 
         if (empty($job) || !is_a($job, 'Thallium\Models\JobModel')) {
-            $this->raiseError(__METHOD__ .'() requires a JobModel reference as parameter!');
+            static::raiseError(__METHOD__ .'() requires a JobModel reference as parameter!');
             return false;
         }
 
         if (!$job->hasParameters() || ($delete_request = $job->getParameters()) === false) {
-            $this->raiseError(get_class($job) .'::getParameters() returned false!');
+            static::raiseError(get_class($job) .'::getParameters() returned false!');
             return false;
         }
 
         if (!is_object($delete_request)) {
-            $this->raiseError(get_class($job) .'::getParameters() returned invalid data!');
+            static::raiseError(get_class($job) .'::getParameters() returned invalid data!');
             return false;
         }
 
         if (!isset($delete_request->id) || empty($delete_request->id) ||
             !isset($delete_request->guid) || empty($delete_request->guid)
         ) {
-            $this->raiseError(__METHOD__ .'() delete-request is incomplete!');
+            static::raiseError(__METHOD__ .'() delete-request is incomplete!');
             return false;
         }
 
         if ($delete_request->id != 'all' &&
             !$thallium->isValidId($delete_request->id)
         ) {
-            $this->raiseError(__METHOD__ .'() \$id is invalid!');
+            static::raiseError(__METHOD__ .'() \$id is invalid!');
             return false;
 
         }
@@ -454,22 +454,22 @@ class JobsController extends DefaultController
         if ($delete_request->guid != 'all' &&
             !$thallium->isValidGuidSyntax($delete_request->guid)
         ) {
-            $this->raiseError(__METHOD__ .'() \$guid is invalid!');
+            static::raiseError(__METHOD__ .'() \$guid is invalid!');
             return false;
         }
 
         if (!$mbus->sendMessageToClient('delete-reply', 'Deleting...', '20%')) {
-            $this->raiseError(get_class($mbus) .'::sendMessageToClient() returned false!');
+            static::raiseError(get_class($mbus) .'::sendMessageToClient() returned false!');
             return false;
         }
 
         if (!isset($delete_request->model) || empty($delete_request->model)) {
-            $this->raiseError(__METHOD__ .'(), delete-request does not contain model information!');
+            static::raiseError(__METHOD__ .'(), delete-request does not contain model information!');
             return false;
         }
 
         if (!$thallium->isRegisteredModel($delete_request->model)) {
-            $this->raiseError(__METHOD__ .'(), delete-request contains an unsupported model!');
+            static::raiseError(__METHOD__ .'(), delete-request contains an unsupported model!');
             return false;
         }
 
@@ -478,12 +478,12 @@ class JobsController extends DefaultController
         $guid = $delete_request->guid;
 
         if (($obj = $thallium->loadModel($model, $id, $guid)) === false) {
-            $this->raiseError(get_class($thallium) .'::loadModel() returned false!');
+            static::raiseError(get_class($thallium) .'::loadModel() returned false!');
             return false;
         }
 
         if (!$obj->permitsRpcActions('delete')) {
-            $this->raiseError(__METHOD__ ."(), {$obj_name} does not permit 'delete' action!");
+            static::raiseError(__METHOD__ ."(), {$obj_name} does not permit 'delete' action!");
             return false;
         }
 
@@ -494,23 +494,23 @@ class JobsController extends DefaultController
                 $rm_method = 'delete';
             }
             if (!$obj->$rm_method()) {
-                $this->raiseError(get_class($obj) ."::${rm_method}() returned false!");
+                static::raiseError(get_class($obj) ."::${rm_method}() returned false!");
                 return false;
             }
             if (!$mbus->sendMessageToClient('delete-reply', 'Done', '100%')) {
-                $this->raiseError(get_class($mbus) .'::sendMessageToClient() returned false!');
+                static::raiseError(get_class($mbus) .'::sendMessageToClient() returned false!');
                 return false;
             }
             return true;
         }
 
         if (!$obj->delete()) {
-            $this->raiseError(get_class($obj) .'::delete() returned false!');
+            static::raiseError(get_class($obj) .'::delete() returned false!');
             return false;
         }
 
         if (!$mbus->sendMessageToClient('delete-reply', 'Done', '100%')) {
-            $this->raiseError(get_class($mbus) .'::sendMessageToClient() returned false!');
+            static::raiseError(get_class($mbus) .'::sendMessageToClient() returned false!');
             return false;
         }
 
