@@ -49,17 +49,17 @@ class HttpRouterController extends DefaultController
 
         // check HTTP request method
         if (!isset($_SERVER['REQUEST_URI']) || empty($_SERVER['REQUEST_URI'])) {
-            $this->raiseError("Error - \$_SERVER['REQUEST_URI'] is not set!");
+            static::raiseError("Error - \$_SERVER['REQUEST_URI'] is not set!");
             return false;
         }
 
         if (!isset($_SERVER['REQUEST_METHOD']) || empty($_SERVER['REQUEST_METHOD'])) {
-            $this->raiseError("\$_SERVER['REQUEST_METHOD'] is not set!");
+            static::raiseError("\$_SERVER['REQUEST_METHOD'] is not set!");
             return false;
         }
 
         if (!$this->isValidRequestMethod($_SERVER['REQUEST_METHOD'])) {
-            $this->raiseError("unspported request method {$_SERVER['REQUEST_METHOD']}");
+            static::raiseError("unspported request method {$_SERVER['REQUEST_METHOD']}");
             return false;
         }
 
@@ -72,7 +72,7 @@ class HttpRouterController extends DefaultController
 
         // just to check if someone may fools us.
         if (substr_count($uri, '/') > 10) {
-            $this->raiseError(__METHOD__ .'(), request looks strange - are you try to fooling us?', true);
+            static::raiseError(__METHOD__ .'(), request looks strange - are you try to fooling us?', true);
             return false;
         }
 
@@ -96,7 +96,7 @@ class HttpRouterController extends DefaultController
             empty($this->query_parts) ||
             count($this->query_parts) < 1
         ) {
-            $this->raiseError(__METHOD__ .'(), unable to parse request URI - nothing to be found.', true);
+            static::raiseError(__METHOD__ .'(), unable to parse request URI - nothing to be found.', true);
             return false;
         }
 
@@ -106,7 +106,7 @@ class HttpRouterController extends DefaultController
 
         if ($last_element >= 0 && strpos($this->query_parts[$last_element], '?') !== false) {
             if (($query_parts_params = explode('?', $this->query_parts[$last_element], 2)) === false) {
-                $this->raiseError(__METHOD__ .'(), explode() returned false!');
+                static::raiseError(__METHOD__ .'(), explode() returned false!');
                 return false;
             }
             $this->query_parts[$last_element] = $query_parts_params[0];
@@ -125,7 +125,7 @@ class HttpRouterController extends DefaultController
         } elseif (isset($this->query_parts[0]) && !empty($this->query_parts[0])) {
             $this->query->view = $this->query_parts[0];
         } else {
-            $this->raiseError(
+            static::raiseError(
                 "Something is wrong here. "
                 ."Check if base_web_path is correctly defined in your configuration."
             );
@@ -193,15 +193,15 @@ class HttpRouterController extends DefaultController
             )
         ) {
             if (!isset($_POST['type']) || !isset($_POST['action'])) {
-                $this->raiseError("Incomplete RPC request!");
+                static::raiseError("Incomplete RPC request!");
                 return false;
             }
             if (!is_string($_POST['type']) || !is_string($_POST['action'])) {
-                $this->raiseError("Invalid RPC request!");
+                static::raiseError("Invalid RPC request!");
                 return false;
             }
             if ($_POST['type'] != "rpc" && $this->isValidRpcAction($_POST['action'])) {
-                $this->raiseError("Invalid RPC action!");
+                static::raiseError("Invalid RPC action!");
                 return false;
             }
             $this->query->call_type = "rpc";
@@ -302,7 +302,7 @@ class HttpRouterController extends DefaultController
     public function addValidRpcAction($action)
     {
         if (!isset($action) || empty($action) || !is_string($action)) {
-            $this->raiseError(__METHOD__ .'(), $action parameter is invalid!');
+            static::raiseError(__METHOD__ .'(), $action parameter is invalid!');
             return false;
         }
 
@@ -317,7 +317,7 @@ class HttpRouterController extends DefaultController
     public function isValidRpcAction($action)
     {
         if (!isset($action) || empty($action) || !is_string($action)) {
-            $this->raiseError(__METHOD__ .'(), $action parameter is invalid!');
+            static::raiseError(__METHOD__ .'(), $action parameter is invalid!');
             return false;
         }
 
@@ -398,7 +398,7 @@ class HttpRouterController extends DefaultController
         global $thallium;
 
         if (($models = $thallium->getRegisteredModels()) === false) {
-            $this->raiseError(get_class($thallium) .'::getRegisteredModels() returned false!');
+            static::raiseError(get_class($thallium) .'::getRegisteredModels() returned false!');
             return false;
         }
 
