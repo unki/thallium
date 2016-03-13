@@ -24,7 +24,6 @@ abstract class DefaultController
     const CONFIG_DIRECTORY = APP_BASE ."/config";
     const CACHE_DIRECTORY = APP_BASE ."/cache";
     const LOG_LEVEL = LOG_WARNING;
-    protected $last_error;
 
     public function __construct()
     {
@@ -36,30 +35,29 @@ abstract class DefaultController
         global $mbus;
 
         if (!isset($command) || empty($command) || !is_string($command)) {
-            $this->raiseError(__METHOD__ .', parameter \$command is mandatory and has to be a string!');
+            static::raiseError(__METHOD__ .', parameter \$command is mandatory and has to be a string!');
             return false;
         }
         if (!isset($body) || empty($body) || !is_string($body)) {
-            $this->raiseError(__METHOD__ .', parameter \$body is mandatory and has to be a string!');
+            static::raiseError(__METHOD__ .', parameter \$body is mandatory and has to be a string!');
             return false;
         }
 
         if (isset($value) && !empty($value) && !is_string($value)) {
-            $this->raiseError(__METHOD__ .', parameter \$value has to be a string!');
+            static::raiseError(__METHOD__ .', parameter \$value has to be a string!');
             return false;
         }
 
         if (!$mbus->sendMessageToClient($command, $body, $value)) {
-            $this->raiseError(get_class($mbus) .'::sendMessageToClient() returned false!');
+            static::raiseError(get_class($mbus) .'::sendMessageToClient() returned false!');
             return false;
         }
 
         return true;
     }
 
-    public function raiseError($text, $stop_execution = false, $catched_exception = null)
+    public static function raiseError($text, $stop_execution = false, $catched_exception = null)
     {
-        $this->last_error = $text;
         if (defined('DB_NOERROR')) {
             return;
         }
@@ -137,12 +135,12 @@ abstract class DefaultController
 
         if (!isset($obj) || empty($obj) || !is_object($obj) ||
             !isset($model) || empty($model) || !is_string($model)) {
-            $this->raiseError(__METHOD__ .'(), parameters are invalid!');
+            static::raiseError(__METHOD__ .'(), parameters are invalid!');
             return false;
         }
 
         if (!($prefix = $thallium->getNamespacePrefix())) {
-            $this->raiseError(get_class($thallium) .'::getNamespacePrefix() returned false!');
+            static::raiseError(get_class($thallium) .'::getNamespacePrefix() returned false!');
             return false;
         }
 
