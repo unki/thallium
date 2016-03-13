@@ -26,32 +26,32 @@ class AuditController extends DefaultController
         try {
             $entry = new \Thallium\Models\AuditEntryModel;
         } catch (Exception $e) {
-            $this->raiseError("Failed to load AuditEntryModel");
+            static::raiseError("Failed to load AuditEntryModel");
             return false;
         }
 
         if (!$entry->setMessage($message)) {
-            $this->raiseError("AuditEntryModel::setMessage() returned false!");
+            static::raiseError("AuditEntryModel::setMessage() returned false!");
             return false;
         }
 
         if (!empty($guid) && !$entry->setEntryGuid($guid)) {
-            $this->raiseError("AuditEntryModel::setEntryGuid() returned false!");
+            static::raiseError("AuditEntryModel::setEntryGuid() returned false!");
             return false;
         }
 
         if (!$entry->setEntryType($entry_type)) {
-            $this->raiseError("AuditEntryModel::setEntryType() returned false!");
+            static::raiseError("AuditEntryModel::setEntryType() returned false!");
             return false;
         }
 
         if (!$entry->setScene($scene)) {
-            $this->raiseError("AuditEntryModel::setScene() returned false!");
+            static::raiseError("AuditEntryModel::setScene() returned false!");
             return false;
         }
 
         if (!$entry->save()) {
-            $this->raiseError("AuditEntryModel::save() returned false!");
+            static::raiseError("AuditEntryModel::save() returned false!");
             return false;
         }
 
@@ -63,24 +63,24 @@ class AuditController extends DefaultController
         global $thallium;
 
         if (empty($guid) || !$thallium->isValidGuidSyntax($guid)) {
-            $this->raiseError(__METHOD__ .' requires a valid GUID as first parameter!');
+            static::raiseError(__METHOD__ .' requires a valid GUID as first parameter!');
             return false;
         }
 
         try {
             $log = new \Thallium\Models\AuditLogModel($guid);
         } catch (\Exception $e) {
-            $this->raiseError("Failed to load AuditLogModel! ". $e->getMessage());
+            static::raiseError("Failed to load AuditLogModel! ". $e->getMessage());
             return false;
         }
 
         if (!$entries = $log->getLog()) {
-            $this->raiseError(get_class($log) .'::getLog() returned false!');
+            static::raiseError(get_class($log) .'::getLog() returned false!');
             return false;
         }
 
         if (!is_array($entries)) {
-            $this->raiseError(__METHOD__ .' invalid audit log retrieved!');
+            static::raiseError(__METHOD__ .' invalid audit log retrieved!');
             return false;
         }
 
