@@ -29,11 +29,11 @@ class InstallerController extends DefaultController
 
         if ($db->checkTableExists("TABLEPREFIXmeta")) {
             if (($this->schema_version_before = $db->getApplicationDatabaseSchemaVersion()) === false) {
-                $this->raiseError(get_class($db) .'::getApplicationDatabaseSchemaVersion() returned false!');
+                static::raiseError(get_class($db) .'::getApplicationDatabaseSchemaVersion() returned false!');
                 return false;
             }
             if (($this->framework_schema_version_before = $db->getFrameworkDatabaseSchemaVersion()) === false) {
-                $this->raiseError(get_class($db) .'::getFrameworkDatabaseSchemaVersion() returned false!');
+                static::raiseError(get_class($db) .'::getFrameworkDatabaseSchemaVersion() returned false!');
                 return false;
             }
         }
@@ -50,7 +50,7 @@ class InstallerController extends DefaultController
             $this->framework_schema_version_before < $db->getFrameworkSoftwareSchemaVersion()
         ) {
             if (!$this->createDatabaseTables()) {
-                $this->raiseError(__CLASS__ .'::createDatabaseTables() returned false!');
+                static::raiseError(__CLASS__ .'::createDatabaseTables() returned false!');
                 return false;
             }
         }
@@ -59,7 +59,7 @@ class InstallerController extends DefaultController
             $db->getFrameworkDatabaseSchemaVersion() < $db->getFrameworkSoftwareSchemaVersion()
         ) {
             if (!$this->upgradeDatabaseSchema()) {
-                $this->raiseError(__CLASS__ .'::upgradeDatabaseSchema() returned false!');
+                static::raiseError(__CLASS__ .'::upgradeDatabaseSchema() returned false!');
                 return false;
             }
         }
@@ -77,7 +77,7 @@ class InstallerController extends DefaultController
         print "Framework database schema version after upgrade: {$db->getFrameworkDatabaseSchemaVersion()}<br />\n";
 
         if (!($base_path = $config->getWebPath())) {
-            $this->raiseError(get_class($config) .'"::getWebPath() returned false!');
+            static::raiseError(get_class($config) .'"::getWebPath() returned false!');
             return false;
         }
 
@@ -89,12 +89,12 @@ class InstallerController extends DefaultController
     protected function createDatabaseTables()
     {
         if (!($this->createFrameworkDatabaseTables())) {
-            $this->raiseError(__CLASS__ .'::createFrameworkDatabaseTables() returned false!');
+            static::raiseError(__CLASS__ .'::createFrameworkDatabaseTables() returned false!');
             return false;
         }
 
         if (!($this->createApplicationDatabaseTables())) {
-            $this->raiseError(__CLASS__ .'::createApplicationDatabaseTables() returned false!');
+            static::raiseError(__CLASS__ .'::createApplicationDatabaseTables() returned false!');
             return false;
         }
 
@@ -118,7 +118,7 @@ class InstallerController extends DefaultController
                 ENGINE=InnoDB DEFAULT CHARSET=utf8;";
 
             if ($db->query($table_sql) === false) {
-                $this->raiseError(__METHOD__ .'(), failed to create "audit" table!');
+                static::raiseError(__METHOD__ .'(), failed to create "audit" table!');
                 return false;
             }
         }
@@ -138,7 +138,7 @@ class InstallerController extends DefaultController
                 ) ENGINE=MyISAM DEFAULT CHARSET=utf8";
 
             if ($db->query($table_sql) === false) {
-                $this->raiseError(__METHOD__ .'(), failed to create "message_bus" table!');
+                static::raiseError(__METHOD__ .'(), failed to create "message_bus" table!');
                 return false;
             }
         }
@@ -157,7 +157,7 @@ class InstallerController extends DefaultController
                 ) ENGINE=MyISAM DEFAULT CHARSET=utf8";
 
             if ($db->query($table_sql) === false) {
-                $this->raiseError(__METHOD__ .'(), failed to create "jobs" table!');
+                static::raiseError(__METHOD__ .'(), failed to create "jobs" table!');
                 return false;
             }
         }
@@ -173,31 +173,31 @@ class InstallerController extends DefaultController
                 ENGINE=MyISAM DEFAULT CHARSET=utf8;";
 
             if ($db->query($table_sql) === false) {
-                $this->raiseError(__METHOD__ .'(), failed to create "meta" table!');
+                static::raiseError(__METHOD__ .'(), failed to create "meta" table!');
                 return false;
             }
 
             if (!$db->setDatabaseSchemaVersion()) {
-                $this->raiseError(get_class($db) .'::setDatabaseFrameworkSchemaVersion() returned false!');
+                static::raiseError(get_class($db) .'::setDatabaseFrameworkSchemaVersion() returned false!');
                 return false;
             }
 
             if (!$db->setDatabaseSchemaVersion(null, 'framework')) {
-                $this->raiseError(get_class($db) .'::setDatabaseFrameworkSchemaVersion() returned false!');
+                static::raiseError(get_class($db) .'::setDatabaseFrameworkSchemaVersion() returned false!');
                 return false;
             }
         }
 
         if (!$db->getApplicationDatabaseSchemaVersion()) {
             if (!$db->setDatabaseSchemaVersion()) {
-                $this->raiseError(get_class($db) .'::setDatabaseSchemaVersion() returned false!');
+                static::raiseError(get_class($db) .'::setDatabaseSchemaVersion() returned false!');
                 return false;
             }
         }
 
         if (!$db->getFrameworkDatabaseSchemaVersion()) {
             if (!$db->setDatabaseSchemaVersion(null, 'framework')) {
-                $this->raiseError(get_class($db) .'::setDatabaseSchemaVersion() returned false!');
+                static::raiseError(get_class($db) .'::setDatabaseSchemaVersion() returned false!');
                 return false;
             }
         }
@@ -216,12 +216,12 @@ class InstallerController extends DefaultController
         global $db;
 
         if (!$this->upgradeApplicationDatabaseSchema()) {
-            $this->raiseError(__CLASS__ .'::upgradeApplicationDatabaseSchema() returned false!');
+            static::raiseError(__CLASS__ .'::upgradeApplicationDatabaseSchema() returned false!');
             return false;
         }
 
         if (!$this->upgradeFrameworkDatabaseSchema()) {
-            $this->raiseError(__CLASS__ .'::upgradeFrameworkDatabaseSchema() returned false!');
+            static::raiseError(__CLASS__ .'::upgradeFrameworkDatabaseSchema() returned false!');
             return false;
         }
 
@@ -233,17 +233,17 @@ class InstallerController extends DefaultController
         global $db;
 
         if (!$software_version = $db->getApplicationSoftwareSchemaVersion()) {
-            $this->raiseError(get_class($db) .'::getSoftwareSchemaVersion() returned false!');
+            static::raiseError(get_class($db) .'::getSoftwareSchemaVersion() returned false!');
             return false;
         }
 
         if ($software_version < 1) {
-            $this->raiseError(__METHOD__ .'(), invalid framework schema version found!');
+            static::raiseError(__METHOD__ .'(), invalid framework schema version found!');
             return false;
         }
 
         if (($db_version = $db->getApplicationDatabaseSchemaVersion()) === false) {
-            $this->raiseError(get_class($db) .'::getApplicationDatabaseSchemaVersion() returned false!');
+            static::raiseError(get_class($db) .'::getApplicationDatabaseSchemaVersion() returned false!');
             return false;
         }
 
@@ -255,14 +255,14 @@ class InstallerController extends DefaultController
             $method_name = "upgradeApplicationDatabaseSchemaV{$i}";
 
             if (!method_exists($this, $method_name)) {
-                $this->raiseError(__METHOD__ .'(), no upgrade method found for version '. $i);
+                static::raiseError(__METHOD__ .'(), no upgrade method found for version '. $i);
                 return false;
             } else {
                 print "Invoking {$method_name}().<br />\n";
             }
 
             if (!$this->$method_name()) {
-                $this->raiseError(__CLASS__ ."::{$method_name}() returned false!");
+                static::raiseError(__CLASS__ ."::{$method_name}() returned false!");
                 return false;
             }
         }
@@ -275,17 +275,17 @@ class InstallerController extends DefaultController
         global $db;
 
         if (!$software_version = $db->getFrameworkSoftwareSchemaVersion()) {
-            $this->raiseError(get_class($db) .'::getFrameworkSoftwareSchemaVersion() returned false!');
+            static::raiseError(get_class($db) .'::getFrameworkSoftwareSchemaVersion() returned false!');
             return false;
         }
 
         if ($software_version < 1) {
-            $this->raiseError(__METHOD__ .'(), invalid framework schema version found!');
+            static::raiseError(__METHOD__ .'(), invalid framework schema version found!');
             return false;
         }
 
         if (($db_version = $db->getFrameworkDatabaseSchemaVersion()) === false) {
-            $this->raiseError(get_class($db) .'::getFrameworkDatabaseSchemaVersion() returned false!');
+            static::raiseError(get_class($db) .'::getFrameworkDatabaseSchemaVersion() returned false!');
             return false;
         }
 
@@ -297,14 +297,14 @@ class InstallerController extends DefaultController
             $method_name = "upgradeFrameworkDatabaseSchemaV{$i}";
 
             if (!method_exists($this, $method_name)) {
-                $this->raiseError(__METHOD__ .'(), no upgrade method found for version '. $i);
+                static::raiseError(__METHOD__ .'(), no upgrade method found for version '. $i);
                 return false;
             } else {
                 print "Invoking {$method_name}().<br />\n";
             }
 
             if (!$this->$method_name()) {
-                $this->raiseError(__CLASS__ ."::{$method_name}() returned false!");
+                static::raiseError(__CLASS__ ."::{$method_name}() returned false!");
                 return false;
             }
         }
@@ -335,7 +335,7 @@ class InstallerController extends DefaultController
         );
 
         if ($result === false) {
-            $this->raiseError(__METHOD__ ." failed!");
+            static::raiseError(__METHOD__ ." failed!");
             return false;
         }
 
@@ -355,7 +355,7 @@ class InstallerController extends DefaultController
         );
 
         if ($result === false) {
-            $this->raiseError(__METHOD__ ." failed!");
+            static::raiseError(__METHOD__ ." failed!");
             return false;
         }
 
