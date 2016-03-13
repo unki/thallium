@@ -21,8 +21,8 @@ namespace Thallium\Views;
 
 class MainView extends DefaultView
 {
-    public $default_mode = 'show';
-    public $class_name = 'main';
+    protected static $view_class_name = 'main';
+    protected static $view_default_mode = 'show';
 
     public function show()
     {
@@ -31,6 +31,11 @@ class MainView extends DefaultView
         $tmpl->assign("software_version", \Thallium\Controllers\MainController::FRAMEWORK_VERSION);
         $tmpl->assign("schema_version", $db->getApplicationDatabaseSchemaVersion());
         $tmpl->assign("framework_schema_version", $db->getFrameworkDatabaseSchemaVersion());
+
+        if (!$tmpl->templateExists('main.tpl')) {
+            $this->raiseError(__METHOD__ .'(), main.tpl does not exist!');
+            return false;
+        }
 
         return $tmpl->fetch("main.tpl");
     }
