@@ -17,6 +17,12 @@
  * GNU Affero General Public License for more details.
  */
 
+header("X-Frame-Options: DENY");
+header("Content-Security-Policy: default-src 'self'; script-src 'self';"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
+header("X-Content-Security-Policy: default-src 'self'; script-src 'self';"); // IE 10+
+header("X-XSS-Protection: 1; mode=block");
+header("X-Content-Type-Options: nosniff");
+
 require_once '../main.php';
 
 // vim: set filetype=php expandtab softtabstop=4 tabstop=4 shiftwidth=4:
