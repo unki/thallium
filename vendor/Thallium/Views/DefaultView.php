@@ -17,19 +17,40 @@
  * GNU Affero General Public License for more details.
  */
 
-namespace Thallium\Views ;
+namespace Thallium\Views;
 
 abstract class DefaultView
 {
-    public $default_mode = "list";
+    protected static $view_default_mode = "list";
+    protected static $view_class_name;
 
     public function __construct()
     {
-        global $thallium, $config;
-
-        if (!isset($this->class_name)) {
-            $thallium->raiseError("Class has not defined property 'class_name'. Something is wrong with it");
+        if (!static::validateView()) {
+            static::raiseError(__CLASS__ .'::validateView() returned false!', true);
+            return;
         }
+    }
+
+    protected static function validateView()
+    {
+        if (!isset(static::$view_default_mode) ||
+            empty(static::$view_default_mode) ||
+            !is_string(static::$view_default_mode)
+        ) {
+            static::raiseError(__METHOD__ .'(), $view_default_mode is invalid!');
+            return false;
+        }
+
+        if (!isset(static::$view_class_name) ||
+            empty(static::$view_class_name) ||
+            !is_string(static::$view_class_name)
+        ) {
+            static::raiseError(__METHOD__ .'(), $view_class_name is invalid!');
+            return false;
+        }
+
+        return true;
     }
 
     public function show()
@@ -41,28 +62,28 @@ abstract class DefaultView
         }
 
         if ((!isset($params) || empty($params)) &&
-            $this->default_mode == "list"
+            static::$view_default_mode == "list"
         ) {
             $mode = "list";
         } elseif (isset($params) && !empty($params)) {
             if (isset($params[0]) && !empty($params[0]) &&
-                $this->isKnownMode($params[0])
+                static::isKnownMode($params[0])
             ) {
                 $mode = $params[0];
             }
-        } elseif ($this->default_mode == "show") {
+        } elseif (static::$view_default_mode == "show") {
             $mode = "show";
         }
 
         if (!isset($mode)) {
-            $mode = $this->default_mode;
+            $mode = static::$view_default_mode;
         }
 
-        if ($mode == "list" && $tmpl->templateExists($this->class_name ."_list.tpl")) {
+        if ($mode == "list" && $tmpl->templateExists(static::$view_class_name ."_list.tpl")) {
             return $this->showList();
-        } elseif ($mode == "edit" && $tmpl->templateExists($this->class_name ."_edit.tpl")) {
+        } elseif ($mode == "edit" && $tmpl->templateExists(static::$view_class_name ."_edit.tpl")) {
             if (!$item = $router->parseQueryParams()) {
-                $thallium->raiseError("HttpRouterController::parseQueryParams() returned false!");
+                static::raiseError("HttpRouterController::parseQueryParams() returned false!");
                 return false;
             }
             if (empty($item) ||
@@ -74,14 +95,14 @@ abstract class DefaultView
                 !$thallium->isValidId($item['id']) ||
                 !$thallium->isValidGuidSyntax($item['hash'])
             ) {
-                $thallium->raiseError("HttpRouterController::parseQueryParams() was unable to parse query parameters!");
+                static::raiseError("HttpRouterController::parseQueryParams() was unable to parse query parameters!");
                 return false;
             }
             return $this->showEdit($item['id'], $item['hash']);
 
-        } elseif ($mode == "show" && $tmpl->templateExists($this->class_name ."_show.tpl")) {
+        } elseif ($mode == "show" && $tmpl->templateExists(static::$view_class_name ."_show.tpl")) {
             if (!$item = $router->parseQueryParams()) {
-                $thallium->raiseError("HttpRouterController::parseQueryParams() returned false!");
+                static::raiseError("HttpRouterController::parseQueryParams() returned false!");
             }
             if (empty($item) ||
                 !is_array($item) ||
@@ -92,40 +113,69 @@ abstract class DefaultView
                 !$thallium->isValidId($item['id']) ||
                 !$thallium->isValidGuidSyntax($item['hash'])
             ) {
-                $thallium->raiseError("HttpRouterController::parseQueryParams() was unable to parse query parameters!");
+                static::raiseError("HttpRouterController::parseQueryParams() was unable to parse query parameters!");
                 return false;
             }
             return $this->showItem($item['id'], $item['hash']);
 
-        } elseif ($tmpl->templateExists($this->class_name .".tpl")) {
-            return $tmpl->fetch($this->class_name .".tpl");
+        } elseif ($tmpl->templateExists(static::$view_class_name .".tpl")) {
+            return $tmpl->fetch(static::$view_class_name .".tpl");
         }
 
-        $thallium->raiseError("All methods utilized but still don't know what to show!");
+        static::raiseError(__METHOD__ .'(), all methods utilized but still do not know what to show!');
         return false;
     }
 
     public function showList()
     {
         global $tmpl;
-        $tmpl->registerPlugin("block", $this->class_name ."_list", array(&$this, $this->class_name ."List"));
-        return $tmpl->fetch($this->class_name ."_list.tpl");
+
+        $template_name = static::$view_class_name ."_list.tpl";
+
+        if (!$tmpl->templateExists($template_name)) {
+            static::raiseError(__METHOD__ ."(), template '{$template_name}' does not exist!");
+            return false;
+        }
+
+        $tmpl->registerPlugin(
+            'block',
+            static::$view_class_name ."_list",
+            array(&$this, static::$view_class_name ."List")
+        );
+        return $tmpl->fetch($template_name);
     }
 
     public function showEdit($id)
     {
         global $tmpl;
+
         $tmpl->assign('item', $id);
-        return $tmpl->fetch($this->class_name ."_edit.tpl");
+
+        $template_name = static::$view_class_name ."_edit.tpl";
+
+        if (!$tmpl->templateExists($template_name)) {
+            static::raiseError(__METHOD__ ."(), template '{$template_name}' does not exist!");
+            return false;
+        }
+
+        return $tmpl->fetch($template_name);
     }
 
     public function showItem($id, $hash)
     {
         global $tmpl;
-        return $tmpl->fetch($this->class_name ."_show.tpl");
+
+        $template_name = static::$view_class_name ."_show.tpl";
+
+        if (!$tmpl->templateExists($template_name)) {
+            static::raiseError(__METHOD__ ."(), template '{$template_name}' does not exist!");
+            return false;
+        }
+
+        return $tmpl->fetch($template_name);
     }
 
-    protected function isKnownMode($mode)
+    protected static function isKnownMode($mode)
     {
         $valid_modes = array(
             'list',
@@ -136,6 +186,19 @@ abstract class DefaultView
         if (!in_array($mode, $valid_modes)) {
             return false;
         }
+
+        return true;
+    }
+
+    protected static function raiseError($string, $stop_execution = false, $exception = null)
+    {
+        global $thallium;
+
+        $thallium::raiseError(
+            $string,
+            $stop_execution,
+            $exception
+        );
 
         return true;
     }
