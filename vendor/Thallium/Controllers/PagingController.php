@@ -32,12 +32,12 @@ class PagingController extends DefaultController
     public function __construct($params)
     {
         if (!isset($params) || empty($params) || !is_array($params)) {
-            $this->raiseError(__CLASS__ .'::__construct(), $params parameter is invalid!', true);
+            static::raiseError(__CLASS__ .'::__construct(), $params parameter is invalid!', true);
             return false;
         }
 
         if (!$this->setPagingParameters($params)) {
-            $this->raiseError(__CLASS__ .'::setPagingParameters() returned false!', true);
+            static::raiseError(__CLASS__ .'::setPagingParameters() returned false!', true);
             return false;
         }
 
@@ -47,12 +47,12 @@ class PagingController extends DefaultController
     public function setPagingData(&$data)
     {
         if (!isset($data) || empty($data) || !is_array($data)) {
-            $this->raiseError(__METHOD__ .'(), $data parameter is invalid!');
+            static::raiseError(__METHOD__ .'(), $data parameter is invalid!');
             return false;
         }
 
         if ($this->isPagingDataSet()) {
-            $this->raiseError(__METHOD__ .'(), paging data already set!');
+            static::raiseError(__METHOD__ .'(), paging data already set!');
             return false;
         }
 
@@ -72,18 +72,18 @@ class PagingController extends DefaultController
     protected function setPagingParameters($params)
     {
         if (!isset($params) || empty($params) || !is_array($params)) {
-            $this->raiseError(__METHOD__ .'(), $params is invalid!');
+            static::raiseError(__METHOD__ .'(), $params is invalid!');
             return false;
         }
 
         if (isset($this->pagingParameters) && !empty($this->pagingParameters)) {
-            $this->raiseError(__METHOD__ .'(), paging parameters already set!');
+            static::raiseError(__METHOD__ .'(), paging parameters already set!');
             return false;
         }
 
         foreach ($params as $key => $value) {
             if (!($this->setParameter($key, $value))) {
-                $this->raiseError(__CLASS__ .'::setParameter() returned false!');
+                static::raiseError(__CLASS__ .'::setParameter() returned false!');
                 return false;
             }
         }
@@ -97,7 +97,7 @@ class PagingController extends DefaultController
             !isset($value) || empty($value) ||
             (!is_string($value) && !is_numeric($value))
         ) {
-            $this->raiseError(__METHOD__ .'(), $key and/or $value parameters are invalid!');
+            static::raiseError(__METHOD__ .'(), $key and/or $value parameters are invalid!');
             return false;
         }
 
@@ -108,7 +108,7 @@ class PagingController extends DefaultController
     public function getParameter($key)
     {
         if (!isset($key) || empty($key) || !is_string($key)) {
-            $this->raiseError(__METHOD__ .'(), $key parameter is invalid!');
+            static::raiseError(__METHOD__ .'(), $key parameter is invalid!');
             return false;
         }
 
@@ -122,19 +122,19 @@ class PagingController extends DefaultController
     public function getNumberOfPages()
     {
         if (!$this->isPagingDataSet()) {
-            $this->raiseError(__METHOD__ .'(), paging data has not been set yet!');
+            static::raiseError(__METHOD__ .'(), paging data has not been set yet!');
             return false;
         }
 
         if (($items_per_page = $this->getCurrentItemsLimit()) === false) {
-            $this->raiseError(__CLASS__ .'::getCurrentItemsLimit() returned false!');
+            static::raiseError(__CLASS__ .'::getCurrentItemsLimit() returned false!');
             return false;
         }
 
         if (!isset($items_per_page) || is_null($items_per_page) ||
             !is_numeric($items_per_page) || $items_per_page < 0
         ) {
-            $this->raiseError(__METHOD__ .'(), $items_per_page not correctly defined!');
+            static::raiseError(__METHOD__ .'(), $items_per_page not correctly defined!');
             return false;
         }
 
@@ -155,7 +155,7 @@ class PagingController extends DefaultController
             !is_numeric($totalPages) ||
             $totalPages < 1
         ) {
-            $this->raiseError(__METHOD__ .'(), failure on calculating total pages!');
+            static::raiseError(__METHOD__ .'(), failure on calculating total pages!');
             return false;
         }
 
@@ -197,13 +197,13 @@ class PagingController extends DefaultController
             !is_numeric($pageno) ||
             $pageno < 1
         ) {
-            $this->raiseError(__METHOD__ .'(), $pageno parameter is invalid!');
+            static::raiseError(__METHOD__ .'(), $pageno parameter is invalid!');
             return false;
         }
 
         if ($this->isPagingDataSet()) {
             if (($total = $this->getNumberOfPages()) === false) {
-                $this->raiseError(__CLASS__ .'::getNumberOfPages() returned false!');
+                static::raiseError(__CLASS__ .'::getNumberOfPages() returned false!');
                 return false;
             }
 
@@ -224,17 +224,17 @@ class PagingController extends DefaultController
         }
 
         if (!$this->isPagingDataSet()) {
-            $this->raiseError(__METHOD__ .'(), paging data has not been set yet!');
+            static::raiseError(__METHOD__ .'(), paging data has not been set yet!');
             return false;
         }
 
         if (($total = $this->getNumberOfPages()) === false) {
-            $this->raiseError(__CLASS__ .'::getNumberOfPages() returned false!');
+            static::raiseError(__CLASS__ .'::getNumberOfPages() returned false!');
             return false;
         }
 
         if (($items_per_page = $this->getCurrentItemsLimit()) === false) {
-            $this->raiseError(__CLASS__ .'::getCurrentItemsLimit() returned false!');
+            static::raiseError(__CLASS__ .'::getCurrentItemsLimit() returned false!');
             return false;
         }
 
@@ -257,7 +257,7 @@ class PagingController extends DefaultController
         );
 
         if (!isset($data) || empty($data) || !is_array($data)) {
-            $this->raiseError(__METHOD__ .'(), slicing paging data failed!');
+            static::raiseError(__METHOD__ .'(), slicing paging data failed!');
             return false;
         }
 
@@ -279,12 +279,12 @@ class PagingController extends DefaultController
     public function getNextPageNumber()
     {
         if (($page = $this->getCurrentPage()) === false) {
-            $this->raiseError(__CLASS__ .'::getCurrentPage() returned false!');
+            static::raiseError(__CLASS__ .'::getCurrentPage() returned false!');
             return false;
         }
 
         if (($total = $this->getNumberOfPages()) === false) {
-            $this->raiseError(__CLASS__ .'::getNumberOfPages() returned false!');
+            static::raiseError(__CLASS__ .'::getNumberOfPages() returned false!');
             return false;
         }
 
@@ -292,7 +292,7 @@ class PagingController extends DefaultController
             !isset($total) || empty($total) || !is_numeric($total) ||
             $total < 0
         ) {
-            $this->raiseError(__METHOD__ .'(), incomplete informations!');
+            static::raiseError(__METHOD__ .'(), incomplete informations!');
             return false;
         }
 
@@ -306,12 +306,12 @@ class PagingController extends DefaultController
     public function getPreviousPageNumber()
     {
         if (($page = $this->getCurrentPage()) === false) {
-            $this->raiseError(__CLASS__ .'::getCurrentPage() returned false!');
+            static::raiseError(__CLASS__ .'::getCurrentPage() returned false!');
             return false;
         }
 
         if (!isset($page) || empty($page) || !is_numeric($page)) {
-            $this->raiseError(__METHOD__ .'(), incomplete informations!');
+            static::raiseError(__METHOD__ .'(), incomplete informations!');
             return false;
         }
 
@@ -339,7 +339,7 @@ class PagingController extends DefaultController
     public function getPageNumbers()
     {
         if (($total = $this->getNumberOfPages()) === false) {
-            $this->raiseError(__CLASS__ .'::getNumberOfPages() returned false!');
+            static::raiseError(__CLASS__ .'::getNumberOfPages() returned false!');
             return false;
         }
 
@@ -348,7 +348,7 @@ class PagingController extends DefaultController
             !is_numeric($total) ||
             $total < 0
         ) {
-            $this->raiseError(__CLASS__ .'::getNumberOfPages() returned invalid data!');
+            static::raiseError(__CLASS__ .'::getNumberOfPages() returned invalid data!');
             return false;
         }
 
@@ -363,12 +363,12 @@ class PagingController extends DefaultController
     public function getDeltaPageNumbers()
     {
         if (($pages = $this->getPageNumbers()) === false) {
-            $this->raiseError(__CLASS__ .'::getPageNumbers() returned false!');
+            static::raiseError(__CLASS__ .'::getPageNumbers() returned false!');
             return false;
         }
 
         if (($delta = $this->getParameter('delta')) === false) {
-            $this->raiseError(__METHOD__ .'(), $delta has not been set!');
+            static::raiseError(__METHOD__ .'(), $delta has not been set!');
             return false;
         }
 
@@ -380,7 +380,7 @@ class PagingController extends DefaultController
             !isset($delta) || empty($delta) || !is_numeric($delta) || $delta < 1 ||
             !isset($page) || empty($page) || !is_numeric($page) || $page < 1
         ) {
-            $this->raiseError(__METHOD__ .'(), incomplete informations!');
+            static::raiseError(__METHOD__ .'(), incomplete informations!');
             return false;
         }
 
@@ -431,12 +431,12 @@ class PagingController extends DefaultController
     public function setItemsLimit($limit)
     {
         if (!isset($limit) || !is_numeric($limit)) {
-            $this->raiseError(__METHOD__ .'(), $limit parameter is invalid!');
+            static::raiseError(__METHOD__ .'(), $limit parameter is invalid!');
             return false;
         }
 
         if (($limits = $this->getItemsLimits()) === false) {
-            $this->raiseError(__CLASS__ .'::getCurrentItemsLimits() returned false!');
+            static::raiseError(__CLASS__ .'::getCurrentItemsLimits() returned false!');
             return false;
         }
 
@@ -446,7 +446,7 @@ class PagingController extends DefaultController
         }
 
         if (!in_array($limit, $limits)) {
-            $this->raiseError(__METHOD__ .'(), $limit parameter is not within allowed-limits list!');
+            static::raiseError(__METHOD__ .'(), $limit parameter is not within allowed-limits list!');
             return false;
         }
 
@@ -457,12 +457,12 @@ class PagingController extends DefaultController
     public function isCurrentItemsLimit($limit)
     {
         if (!isset($limit) || !is_numeric($limit)) {
-            $this->raiseError(__METHOD__ .'(), $limit parameter is invalid!');
+            static::raiseError(__METHOD__ .'(), $limit parameter is invalid!');
             return false;
         }
 
         if (($cur_limit = $this->getCurrentItemsLimit()) === false) {
-            $this->raiseError(__CLASS__ .'::getCurrentItemsLimit() returned false!');
+            static::raiseError(__CLASS__ .'::getCurrentItemsLimit() returned false!');
             return false;
         }
 
