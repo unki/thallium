@@ -33,14 +33,14 @@ class ViewsController extends DefaultController
         global $thallium;
 
         if (!$thallium->loadController('Templates', 'tmpl')) {
-            $this->raiseError(get_class($thallium) .'::loadController() returned false!', true);
+            static::raiseError(get_class($thallium) .'::loadController() returned false!', true);
             return false;
         }
 
         try {
             $this->page_skeleton = new \Thallium\Views\SkeletonView;
         } catch (\Exception $e) {
-            $this->raiseError(__CLASS__ .', unable to load SkeletonView!', true, $e);
+            static::raiseError(__CLASS__ .', unable to load SkeletonView!', true, $e);
             return false;
         }
 
@@ -53,7 +53,7 @@ class ViewsController extends DefaultController
 
         foreach (array_keys($this->page_map) as $entry) {
             if (($result = preg_match($entry, $view)) === false) {
-                $this->raiseError(__METHOD__ ."(), unable to match ${entry} in ${view}");
+                static::raiseError(__METHOD__ ."(), unable to match ${entry} in ${view}");
                 return false;
             }
 
@@ -62,12 +62,12 @@ class ViewsController extends DefaultController
             }
 
             if (!($prefix = $thallium->getNamespacePrefix())) {
-                $this->raiseError(get_class($thallium) .'::getNamespacePrefix() returned false!');
+                static::raiseError(get_class($thallium) .'::getNamespacePrefix() returned false!');
                 return false;
             }
 
             if (!class_exists('\\'. $prefix .'\\Views\\'.$this->page_map[$entry])) {
-                $this->raiseError(__METHOD__ ."(), view class ". $this->page_map[$entry] ." does not exist!");
+                static::raiseError(__METHOD__ ."(), view class ". $this->page_map[$entry] ." does not exist!");
                 return false;
             }
 
@@ -80,7 +80,7 @@ class ViewsController extends DefaultController
         global $thallium, $tmpl;
 
         if (!($prefix = $thallium->getNamespacePrefix())) {
-            $this->raiseError(get_class($thallium) .'::getNamespacePrefix() returned false!');
+            static::raiseError(get_class($thallium) .'::getNamespacePrefix() returned false!');
             return false;
         }
 
@@ -89,7 +89,7 @@ class ViewsController extends DefaultController
         try {
             $page = new $view;
         } catch (Exception $e) {
-            $this->raiseError("Failed to load view {$view}!");
+            static::raiseError("Failed to load view {$view}!");
             return false;
         }
 
