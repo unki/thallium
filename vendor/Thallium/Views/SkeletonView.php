@@ -32,7 +32,7 @@ class SkeletonView extends DefaultView
         global $tmpl;
 
         if (!$tmpl->templateExists('skeleton.tpl')) {
-            $this->raiseError(__METHOD__ .'(), skeleton.tpl does not exist!');
+            static::raiseError(__METHOD__ .'(), skeleton.tpl does not exist!');
             return false;
         }
 
