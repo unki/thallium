@@ -27,9 +27,20 @@ class SessionController extends DefaultController
             return true;
         }
 
+        if (($http_only = ini_get('session.cookie_httponly')) === false ||
+            !isset($http_only) ||
+            empty($http_only) ||
+            !$http_only
+        ) {
+            if (ini_set('session.cookie_httponly', 1) === false) {
+                $this->raiseError(__METHOD__ .'(), failed to set session.cookie_httponly=1!', true);
+                return;
+            }
+        }
+
         if (!session_start()) {
-            static::raiseError("Failed to initialize session!");
-            return false;
+            static::raiseError(__METHOD__ .'(), session_start() returned false!', true);
+            return;
         }
     }
 
