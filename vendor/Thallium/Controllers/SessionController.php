@@ -28,7 +28,7 @@ class SessionController extends DefaultController
         }
 
         if (!session_start()) {
-            $this->raiseError("Failed to initialize session!");
+            static::raiseError("Failed to initialize session!");
             return false;
         }
     }
@@ -42,12 +42,12 @@ class SessionController extends DefaultController
         global $thallium;
 
         if (!($guid = $thallium->createGuid())) {
-            $this->raiseError(get_class($thallium) .'::createGuid() returned false!');
+            static::raiseError(get_class($thallium) .'::createGuid() returned false!');
             return false;
         }
 
         if (empty($guid) || !$thallium->isValidGuidSyntax($guid)) {
-            $this->raiseError(get_class($thallium) .'::createGuid() returned an invalid GUID');
+            static::raiseError(get_class($thallium) .'::createGuid() returned an invalid GUID');
             return false;
         }
 
@@ -63,7 +63,7 @@ class SessionController extends DefaultController
     public function getVariable($key)
     {
         if (!isset($key) || empty($key) || !is_string($key)) {
-            $this->raiseError(__METHOD__ .'(), $key parameter is invalid!');
+            static::raiseError(__METHOD__ .'(), $key parameter is invalid!');
             return false;
         }
 
@@ -79,7 +79,7 @@ class SessionController extends DefaultController
         if (!isset($key) || empty($key) || !is_string($key) ||
             !isset($value) || (!is_string($value) && !is_numeric($value))
         ) {
-            $this->raiseError(__METHOD__ .'(), $key and/or $value parameters are invalid!');
+            static::raiseError(__METHOD__ .'(), $key and/or $value parameters are invalid!');
             return false;
         }
 
