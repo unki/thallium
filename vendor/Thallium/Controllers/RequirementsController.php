@@ -26,7 +26,7 @@ class RequirementsController extends DefaultController
     public function __construct()
     {
         if (!constant('APP_BASE')) {
-            $this->raiseError(__METHOD__ .'(), APP_BASE is not defined!', true);
+            static::raiseError(__METHOD__ .'(), APP_BASE is not defined!', true);
             return false;
         }
     }
@@ -65,7 +65,7 @@ class RequirementsController extends DefaultController
         $missing = false;
 
         if (!(function_exists("microtime"))) {
-            $this->raiseError("microtime() function does not exist!");
+            static::raiseError("microtime() function does not exist!");
             $missing = true;
         }
 
@@ -83,7 +83,7 @@ class RequirementsController extends DefaultController
         $missing = false;
 
         if (!($dbtype = $config->getDatabaseType())) {
-            $this->raiseError("Error - incomplete configuration found, can not check requirements!");
+            static::raiseError("Error - incomplete configuration found, can not check requirements!");
             return false;
         }
 
@@ -162,12 +162,12 @@ class RequirementsController extends DefaultController
         $missing = false;
 
         if (!$uid = $thallium->getProcessUserId()) {
-            $this->raiseError(get_class($thallium) .'::getProcessUserId() returned false!');
+            static::raiseError(get_class($thallium) .'::getProcessUserId() returned false!');
             return false;
         }
 
         if (!$gid = $thallium->getProcessGroupId()) {
-            $this->raiseError(get_class($thallium) .'::getProcessGroupId() returned false!');
+            static::raiseError(get_class($thallium) .'::getProcessGroupId() returned false!');
             return false;
         }
 
