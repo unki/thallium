@@ -50,6 +50,10 @@ $(document).ready(function () {
         var inlineobj = new ThalliumInlineEditable($(this));
         inlineobj.toggle();
     });
+    /* RPC handlers */
+    $("a.delete.item").click(function () {
+        delete_object($(this));
+    })
 });
 
 function show_modal(type, settings, id, do_function, modalclass)
