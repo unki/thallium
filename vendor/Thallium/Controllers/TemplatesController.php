@@ -82,9 +82,9 @@ class TemplatesController extends DefaultController
 
         if (!is_writeable($this->config_compile_dir)) {
             static::raiseError(
-                "Error - Smarty compile directory ". $this->config_compile_dir ." is not writeable
-                for the current user (". $this->getuid() .").<br />\n
-                Please check that permissions are set correctly to this directory.<br />\n",
+                "Error - Smarty compile directory {$this->config_compile_dir} is not "
+                ."writeable for the current user ({$this->getuid()}).<br />"
+                ."Please check that permissions are set correctly to this directory.<br />",
                 true
             );
             return false;
