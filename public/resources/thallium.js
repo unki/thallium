@@ -50,10 +50,6 @@ $(document).ready(function () {
         var inlineobj = new ThalliumInlineEditable($(this));
         inlineobj.toggle();
     });
-    $('.inline.editable.edit.link').click(function () {
-        var inlineobj = new ThalliumInlineEditable($(this));
-        inlineobj.toggle();
-    });
 });
 
 function show_modal(type, settings, id, do_function, modalclass)
