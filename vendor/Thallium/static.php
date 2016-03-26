@@ -20,6 +20,7 @@
 define('APP_BASE', realpath(__DIR__ .'/../../'));
 
 define('FIELD_TYPE', 'type');
+define('FIELD_DEFAULT', 'default');
 define('FIELD_INT', 'int');
 define('FIELD_STRING', 'string');
 define('FIELD_BOOL', 'bool');
