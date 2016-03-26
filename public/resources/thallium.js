@@ -35,7 +35,6 @@ $(document).ready(function () {
         return false;
     }
 
-    /* RPC handlers */
     $("form.ui.form.add").on('submit', function () {
         rpc_object_update($(this), function (element, data) {
             if (data != "ok") {
@@ -51,12 +50,8 @@ $(document).ready(function () {
         var inlineobj = new ThalliumInlineEditable($(this));
         inlineobj.toggle();
     });
-    /* RPC handlers */
-    $("table tr td a.delete").click(function () {
-        delete_object($(this));
-    })
     $('.inline.editable.edit.link').click(function () {
-        inlineobj = new ThalliumInlineEditable($(this));
+        var inlineobj = new ThalliumInlineEditable($(this));
         inlineobj.toggle();
     });
 });
