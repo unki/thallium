@@ -145,7 +145,7 @@ abstract class DefaultView
         return $tmpl->fetch($template_name);
     }
 
-    public function showEdit($id)
+    public function showEdit($id, $guid)
     {
         global $tmpl;
 
@@ -161,7 +161,7 @@ abstract class DefaultView
         return $tmpl->fetch($template_name);
     }
 
-    public function showItem($id, $hash)
+    public function showItem($id, $guid)
     {
         global $tmpl;
 
