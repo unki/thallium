@@ -82,7 +82,7 @@ abstract class DefaultView
         if ($mode == "list" && $tmpl->templateExists(static::$view_class_name ."_list.tpl")) {
             return $this->showList();
         } elseif ($mode == "edit" && $tmpl->templateExists(static::$view_class_name ."_edit.tpl")) {
-            if (!$item = $router->parseQueryParams()) {
+            if (($item = $router->parseQueryParams()) === false) {
                 static::raiseError("HttpRouterController::parseQueryParams() returned false!");
                 return false;
             }
@@ -90,33 +90,33 @@ abstract class DefaultView
                 !is_array($item) ||
                 !isset($item['id']) ||
                 empty($item['id']) ||
-                !isset($item['hash']) ||
-                empty($item['hash']) ||
+                !isset($item['guid']) ||
+                empty($item['guid']) ||
                 !$thallium->isValidId($item['id']) ||
-                !$thallium->isValidGuidSyntax($item['hash'])
+                !$thallium->isValidGuidSyntax($item['guid'])
             ) {
                 static::raiseError("HttpRouterController::parseQueryParams() was unable to parse query parameters!");
                 return false;
             }
-            return $this->showEdit($item['id'], $item['hash']);
+            return $this->showEdit($item['id'], $item['guid']);
 
         } elseif ($mode == "show" && $tmpl->templateExists(static::$view_class_name ."_show.tpl")) {
-            if (!$item = $router->parseQueryParams()) {
+            if (($item = $router->parseQueryParams()) === false) {
                 static::raiseError("HttpRouterController::parseQueryParams() returned false!");
             }
             if (empty($item) ||
                 !is_array($item) ||
                 !isset($item['id']) ||
                 empty($item['id']) ||
-                !isset($item['hash']) ||
-                empty($item['hash']) ||
+                !isset($item['guid']) ||
+                empty($item['guid']) ||
                 !$thallium->isValidId($item['id']) ||
-                !$thallium->isValidGuidSyntax($item['hash'])
+                !$thallium->isValidGuidSyntax($item['guid'])
             ) {
                 static::raiseError("HttpRouterController::parseQueryParams() was unable to parse query parameters!");
                 return false;
             }
-            return $this->showItem($item['id'], $item['hash']);
+            return $this->showItem($item['id'], $item['guid']);
 
         } elseif ($tmpl->templateExists(static::$view_class_name .".tpl")) {
             return $tmpl->fetch(static::$view_class_name .".tpl");
