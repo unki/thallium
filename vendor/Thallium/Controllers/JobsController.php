@@ -463,7 +463,7 @@ class JobsController extends DefaultController
             return false;
         }
 
-        if (!isset($delete_request->model) || empty($delete_request->model)) {
+        if (!isset($delete_request->model) || empty($delete_request->model) || !is_string($delete_request->model)) {
             static::raiseError(__METHOD__ .'(), delete-request does not contain model information!');
             return false;
         }
@@ -483,7 +483,7 @@ class JobsController extends DefaultController
         }
 
         if (!$obj->permitsRpcActions('delete')) {
-            static::raiseError(__METHOD__ ."(), {$obj_name} does not permit 'delete' action!");
+            static::raiseError(__METHOD__ ."(), requested model does not permit RPC 'delete' action!");
             return false;
         }
 
