@@ -863,20 +863,55 @@ abstract class DefaultModel
         }
 
         if ($value_type !== $field_type) {
-            error_log(print_r(array($field, $value, $value_type, $field_type), true));
             static::raiseError(__METHOD__ .'(), value type does not match field type!', true);
             return;
         }
 
-        $this->$name = $value;
+        if (!static::hasFieldSetMethod($field)) {
+            $this->$name = $value;
+            return;
+        }
 
-    } // __set()
+        if (($set_method = static::getFieldSetMethod($field)) === false) {
+            static::raiseError(__CLASS__ .'::getFieldSetMethod() returned false!', true);
+            return;
+        }
+
+        if (!is_callable(array($this, $set_method))) {
+            $this->raiseError(__CLASS__ ."::{$set_method}() is not callable!", true);
+            return;
+        }
+
+        if (!call_user_func(array($this, $set_method), $value)) {
+            $this->raiseError(__CLASS__ ."::{$set_method}() returned false!", true);
+            return;
+        }
+    }
 
     /* override PHP's __get() function */
     final public function __get($name)
     {
         if (isset($this->$name)) {
-            return $this->$name;
+            if (!static::hasFieldGetMethod($field)) {
+                return $this->$name;
+            }
+
+            if (($set_method = static::getFieldGetMethod($field)) === false) {
+                static::raiseError(__CLASS__ .'::getFieldGetMethod() returned false!', true);
+                return;
+            }
+
+            if (!is_callable(array($this, $set_method))) {
+                $this->raiseError(__CLASS__ ."::{$set_method}() is not callable!", true);
+                return;
+            }
+
+            if (($retval = call_user_func(array($this, $set_method), $value)) === false) {
+                $this->raiseError(__CLASS__ ."::{$set_method}() returned false!", true);
+                return;
+            }
+
+            return $retval;
         }
 
         if (!$this->hasVirtualFields()) {
@@ -2019,6 +2054,86 @@ abstract class DefaultModel
         }
 
         return true;
+    }
+
+    protected function hasFieldSetMethod($field)
+    {
+        if (!static::hasFields()) {
+            static::raiseError(__METHOD__ .'(), this model has no fields!');
+            return false;
+        }
+        if (!static::hasField($field)) {
+            static::raiseError(__METHOD__ .'(), model does not provide the requested field!');
+            return false;
+        }
+        if (!isset(static::$model_fields[$field]) ||
+            empty(static::$model_fields[$field]) ||
+            !is_array(static::$model_fields[$field])
+        ) {
+            static::raiseError(__METHOD__ .'(), $model_fields does not contain requested field!');
+            return false;
+        }
+
+        if (!isset(static::$model_fields[$field][FIELD_SET]) ||
+            empty(static::$model_fields[$field][FIELD_SET]) ||
+            !is_string(static::$model_fields[$field][FIELD_SET]) ||
+            !method_exists(__CLASS__, static::$model_fields[$field][FIELD_SET])
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    protected function getFieldSetMethod($field)
+    {
+        if (!static::hasFieldSetMethod($field)) {
+            static::raiseError(__CLASS__ .'::hasFieldSetMethod() returned false!');
+            return false;
+        }
+
+        return static::$model_fields[$field][FIELD_SET];
+    }
+
+    protected function hasFieldGetMethod($field)
+    {
+        if (!static::hasFields()) {
+            static::raiseError(__METHOD__ .'(), this model has no fields!');
+            return false;
+        }
+
+        if (!static::hasField($field)) {
+            static::raiseError(__METHOD__ .'(), model does not provide the requested field!');
+            return false;
+        }
+
+        if (!isset(static::$model_fields[$field]) ||
+            empty(static::$model_fields[$field]) ||
+            !is_array(static::$model_fields[$field])
+        ) {
+            static::raiseError(__METHOD__ .'(), $model_fields does not contain requested field!');
+            return false;
+        }
+
+        if (!isset(static::$model_fields[$field][FIELD_GET]) ||
+            empty(static::$model_fields[$field][FIELD_GET]) ||
+            !is_string(static::$model_fields[$field][FIELD_GET]) ||
+            !method_exists($this, static::$model_fields[$field][FIELD_GET])
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    protected function getFieldGetMethod($field)
+    {
+        if (!static::hasFieldGetMethod($field)) {
+            static::raiseError(__CLASS__ .'::hasFieldGetMethod() returned false!');
+            return false;
+        }
+
+        return static::$model_fields[$field][FIELD_GET];
     }
 }
 
