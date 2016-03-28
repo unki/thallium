@@ -829,7 +829,7 @@ abstract class DefaultModel
             return;
         }
 
-        if (is_null($value)) {
+        if (is_null($value) || empty($value)) {
             $this->model_values[$field] = null;
             return;
         }
@@ -864,7 +864,11 @@ abstract class DefaultModel
         }
 
         if ($value_type !== $field_type) {
-            static::raiseError(__METHOD__ .'(), value type does not match field type!', true);
+            static::raiseError(
+                __METHOD__
+                ."(), field {$field}, value type ({$value_type}) does not match field type ({$field_type})!",
+                true
+            );
             return;
         }
 
