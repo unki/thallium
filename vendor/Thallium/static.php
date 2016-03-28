@@ -30,6 +30,7 @@ define('FIELD_TIMESTAMP', 'timestamp');
 define('FIELD_YESNO', 'yesno');
 define('FIELD_DATE', 'date');
 define('FIELD_GUID', 'guid');
+define('FIELD_IDX', 'idx');
 
 if (!constant('LOG_ERR')) {
     define('LOG_ERR', 1);
