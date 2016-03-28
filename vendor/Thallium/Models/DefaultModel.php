@@ -2062,10 +2062,12 @@ abstract class DefaultModel
             static::raiseError(__METHOD__ .'(), this model has no fields!');
             return false;
         }
+
         if (!static::hasField($field)) {
             static::raiseError(__METHOD__ .'(), model does not provide the requested field!');
             return false;
         }
+
         if (!isset(static::$model_fields[$field]) ||
             empty(static::$model_fields[$field]) ||
             !is_array(static::$model_fields[$field])
@@ -2077,7 +2079,7 @@ abstract class DefaultModel
         if (!isset(static::$model_fields[$field][FIELD_SET]) ||
             empty(static::$model_fields[$field][FIELD_SET]) ||
             !is_string(static::$model_fields[$field][FIELD_SET]) ||
-            !method_exists(__CLASS__, static::$model_fields[$field][FIELD_SET])
+            !method_exists(get_called_class(), static::$model_fields[$field][FIELD_SET])
         ) {
             return false;
         }
@@ -2118,7 +2120,7 @@ abstract class DefaultModel
         if (!isset(static::$model_fields[$field][FIELD_GET]) ||
             empty(static::$model_fields[$field][FIELD_GET]) ||
             !is_string(static::$model_fields[$field][FIELD_GET]) ||
-            !method_exists($this, static::$model_fields[$field][FIELD_GET])
+            !method_exists(get_called_class(), static::$model_fields[$field][FIELD_GET])
         ) {
             return false;
         }
