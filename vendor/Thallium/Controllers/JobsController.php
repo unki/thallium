@@ -125,10 +125,7 @@ class JobsController extends DefaultController
             return false;
         }
 
-        if (!isset($job->job_guid) ||
-            empty($job->job_guid) ||
-            !$thallium->isValidGuidSyntax($job->job_guid)
-        ) {
+        if (!$job->hasGuid() || !$thallium->isValidGuidSyntax($job->getGuid())) {
             static::raiseError(get_class($job) .'::save() has not lead to a valid GUID!');
             return false;
         }
