@@ -2185,6 +2185,27 @@ abstract class DefaultModel
 
         return true;
     }
+
+    public function hasValue($field)
+    {
+        if (!static::hasFields()) {
+            static::raiseError(__METHOD__ .'(), this model has no fields!');
+            return false;
+        }
+
+        if (!static::hasField($field)) {
+            static::raiseError(__METHOD__ .'(), this model has not that field!');
+            return false;
+        }
+
+        if (!isset($this->model_values[$field]) ||
+            empty($this->model_values[$field])
+        ) {
+            return false;
+        }
+
+        return true;
+    }
 }
 
 // vim: set filetype=php expandtab softtabstop=4 tabstop=4 shiftwidth=4:
