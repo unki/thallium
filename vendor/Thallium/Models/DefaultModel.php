@@ -2206,6 +2206,16 @@ abstract class DefaultModel
 
         return true;
     }
+
+    public function getValue($field)
+    {
+        if (!$this->hasValue($field)) {
+            static::raiseError(__CLASS__ .'::hasValue() returned false!');
+            return false;
+        }
+
+        return $this->model_values[$field];
+    }
 }
 
 // vim: set filetype=php expandtab softtabstop=4 tabstop=4 shiftwidth=4:
