@@ -763,12 +763,15 @@ abstract class DefaultModel
                 continue;
             }
 
-            if ($this->hasDefaultValue($field)) {
-                $this->model_values[$field] = $this->getDefaultValue($field);
+            if (!$this->hasDefaultValue($field)) {
+                $this->model_values[$field] = null;
                 continue;
             }
 
-            $this->model_values[$field] = null;
+            if (($this->model_values[$field] = $this->getDefaultValue($field)) === false) {
+                $this->raiseError(__CLASS__ .'::getDefaultValue() returned false!');
+                return false;
+            }
         }
 
         return true;
@@ -2209,6 +2212,27 @@ abstract class DefaultModel
             return false;
         }
 
+        return true;
+    }
+
+    public function setValue($field, $value)
+    {
+        if (!isset($field) || empty($field) || !is_string($field)) {
+            static::raiseError(__METHOD__ .'(), $field parameter is invalid!');
+            return false;
+        }
+
+        if (!static::hasFields()) {
+            static::raiseError(__METHOD__ .'(), this model has no fields!');
+            return false;
+        }
+
+        if (!static::hasField($field)) {
+            static::raiseError(__METHOD__ .'(), this model has not that field!');
+            return false;
+        }
+
+        $this->model_values[$field] = $value;
         return true;
     }
 
