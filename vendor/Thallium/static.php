@@ -23,7 +23,7 @@ define('FIELD_SET', 'set');
 define('FIELD_GET', 'get');
 define('FIELD_TYPE', 'type');
 define('FIELD_DEFAULT', 'default');
-define('FIELD_INT', 'int');
+define('FIELD_INT', 'integer');
 define('FIELD_STRING', 'string');
 define('FIELD_BOOL', 'bool');
 define('FIELD_TIMESTAMP', 'timestamp');
