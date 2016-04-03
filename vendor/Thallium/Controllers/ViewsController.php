@@ -27,6 +27,7 @@ class ViewsController extends DefaultController
         '/^about$/' => 'AboutView',
     );
     protected $page_skeleton;
+    protected $loaded_views = array();
 
     public function __construct()
     {
@@ -93,6 +94,10 @@ class ViewsController extends DefaultController
             return false;
         }
 
+        if ($this->isLoadedView($view_class)) {
+            return $this->getLoadedView($view_class);
+        }
+
         try {
             $view_obj = new $view_class;
         } catch (\Exception $e) {
@@ -100,6 +105,7 @@ class ViewsController extends DefaultController
             return false;
         }
 
+        $this->loaded_views[$view_class] =& $view_obj;
         return $view_obj;
     }
 
@@ -130,6 +136,25 @@ class ViewsController extends DefaultController
         }
 
         return $this->page_skeleton->show();
+    }
+
+    protected function isLoadedView($name)
+    {
+        if (!isset($this->loaded_views[$name]) || empty($this->loaded_views[$name])) {
+            return false;
+        }
+
+        return true;
+    }
+
+    protected function getLoadedView($name)
+    {
+        if (!$this->isLoadedView($name)) {
+            static::raiseError(__CLASS__ .'::isViewLoaded() returned false!');
+            return false;
+        }
+
+        return $this->loaded_views[$name];
     }
 }
 
