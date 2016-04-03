@@ -23,6 +23,11 @@ abstract class DefaultView
 {
     protected static $view_default_mode = "list";
     protected static $view_class_name;
+    protected static $view_modes = array(
+        'list',
+        'edit',
+        'show',
+    );
 
     public function __construct()
     {
@@ -177,13 +182,7 @@ abstract class DefaultView
 
     protected static function isKnownMode($mode)
     {
-        $valid_modes = array(
-            'list',
-            'edit',
-            'show',
-        );
-
-        if (!in_array($mode, $valid_modes)) {
+        if (!in_array($mode, static::$view_modes)) {
             return false;
         }
 
