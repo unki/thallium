@@ -23,11 +23,12 @@ abstract class DefaultView
 {
     protected static $view_default_mode = "list";
     protected static $view_class_name;
-    protected static $view_modes = array(
+    protected static $view_default_modes = array(
         'list',
-        'edit',
         'show',
+        'edit',
     );
+    protected $view_modes = array();
 
     public function __construct()
     {
@@ -200,6 +201,57 @@ abstract class DefaultView
         );
 
         return true;
+    }
+
+    public function addMode($mode)
+    {
+        if (!isset($mode) || empty($mode) || !is_string($mode)) {
+            static::raiseError(__METHOD__ .'(), $mode parameter is invalid!');
+            return false;
+        }
+
+        if (in_array($mode, static::$view_default_modes)) {
+            return true;
+        }
+
+        if (isset($this->view_modes) &&
+            !empty($this->view_modes) &&
+            is_array($this->view_modes) &&
+            in_array($mode, $this->view_modes)
+        ) {
+            return true;
+        }
+
+        array_push($this->view_modes, $mode);
+        return true;
+    }
+
+    public function isValidMode($mode)
+    {
+        if (!isset($mode) || empty($mode) || !is_string($mode)) {
+            static::raiseError(__METHOD__ .'(), $mode parameter is invalid!');
+            return false;
+        }
+
+        if (($modes = $this->getModes()) === false) {
+            static::raiseError(__CLASS__ .'::getModes() returned false!');
+            return false;
+        }
+
+        if (!in_array($mode, $modes)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function getModes()
+    {
+        if (!isset($this->view_modes) || empty($this->view_modes) || !is_array($this->view_modes)) {
+            return static::$view_default_modes;
+        }
+
+        return array_merge(static::$view_default_modes, $this->view_modes);
     }
 }
 
