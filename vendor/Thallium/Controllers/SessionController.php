@@ -71,7 +71,7 @@ class SessionController extends DefaultController
         return session_id();
     }
 
-    public function getVariable($key, $prefix)
+    public function hasVariable($key, $prefix = null)
     {
         if (!isset($key) || empty($key) || !is_string($key)) {
             static::raiseError(__METHOD__ .'(), $key parameter is invalid!');
@@ -93,10 +93,26 @@ class SessionController extends DefaultController
             return false;
         }
 
+        return true;
+    }
+
+    public function getVariable($key, $prefix = null)
+    {
+        if (!$this->hasVariable($key, $prefix)) {
+            static::raiseError(__CLASS__ .'::hasVariable() returned false!');
+            return false;
+        }
+
+        if (!isset($prefix) || empty($prefix)) {
+            $var_key = $key;
+        } else {
+            $var_key = $prefix .'_'. $key;
+        }
+
         return $_SESSION[$var_key];
     }
 
-    public function setVariable($key, $value, $prefix)
+    public function setVariable($key, $value, $prefix = null)
     {
         if (!isset($key) || empty($key) || !is_string($key) ||
             !isset($value) || (!is_string($value) && !is_numeric($value))
