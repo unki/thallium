@@ -253,6 +253,38 @@ abstract class DefaultView
 
         return array_merge(static::$view_default_modes, $this->view_modes);
     }
+
+    protected function getSessionVar($name)
+    {
+        global $session;
+
+        if (!$session->hasVariable($name, static::$view_class_name)) {
+            return false;
+        }
+
+        if (($value = $session->getVariable($name, static::$view_class_name)) === false) {
+            static::raiseError(get_class($session) .'::getVariable() returned false!');
+            return false;
+        }
+
+        return $value;
+    }
+
+    protected function setSessionVar($name, $value)
+    {
+        global $session;
+
+        if (!$session->setVariable(
+            $name,
+            $value,
+            static::$view_class_name
+        )) {
+            static::raiseError(get_class($session) .'::setVariable() returned false!');
+            return false;
+        }
+
+        return true;
+    }
 }
 
 // vim: set filetype=php expandtab softtabstop=4 tabstop=4 shiftwidth=4:
