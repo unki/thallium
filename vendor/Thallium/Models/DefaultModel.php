@@ -467,13 +467,25 @@ abstract class DefaultModel
                 static::raiseError(__METHOD__ .'(), unknown field found!');
                 return false;
             }
-            if (!static::hasField($field)) {
-                static::raiseError(__METHOD__ .'(), model has no field like that!');
-                return false;
+            if (static::hasField($field)) {
+                // this will trigger the __set() method.
+                $this->$key = $value;
+                continue;
             }
-
-            // this will trigger the __set() method.
-            $this->$key = $value;
+            if ($this->hasVirtualFields() && $this->hasVirtualField($field)) {
+                $set_method = sprintf("set%s", ucwords($field));
+                if (!is_callable(array($this, $set_method))) {
+                    static::raiseError(__CLASS__ ."::{$set_method}() is not callable!");
+                    return false;
+                }
+                if (!call_user_func(array($this, $set_method), $value)) {
+                    static::raiseError(__CLASS__ ."::{$set_method}() returned false!");
+                    return false;
+                }
+                continue;
+            }
+            static::raiseError(__METHOD__ .'(), model has no field like that!');
+            return false;
         }
 
         return true;
@@ -769,7 +781,7 @@ abstract class DefaultModel
             }
 
             if (($this->model_values[$field] = $this->getDefaultValue($field)) === false) {
-                $this->raiseError(__CLASS__ .'::getDefaultValue() returned false!');
+                static::raiseError(__CLASS__ .'::getDefaultValue() returned false!');
                 return false;
             }
         }
@@ -814,10 +826,12 @@ abstract class DefaultModel
             return;
         }
 
-        if (!$this->hasField($field) &&
-            ($this->hasVirtualFields() && !$this->hasVirtualField($field)) &&
-            $field != 'id'
-        ) {
+        // virtual fields have to validate themself via their get/set methods.
+        if ($this->hasVirtualFields() && $this->hasVirtualField($field)) {
+            return;
+        }
+
+        if (!$this->hasField($field) && $field != 'id') {
             static::raiseError(__METHOD__ ."(), unknown key in ". __CLASS__ ."::__set(): {$field}", true);
             return;
         }
@@ -891,12 +905,12 @@ abstract class DefaultModel
         }
 
         if (!is_callable(array($this, $set_method))) {
-            $this->raiseError(__CLASS__ ."::{$set_method}() is not callable!", true);
+            static::raiseError(__CLASS__ ."::{$set_method}() is not callable!", true);
             return;
         }
 
         if (!call_user_func(array($this, $set_method), $value)) {
-            $this->raiseError(__CLASS__ ."::{$set_method}() returned false!", true);
+            static::raiseError(__CLASS__ ."::{$set_method}() returned false!", true);
             return;
         }
     }
@@ -915,18 +929,18 @@ abstract class DefaultModel
                 return $this->model_values[$field];
             }
 
-            if (($set_method = static::getFieldGetMethod($field)) === false) {
+            if (($get_method = static::getFieldGetMethod($field)) === false) {
                 static::raiseError(__CLASS__ .'::getFieldGetMethod() returned false!', true);
                 return;
             }
 
-            if (!is_callable(array($this, $set_method))) {
-                $this->raiseError(__CLASS__ ."::{$set_method}() is not callable!", true);
+            if (!is_callable(array($this, $get_method))) {
+                static::raiseError(__CLASS__ ."::{$get_method}() is not callable!", true);
                 return;
             }
 
-            if (($retval = call_user_func(array($this, $set_method), $value)) === false) {
-                $this->raiseError(__CLASS__ ."::{$set_method}() returned false!", true);
+            if (($retval = call_user_func(array($this, $get_method), $value)) === false) {
+                static::raiseError(__CLASS__ ."::{$get_method}() returned false!", true);
                 return;
             }
 
