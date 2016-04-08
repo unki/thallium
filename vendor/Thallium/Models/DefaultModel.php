@@ -2288,6 +2288,83 @@ abstract class DefaultModel
 
         return $this->model_model_fields[$field][FIELD_DEFAULT];
     }
+
+    public static function exists($load_by = array())
+    {
+        global $db;
+
+        if (!isset($load_by) || empty($load_by) || (!is_array($load_by) && !is_null($load_by))) {
+            static::raiseError(__METHOD__ .'(), parameter $load_by has to be an array!', true);
+            return;
+        }
+
+        if (($idx = static::column('idx')) === false) {
+            static::raiseError(__CLASS__ .'::column() returned false!');
+            return false;
+        }
+
+        $query_columns = array(
+            $idx
+        );
+
+        $query_where = array();
+
+        foreach ($load_by as $field => $value) {
+            if (($column = static::column($field)) === false) {
+                static::raiseError(__CLASS__ .'::column() returned false!');
+                return false;
+            }
+            $query_where[$column] = $value;
+        }
+
+        $bind_params = array();
+
+        if (($sql = $db->buildQuery(
+            "SELECT",
+            self::getTableName(),
+            $query_columns,
+            $query_where,
+            $bind_params
+        )) === false) {
+            static::raiseError(get_class($db) .'::buildQuery() returned false!');
+            return false;
+        }
+
+        try {
+            $sth = $db->prepare($sql);
+        } catch (\Exception $e) {
+            static::raiseError(__METHOD__ .'(), unable to prepare database query!');
+            return false;
+        }
+
+        if (!$sth) {
+            static::raiseError(get_class($db) ."::prepare() returned invalid data!");
+            return false;
+        }
+
+        foreach ($bind_params as $key => $value) {
+            $sth->bindParam($key, $value);
+        }
+
+        if (!$db->execute($sth, $bind_params)) {
+            static::raiseError(__METHOD__ ."(), unable to execute query!");
+            return false;
+        }
+
+        $num_rows = $sth->rowCount();
+        $db->freeStatement($sth);
+
+        if ($num_rows < 1) {
+            return false;
+        }
+
+        if ($num_rows > 1) {
+            static::raiseError(__METHOD__ .'(), more than one object found!');
+            return false;
+        }
+
+        return true;
+    }
 }
 
 // vim: set filetype=php expandtab softtabstop=4 tabstop=4 shiftwidth=4:
