@@ -44,6 +44,7 @@ class MessageModel extends DefaultModel
         ),
         'body' => array(
             FIELD_TYPE => FIELD_STRING,
+            FIELD_LENGTH => 4096,
         ),
         'value' => array(
             FIELD_TYPE => FIELD_STRING,
