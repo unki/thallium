@@ -162,6 +162,16 @@ abstract class DefaultModel
                     static::raiseError(__METHOD__ .'(), unknown field type found!', true);
                     return false;
                 }
+                if (array_key_exists(FIELD_LENGTH, $params)) {
+                    if (!is_int($params[FIELD_LENGTH])) {
+                        static::raiseError(__METHOD__ ."(), FIELD_LENGTH of {$field} is not an integer!", true);
+                        return false;
+                    }
+                    if ($params[FIELD_LENGTH] < 0 && $params[FIELD_LENGTH] < 16384) {
+                        static::raiseError(__METHOD__ ."(), FIELD_LENGTH of {$field} is out of bound!", true);
+                        return false;
+                    }
+                }
             }
         }
 
@@ -390,8 +400,11 @@ abstract class DefaultModel
                     static::raiseError(__CLASS__ ."::validateField() returned false for field {$field}!");
                     return false;
                 }
+                if (!$this->setFieldValue($field, $value)) {
+                    static::raiseError(__CLASS__ ."::setFieldValue() returned false for field {$field}!");
+                    return false;
+                }
                 $this->model_init_values[$field] = $value;
-                $this->model_values[$field] = $value;
             }
         } elseif (static::isHavingItems()) {
             while (($row = $sth->fetch(\PDO::FETCH_ASSOC)) !== false) {
@@ -1932,7 +1945,45 @@ abstract class DefaultModel
             return false;
         }
 
-        return static::$model_fields[$field_name]['type'];
+        return static::$model_fields[$field_name][FIELD_TYPE];
+    }
+
+    public static function getFieldLength($field_name)
+    {
+        if (!isset($field_name) || empty($field_name) || !is_string($field_name)) {
+            static::raiseError(__METHOD__ .'(), $field_name parameter is invalid!');
+            return false;
+        }
+
+        if (!static::hasField($field_name)) {
+            static::raiseError(__METHOD__ ."(), model has no field {$field_name}!");
+            return false;
+        }
+
+        if (!static::hasFieldLength($field_name) && static::getFieldType($field_name) === FIELD_STRING) {
+            return 255;
+        }
+
+        return static::$model_fields[$field_name][FIELD_LENGTH];
+    }
+
+    public static function hasFieldLength($field_name)
+    {
+        if (!isset($field_name) || empty($field_name) || !is_string($field_name)) {
+            static::raiseError(__METHOD__ .'(), $field_name parameter is invalid!');
+            return false;
+        }
+
+        if (!static::hasField($field_name)) {
+            static::raiseError(__METHOD__ ."(), model has no field {$field_name}!");
+            return false;
+        }
+
+        if (!array_key_exists(FIELD_LENGTH, static::$model_fields[$field_name])) {
+            return false;
+        }
+
+        return true;
     }
 
     public function getTableName()
@@ -2208,7 +2259,7 @@ abstract class DefaultModel
         return true;
     }
 
-    public function hasValue($field)
+    final public function hasFieldValue($field)
     {
         if (!static::hasFields()) {
             static::raiseError(__METHOD__ .'(), this model has no fields!');
@@ -2229,7 +2280,7 @@ abstract class DefaultModel
         return true;
     }
 
-    public function setValue($field, $value)
+    final public function setFieldValue($field, $value)
     {
         if (!isset($field) || empty($field) || !is_string($field)) {
             static::raiseError(__METHOD__ .'(), $field parameter is invalid!');
@@ -2246,21 +2297,37 @@ abstract class DefaultModel
             return false;
         }
 
+        if ($this->hasFieldLength($field)) {
+            if ($this->getFieldType($field) === FIELD_STRING) {
+                if (($field_length = $this->getFieldLength($field)) === false) {
+                    static::raiseError(__CLASS__ .'::getFieldLength() returned false!');
+                    return false;
+                }
+                $value_length = strlen($value);
+                if ($value_length > $field_length) {
+                    static::raiseError(
+                        __METHOD__ ."(), values length ({$value_length}) exceeds fields length ({$field_length})!"
+                    );
+                    return false;
+                }
+            }
+        }
+
         $this->model_values[$field] = $value;
         return true;
     }
 
-    public function getValue($field)
+    final public function getFieldValue($field)
     {
-        if (!$this->hasValue($field)) {
-            static::raiseError(__CLASS__ .'::hasValue() returned false!');
+        if (!$this->hasFieldValue($field)) {
+            static::raiseError(__CLASS__ .'::hasFieldValue() returned false!');
             return false;
         }
 
         return $this->model_values[$field];
     }
 
-    public function hasDefaultValue($field)
+    final public function hasDefaultValue($field)
     {
         if (!static::hasFields()) {
             static::raiseError(__METHOD__ .'(), this model has no fields!');
@@ -2279,7 +2346,7 @@ abstract class DefaultModel
         return true;
     }
 
-    public function getDefaultValue($field)
+    final public function getDefaultValue($field)
     {
         if (!$this->hasDefaultValue($field)) {
             static::raiseError(__CLASS__ .'::hasDefaultValue() returned false!');
