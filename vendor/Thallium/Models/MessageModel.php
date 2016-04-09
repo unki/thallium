@@ -101,7 +101,7 @@ class MessageModel extends DefaultModel
             return false;
         }
 
-        if (($session_id = $this->getFieldValue('session_id'))) {
+        if (($session_id = $this->getFieldValue('session_id')) === false) {
             static::raiseError(__CLASS__ .'::getFieldValue() returned false!');
             return false;
         }
@@ -116,7 +116,7 @@ class MessageModel extends DefaultModel
             return false;
         }
 
-        if (($command = $this->getFieldValue('command'))) {
+        if (($command = $this->getFieldValue('command')) === false) {
             static::raiseError(__CLASS__ .'::getFieldValue() returned false!');
             return false;
         }
@@ -136,9 +136,8 @@ class MessageModel extends DefaultModel
                 static::raiseError(__CLASS__ .'::setFieldValue() returned false!');
                 return false;
             }
-        }
-
-        if (is_array($body)) {
+            return true;
+        } elseif (is_array($body)) {
             $filtered_body = array_filter($body, function ($var) {
                 if (is_numeric($var) || is_string($var)) {
                     return true;
@@ -150,9 +149,7 @@ class MessageModel extends DefaultModel
                 return false;
             }
             return true;
-        }
-
-        if (!is_object($body)) {
+        } elseif (!is_object($body)) {
             static::raiseError(__METHOD__ .'(), unknown $body type!');
             return false;
         }
