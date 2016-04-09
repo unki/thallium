@@ -607,8 +607,6 @@ abstract class DefaultModel
                 static::raiseError(get_class($item) .'::delete() returned false!');
                 return false;
             }
-            static::raiseError(get_class($item) .'::delete() returned false!');
-            return false;
         }
 
         return true;
@@ -2295,6 +2293,11 @@ abstract class DefaultModel
         if (!static::hasField($field)) {
             static::raiseError(__METHOD__ .'(), this model has not that field!');
             return false;
+        }
+
+        if (!isset($value)) {
+            $this->model_values[$field] = null;
+            return true;
         }
 
         if ($this->hasFieldLength($field)) {
