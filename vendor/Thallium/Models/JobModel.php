@@ -146,7 +146,7 @@ class JobModel extends DefaultModel
     protected function preSave()
     {
         if (!$this->hasFieldValue('in_processing')) {
-            if (!$this->setFieldValue('in_processing')) {
+            if (!$this->setFieldValue('in_processing', 'N')) {
                 static::raiseError(__CLASS__ .'::setFieldValue() returned false!');
                 return false;
             }
