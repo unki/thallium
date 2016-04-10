@@ -910,7 +910,7 @@ abstract class DefaultModel
            sometimes we have to cast values to their field types.
         */
         if ($value_type == 'string' &&
-            $field_type == 'int' &&
+            $field_type == FIELD_INT &&
             ctype_digit($value) &&
             is_numeric($value)
         ) {
@@ -924,13 +924,13 @@ abstract class DefaultModel
             $value_type = FIELD_GUID;
         /* distinguish YESNO */
         } elseif ($value_type == 'string' &&
-            $field_type == 'yesno' &&
+            $field_type == FIELD_YESNO &&
             in_array($value, array('yes', 'no', 'Y', 'N'))
         ) {
             $value_type = 'yesno';
         /* distinguish timestamps */
         } elseif ($value_type == 'string' &&
-            $field_type == 'timestamp'
+            $field_type == FIELD_TIMESTAMP
         ) {
             $value_type = 'timestamp';
         }
