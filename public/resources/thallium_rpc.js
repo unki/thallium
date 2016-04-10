@@ -213,8 +213,20 @@ function rpc_object_update(element, successMethod, customData)
         return false;
     }
 
-    if (typeof (value = input.val()) === 'undefined') {
-        return false;
+    if (input.attr('type') === 'checkbox') {
+        if (input.prop('checked')) {
+            if ((value = input.attr('data-checked')) === undefined) {
+                value = 'Y';
+            }
+        } else {
+            if ((value = input.attr('data-unchecked')) === undefined) {
+                value = 'N';
+            }
+        }
+    } else {
+        if (typeof (value = input.val()) === 'undefined') {
+            return false;
+        }
     }
 
     action = safe_string(action);
@@ -239,7 +251,7 @@ function rpc_object_update(element, successMethod, customData)
         id     : id,
         key    : key,
         value  : value
-    }),
+    });
 
     if (typeof customData !== 'undefined') {
         data.customData = customData;
