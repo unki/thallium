@@ -516,7 +516,7 @@ class JobsController extends DefaultController
 
     protected function handleSaveRequest($job)
     {
-        global $ms, $mbus;
+        global $thallium, $mbus;
 
         if (empty($job) || !is_a($job, 'Thallium\Models\JobModel')) {
             static::raiseError(__METHOD__ .'() requires a JobModel reference as parameter!');
@@ -540,12 +540,12 @@ class JobsController extends DefaultController
             return false;
         }
 
-        if (!$ms->isValidId($save_request->id)) {
+        if ($save_request->id !== "new" && !$thallium->isValidId($save_request->id)) {
             static::raiseError(__METHOD__ .'() \$id is invalid!');
             return false;
         }
 
-        if (!$ms->isValidGuidSyntax($save_request->guid)) {
+        if ($save_request->guid !== "new" && !$thallium->isValidGuidSyntax($save_request->guid)) {
             static::raiseError(__METHOD__ .'() \$guid is invalid!');
             return false;
         }
@@ -557,20 +557,28 @@ class JobsController extends DefaultController
             return false;
         }
 
-        if (!$ms->isRegisteredModel($save_request->model)) {
+        if (!$thallium->isRegisteredModel($save_request->model)) {
             static::raiseError(__METHOD__ .'(), save-request contains an unsupported model!');
             return false;
         }
 
         $model = $save_request->model;
-        $id = $save_request->id;
-        $guid = $save_request->guid;
+        if ($save_request->id !== "new") {
+            $id = $save_request->id;
+        } else {
+            $id = null;
+        }
+        if ($save_request->guid !== "new") {
+            $guid = $save_request->guid;
+        } else {
+            $guid = null;
+        }
         unset($save_request->model);
         unset($save_request->id);
         unset($save_request->guid);
 
-        if (($obj = $ms->loadModel($model, $id, $guid)) === false) {
-            static::raiseError(get_class($ms) .'::loadModel() returned false!');
+        if (($obj = $thallium->loadModel($model, $id, $guid)) === false) {
+            static::raiseError(get_class($thallium) .'::loadModel() returned false!');
             return false;
         }
 
