@@ -703,7 +703,7 @@ class DatabaseController extends DefaultController
             return false;
         }
 
-        if (!($result = $this->db->query("DESC ". $table_name, \PDO::FETCH_NUM))) {
+        if (!($result = $this->query("DESC ". $table_name, \PDO::FETCH_NUM))) {
             static::raiseError(__METHOD__ .'(), failed to fetch table structure!');
             return false;
         }
