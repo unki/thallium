@@ -750,6 +750,11 @@ class DatabaseController extends DefaultController
         $this->is_open_transaction = false;
         return true;
     }
+
+    public function getDatabaseName()
+    {
+        return $this->db_cfg['db_name'];
+    }
 }
 
 // vim: set filetype=php expandtab softtabstop=4 tabstop=4 shiftwidth=4:
