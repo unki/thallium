@@ -140,6 +140,12 @@ class DatabaseController extends DefaultController
                 static::raiseError(__METHOD__ .'(), query failed!', false, $e);
             }
 
+            /* PDO::exec() sometimes returns false even if operation was successful.
+             * http://php.net/manual/de/pdo.exec.php#118156
+             * so overrule fow now.
+             */
+
+            return true;
             if (!isset($result) || $result === false) {
                 return false;
             }
