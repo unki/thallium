@@ -688,6 +688,21 @@ class DatabaseController extends DefaultController
 
         return $sql;
     }
+
+    public function getColumns($table_name)
+    {
+        if (!$this->getConnectionStatus()) {
+            static::raiseError(__CLASS__ .'::getConnectionStatus() returned false!');
+            return false;
+        }
+
+        if (!($result = $this->db->query("DESC ". $table_name, \PDO::FETCH_NUM))) {
+            static::raiseError(__METHOD__ .'(), failed to fetch table structure!');
+            return false;
+        }
+
+        return $result->fetchAll();
+    }
 }
 
 // vim: set filetype=php expandtab softtabstop=4 tabstop=4 shiftwidth=4:
