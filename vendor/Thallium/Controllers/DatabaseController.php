@@ -29,6 +29,7 @@ class DatabaseController extends DefaultController
     protected $db;
     protected $db_cfg;
     protected $is_connected = false;
+    protected $is_open_transaction = false;
 
     public function __construct()
     {
@@ -702,6 +703,46 @@ class DatabaseController extends DefaultController
         }
 
         return $result->fetchAll();
+    }
+
+    public function newTransaction()
+    {
+        if (!$this->getConnectionStatus()) {
+            static::raiseError(__CLASS__ .'::getConnectionStatus() returned false!');
+            return false;
+        }
+
+        if (isset($this->is_open_transaction) and $this->is_open_transaction === true) {
+            static::raiseError(__METHOD__ .'(), there is already an ongoing transaction!');
+            return false;
+        }
+
+        try {
+            $this->db->beginTransaction();
+        } catch (\PDOException $e) {
+            static::raiseError(get_class($this->db) .'::beginTransaction() failed!', false, $e);
+            return false;
+        }
+
+        $this->is_open_transaction = true;
+        return true;
+    }
+
+    public function closeTransaction()
+    {
+        if (!isset($this->is_open_transaction) or $this->is_open_transaction !== true) {
+            return true;
+        }
+
+        try {
+            $this->db->commit();
+        } catch (\PDOException $e) {
+            static::raiseError(get_class($this->db) .'::commit() failed!', false, $e);
+            return false;
+        }
+
+        $this->is_open_transaction = false;
+        return true;
     }
 }
 
