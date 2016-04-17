@@ -132,7 +132,7 @@ class DatabaseController extends DefaultController
         /* for manipulating queries use exec instead of query. can save
          * some resource because nothing has to be allocated for results.
          */
-        if (preg_match('/^(update|insert|create|replace|truncate|delete)/i', $query)) {
+        if (preg_match('/^[[:blank:]]*(update|insert|create|replace|truncate|delete|alter)[[:blank:]]/i', $query)) {
             try {
                 $result = $this->db->exec($query);
             } catch (\PDOException $e) {
