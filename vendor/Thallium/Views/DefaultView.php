@@ -25,6 +25,7 @@ abstract class DefaultView
     protected static $view_class_name;
     protected static $view_default_modes = array(
         'list',
+        '^list-([0-9]+).html$',
         'show',
         'edit',
     );
@@ -107,7 +108,6 @@ abstract class DefaultView
                 return false;
             }
             return $this->showEdit($item['id'], $item['guid']);
-
         } elseif ($mode == "show" && $tmpl->templateExists(static::$view_class_name ."_show.tpl")) {
             if (($item = $router->parseQueryParams()) === false) {
                 static::raiseError("HttpRouterController::parseQueryParams() returned false!");
@@ -125,7 +125,6 @@ abstract class DefaultView
                 return false;
             }
             return $this->showItem($item['id'], $item['guid']);
-
         } elseif ($tmpl->templateExists(static::$view_class_name .".tpl")) {
             return $tmpl->fetch(static::$view_class_name .".tpl");
         }
@@ -231,11 +230,13 @@ abstract class DefaultView
             return false;
         }
 
-        if (!in_array($mode, $modes)) {
-            return false;
+        foreach ($modes as $pattern) {
+            if (preg_match("/{$pattern}/", $mode)) {
+                return true;
+            }
         }
 
-        return true;
+        return false;
     }
 
     public function getModes()
