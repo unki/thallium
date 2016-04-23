@@ -24,12 +24,14 @@ abstract class DefaultView
     protected static $view_default_mode = "list";
     protected static $view_class_name;
     protected static $view_default_modes = array(
-        'list',
+        '^list$',
         '^list-([0-9]+).html$',
-        'show',
-        'edit',
+        '^show$',
+        '^edit$',
     );
     protected $view_modes = array();
+    protected $view_items = array();
+    protected $view_items_paged = array();
 
     public function __construct()
     {
@@ -64,24 +66,41 @@ abstract class DefaultView
     {
         global $thallium, $query, $router, $tmpl;
 
+        $items_per_page = null;
+
         if (isset($query->params)) {
             $params = $query->params;
         }
 
-        if ((!isset($params) ||
-            empty($params)) &&
-            static::$view_default_mode == "list"
-        ) {
-            $mode = "list";
-        } elseif (isset($params) && !empty($params)) {
-            if (isset($params[0]) &&
-                !empty($params[0]) &&
-                $this->isValidMode($params[0])
-            ) {
-                $mode = $params[0];
+        /*if (!isset($params) || empty($params)) {
+            if (static::$view_default_mode == "list") {
+                $mode = "list";
+            } elseif (static::$view_default_mode == "show") {
+                $mode = "show";
+            }*/
+        if (isset($params) && !empty($params) && is_array($params)) {
+            if (isset($query->params['items-per-page'])) {
+                $items_per_page = $query->params['items-per-page'];
             }
-        } elseif (static::$view_default_mode == "show") {
-            $mode = "show";
+            if (isset($params[0]) && !empty($params[0]) && $this->isValidMode($params[0])) {
+                if ($query->params[0] == 'list.html') {
+                    $mode = 'list';
+                } elseif (preg_match('/^list-([0-9]+).html$/', $query->params[0], $parts) &&
+                    isset($parts) &&
+                    !empty($parts) &&
+                    is_array($parts) &&
+                    isset($parts[1]) &&
+                    is_numeric($parts[1])
+                ) {
+                    $mode = 'list';
+                    if (!$this->setSessionVar("current_page", $parts[1])) {
+                        $this->raiseError(__CLASS__ .'::setSessionVar() returned false!');
+                        return false;
+                    }
+                } else {
+                    $mode = $params[0];
+                }
+            }
         }
 
         if (!isset($mode)) {
@@ -89,7 +108,7 @@ abstract class DefaultView
         }
 
         if ($mode == "list" && $tmpl->templateExists(static::$view_class_name ."_list.tpl")) {
-            return $this->showList();
+            return $this->showList($mode, $items_per_page);
         } elseif ($mode == "edit" && $tmpl->templateExists(static::$view_class_name ."_edit.tpl")) {
             if (($item = $router->parseQueryParams()) === false) {
                 static::raiseError("HttpRouterController::parseQueryParams() returned false!");
@@ -133,9 +152,35 @@ abstract class DefaultView
         return false;
     }
 
-    public function showList()
+    public function showList($pageno = null, $items_limit = null)
     {
         global $tmpl;
+
+        if (!isset($pageno) || empty($pageno) || !is_numeric($pageno)) {
+            if (($current_page = $this->getSessionVar("current_page")) === false) {
+                $current_page = 1;
+            }
+        } else {
+            $current_page = $pageno;
+        }
+
+        if (!isset($items_limit) || is_null($items_limit) || !is_numeric($items_limit)) {
+            if (($current_items_limit = $this->getSessionVar("current_items_limit")) === false) {
+                $current_items_limit = -1;
+            }
+        } else {
+            $current_items_limit = $items_limit;
+        }
+
+        if (method_exists($this, static::$view_class_name ."List") &&
+            is_callable(array(&$this, static::$view_class_name ."List"))
+        ) {
+            $tmpl->registerPlugin(
+                'block',
+                static::$view_class_name ."_list",
+                array(&$this, static::$view_class_name ."List")
+            );
+        }
 
         $template_name = static::$view_class_name ."_list.tpl";
 
@@ -144,11 +189,56 @@ abstract class DefaultView
             return false;
         }
 
-        $tmpl->registerPlugin(
-            'block',
-            static::$view_class_name ."_list",
-            array(&$this, static::$view_class_name ."List")
-        );
+        if (!isset($this->view_items) || empty($this->view_items) || !is_array($this->view_items)) {
+            return $tmpl->fetch($template_name);
+        }
+
+        try {
+            $pager = new \Thallium\Controllers\PagingController(array(
+                'delta' => 2,
+            ));
+        } catch (\Exception $e) {
+            $this->raiseError(__METHOD__ .'(), failed to load PagingController!');
+            return false;
+        }
+
+        if (!$pager->setPagingData($this->view_items)) {
+            $this->raiseError(get_class($pager) .'::setPagingData() returned false!');
+            return false;
+        }
+
+        if (!$pager->setCurrentPage($current_page)) {
+            $this->raiseError(get_class($pager) .'::setCurrentPage() returned false!');
+            return false;
+        }
+
+        if (!$pager->setItemsLimit($current_items_limit)) {
+            $this->raiseError(get_class($pager) .'::setItemsLimit() returned false!');
+            return false;
+        }
+
+        if (($data = $pager->getPageData()) === false) {
+            $this->raiseError(get_class($pager) .'::getPageData() returned false!');
+            return false;
+        }
+
+        if (!isset($data) || empty($data) || !is_array($data)) {
+            $this->raiseError(get_class($pager) .'::getPageData() returned invalid data!');
+            return false;
+        }
+
+        $this->view_items_paged = $data;
+
+        if (!$this->setSessionVar("current_page", $current_page)) {
+            $this->raiseError(__CLASS__ .'::setSessionVar() returned false!');
+            return false;
+        }
+
+        if (!$this->setSessionVar("current_items_limit", $current_items_limit)) {
+            $this->raiseError(__CLASS__ .'::setSessionVar() returned false!');
+            return false;
+        }
+
         return $tmpl->fetch($template_name);
     }
 
