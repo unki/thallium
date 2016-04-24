@@ -842,6 +842,11 @@ abstract class DefaultModel
     /* override PHP's __set() function */
     final public function __set($name, $value)
     {
+        if (!static::hasFields() && !static::isHavingItems()) {
+            $this->$name = $value;
+            return;
+        }
+
         global $ms;
 
         if ($this->hasVirtualFields() && $this->hasVirtualField($name)) {
@@ -975,6 +980,10 @@ abstract class DefaultModel
     /* override PHP's __get() function */
     final public function __get($name)
     {
+        if (!static::hasFields() && !static::isHavingItems()) {
+            return isset($this->$name) ? $this->$name : null;
+        }
+
         if (($field = static::getFieldNamefromColumn($name)) === false) {
             static::raiseError(__CLASS__ .'::getFieldNameFromColumn() returned false!', true);
             return;
