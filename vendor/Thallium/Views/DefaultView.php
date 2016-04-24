@@ -72,12 +72,6 @@ abstract class DefaultView
             $params = $query->params;
         }
 
-        /*if (!isset($params) || empty($params)) {
-            if (static::$view_default_mode == "list") {
-                $mode = "list";
-            } elseif (static::$view_default_mode == "show") {
-                $mode = "show";
-            }*/
         if (isset($params) && !empty($params) && is_array($params)) {
             if (isset($query->params['items-per-page'])) {
                 $items_per_page = $query->params['items-per-page'];
@@ -179,6 +173,12 @@ abstract class DefaultView
                 'block',
                 static::$view_class_name ."_list",
                 array(&$this, static::$view_class_name ."List")
+            );
+        } else {
+            $tmpl->registerPlugin(
+                'block',
+                static::$view_class_name ."_list",
+                array(&$this, 'dataList')
             );
         }
 
@@ -421,6 +421,59 @@ abstract class DefaultView
         }
 
         return $this->view_data;
+    }
+
+    final public function dataList($params, $content, &$smarty, &$repeat)
+    {
+        $index = $smarty->getTemplateVars('smarty.IB.item_list.index');
+
+        if (!isset($index) || empty($index)) {
+            $index = 0;
+        }
+
+        if (!$this->hasViewData()) {
+            $repeat = false;
+            return $content;
+        }
+
+        if ($index >= count($this->view_items)) {
+            $repeat = false;
+            return $content;
+        }
+
+        if (($items_keys = array_keys($this->view_items)) === false) {
+            static::raiseError(__METHOD__ .'(), internal function went wrong!');
+            return false;
+        }
+
+        if (!isset($items_keys[$index]) ||
+            !is_numeric($items_keys[$index])
+        ) {
+            static::raiseError(__METHOD__ .'(), internal function went wrong!');
+            return false;
+        }
+
+        $item_idx = $items_keys[$index];
+
+        if (!isset($item_idx) || !is_numeric($item_idx)) {
+            $repeat = false;
+            return $content;
+        }
+
+        $item =  $this->view_items[$item_idx];
+
+        if (!isset($item) || empty($item) || !is_object($item)) {
+            $repeat = false;
+            return $content;
+        }
+
+        $smarty->assign("item", $item);
+
+        $index++;
+        $smarty->assign('smarty.IB.item_list.index', $index);
+        $repeat = true;
+
+        return $content;
     }
 }
 
