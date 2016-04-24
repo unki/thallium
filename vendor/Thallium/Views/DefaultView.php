@@ -31,7 +31,7 @@ abstract class DefaultView
     );
     protected $view_modes = array();
     protected $view_items = array();
-    protected $view_items_paged = array();
+    protected $view_data = array();
 
     public function __construct()
     {
@@ -189,7 +189,7 @@ abstract class DefaultView
             return false;
         }
 
-        if (!isset($this->view_items) || empty($this->view_items) || !is_array($this->view_items)) {
+        if (!$this->hasViewData()) {
             return $tmpl->fetch($template_name);
         }
 
@@ -202,7 +202,17 @@ abstract class DefaultView
             return false;
         }
 
-        if (!$pager->setPagingData($this->view_items)) {
+        if (($view_data_model = $this->getViewData()) === false) {
+            static::raiseError(__CLASS__ .'::getViewData() returned false!');
+            return false;
+        }
+
+        if (($view_items = $view_data_model->getItems()) === false) {
+            static::raiseError(get_class($view_data_model) .'::getItems() returned false!');
+            return false;
+        }
+
+        if (!$pager->setPagingData($view_items)) {
             $this->raiseError(get_class($pager) .'::setPagingData() returned false!');
             return false;
         }
@@ -217,17 +227,17 @@ abstract class DefaultView
             return false;
         }
 
-        if (($data = $pager->getPageData()) === false) {
+        if (($items = $pager->getPageData()) === false) {
             $this->raiseError(get_class($pager) .'::getPageData() returned false!');
             return false;
         }
 
-        if (!isset($data) || empty($data) || !is_array($data)) {
+        if (!isset($items) || empty($items) || !is_array($items)) {
             $this->raiseError(get_class($pager) .'::getPageData() returned invalid data!');
             return false;
         }
 
-        $this->view_items_paged = $data;
+        $this->view_items = $items;
 
         if (!$this->setSessionVar("current_page", $current_page)) {
             $this->raiseError(__CLASS__ .'::setSessionVar() returned false!');
@@ -238,6 +248,8 @@ abstract class DefaultView
             $this->raiseError(__CLASS__ .'::setSessionVar() returned false!');
             return false;
         }
+
+        $tmpl->assign('pager', $pager);
 
         return $tmpl->fetch($template_name);
     }
@@ -368,6 +380,47 @@ abstract class DefaultView
         }
 
         return true;
+    }
+
+    protected function setViewData(&$data)
+    {
+        if (!isset($data) || empty($data) || !is_object($data)) {
+            static::raiseError(__METHOD__ .'(), $data parameter is invalid!');
+            return false;
+        }
+
+        if (!method_exists($data, 'isHavingItems') ||
+            !is_callable(array(&$data, 'isHavingItems')) ||
+            !$data->isHavingItems() ||
+            !method_exists($data, 'hasItems') ||
+            !is_callable(array(&$data, 'hasItems')) ||
+            !$data->hasItems()
+        ) {
+            static::raiseError(__METHOD__ .'(), $data parameter is not a valid data model!');
+            return false;
+        }
+
+        $this->view_data = $data;
+        return true;
+    }
+
+    protected function hasViewData()
+    {
+        if (!isset($this->view_data) || empty($this->view_data) || !is_object($this->view_data)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    protected function getViewData()
+    {
+        if (!$this->hasViewData()) {
+            static::raiseError(__CLASS__ .'::getViewData() returned false!');
+            return false;
+        }
+
+        return $this->view_data;
     }
 }
 
