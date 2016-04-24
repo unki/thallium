@@ -202,17 +202,12 @@ abstract class DefaultView
             return false;
         }
 
-        if (($view_data_model = $this->getViewData()) === false) {
+        if (($view_data = $this->getViewData()) === false) {
             static::raiseError(__CLASS__ .'::getViewData() returned false!');
             return false;
         }
 
-        if (($view_items = $view_data_model->getItems()) === false) {
-            static::raiseError(get_class($view_data_model) .'::getItems() returned false!');
-            return false;
-        }
-
-        if (!$pager->setPagingData($view_items)) {
+        if (!$pager->setPagingData($view_data)) {
             $this->raiseError(get_class($pager) .'::setPagingData() returned false!');
             return false;
         }
