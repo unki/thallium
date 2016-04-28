@@ -434,6 +434,13 @@ abstract class DefaultModel
                     static::raiseError(__CLASS__ ."::validateField() returned false for field {$field}!");
                     return false;
                 }
+                // type casting, as fixed point numbers are returned as string!
+                if ($this->getFieldType($field) === FIELD_INT &&
+                    is_string($value) &&
+                    is_numeric($value)
+                ) {
+                    $value = intval($value);
+                }
                 if (!$this->setFieldValue($field, $value)) {
                     static::raiseError(__CLASS__ ."::setFieldValue() returned false for field {$field}!");
                     return false;
