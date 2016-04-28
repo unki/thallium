@@ -2644,6 +2644,29 @@ abstract class DefaultModel
 
         return true;
     }
+
+    public function resetFields()
+    {
+        if (!static::hasFields()) {
+            static::raiseError(__CLASS__ .'::hasFields() returned false!');
+            return false;
+        }
+
+        if (!isset($this->model_init_values) ||
+            empty($this->model_init_values) ||
+            !is_array($this->model_init_values)
+        ) {
+            static::raiseError(__METHOD__ .'(), no inital field values found!');
+            return false;
+        }
+
+        if (!$this->update($this->model_init_values)) {
+            static::raiseError(__CLASS__ .'::update() returned false!');
+            return false;
+        }
+
+        return true;
+    }
 }
 
 // vim: set filetype=php expandtab softtabstop=4 tabstop=4 shiftwidth=4:
