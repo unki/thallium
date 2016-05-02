@@ -147,6 +147,24 @@ class CacheController extends DefaultController
         unset($this->cache[$cache_key]);
         return true;
     }
+
+    public function dump()
+    {
+        if (!isset($this->cache) || empty($this->cache)) {
+            return null;
+        }
+
+        return $this->cache;
+    }
+
+    public function dumpIndex()
+    {
+        if (!isset($this->cache_index) || empty($this->cache_index)) {
+            return null;
+        }
+
+        return $this->cache_index;
+    }
 }
 
 // vim: set filetype=php expandtab softtabstop=4 tabstop=4 shiftwidth=4:
