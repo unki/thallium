@@ -62,6 +62,21 @@ class CacheController extends DefaultController
                 static::raiseError(get_class($thallium) .'::createGuid() returned false!');
                 return false;
             }
+        } elseif (isset($lookup_key) && is_bool($lookup_key) && $lookup_key === true) {
+            $err_prefix = __METHOD__ .'(), lookup key auto-detection has been activated, but model has no ';
+            if (!isset($cacheobj::$model_column_prefix)) {
+                static::raiseError($err_prefix .'model_column_prefix constant!');
+                return false;
+            }
+            if (!method_exists($cacheobj, 'getGuid') || !is_callable(array(&$this, 'getGuid'))) {
+                static::raiseError($err_prefix .'has no getGuid() method!');
+                return false;
+            }
+            if (($cacheobj_guid = $cacheobj->getGuid()) === false) {
+                static::raiseError($err_prefix .'has no GUID!');
+                return false;
+            }
+            $lookup_key = sprintf("%s_%s", $cacheobj::$model_column_prefix, $cacheobj_guid);
         }
 
         if ($this->has($lookup_key)) {
