@@ -2034,6 +2034,8 @@ abstract class DefaultModel
 
     public function getItem($idx)
     {
+        global $cache;
+
         if (!isset($idx) || empty($idx) || (!is_string($idx) && !is_numeric($idx))) {
             static::raiseError(__METHOD__ .'(), $idx parameter is invalid!');
             return false;
@@ -2061,6 +2063,26 @@ abstract class DefaultModel
             $item = new $child_model_name($item);
         } catch (\Exception $e) {
             static::raiseError(__METHOD__ ."(), failed to load {$child_model_name}!");
+            return false;
+        }
+
+        if (!isset($item::$model_column_prefix)) {
+            static::raiseError(__METHOD__ .'(), child model has no model_column_prefix constant!');
+            return false;
+        }
+        if (($item_idx = $item->getId()) === false) {
+            static::raiseError(__METHOD__ .'(), child model has no idx!');
+            return false;
+        }
+
+        $cache_key = sprintf("%s_%s", $item::$model_column_prefix, $item_idx);
+
+        if ($cache->has($cache_key)) {
+            return $item;
+        }
+
+        if (!$cache->add($item, $cache_key)) {
+            static::raiseError(get_class($cache) .'::add() returned false!');
             return false;
         }
 
