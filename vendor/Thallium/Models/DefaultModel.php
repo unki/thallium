@@ -32,6 +32,7 @@ abstract class DefaultModel
     protected $model_load_by = array();
     protected $model_sort_order = array();
     protected $model_items = array();
+    protected $model_items_lookup_index = array();
     protected $model_permit_rpc_updates = false;
     protected $model_rpc_allowed_fields = array();
     protected $model_rpc_allowed_actions = array();
@@ -542,12 +543,9 @@ abstract class DefaultModel
 
         return true;
 
-    } // update()
+    }
 
-    /**
-     * delete
-     */
-    public function delete()
+    final public function delete()
     {
         global $db;
 
@@ -1045,7 +1043,7 @@ abstract class DefaultModel
         return $value;
     }
 
-    public function save()
+    final public function save()
     {
         global $thallium, $db;
 
@@ -1937,7 +1935,7 @@ abstract class DefaultModel
             return false;
         }
 
-        if (($items = static::filterItems($result, $filter)) === false) {
+        if (($items = $this->filterItems($result, $filter)) === false) {
             static::raiseError(__CLASS__ .'::filterItems() returned false!');
             return false;
         }
@@ -1945,7 +1943,7 @@ abstract class DefaultModel
         return $items;
     }
 
-    public static function filterItems($items, $filter)
+    protected function filterItems($items, $filter)
     {
         if (!isset($items) || empty($items) || !is_array($items)) {
             static::raiseError(__METHOD__ .'(), $items parameter is invalid!');
@@ -1975,6 +1973,15 @@ abstract class DefaultModel
                 $hits[$key] = 0;
             }
             foreach ($filter as $field => $pattern) {
+                /* use the lookup-index */
+                if (isset($this->model_items_lookup_index[$field]) &&
+                    isset($this->model_items_lookup_index[$field][$key]) &&
+                    $this->model_items_lookup_index[$field][$key] === $pattern
+                ) {
+                    $hits[$key]++;
+                    continue;
+                }
+
                 if (!$item::hasField($field)) {
                     static::raiseError(__METHOD__ .'(), $filter parameter refers an unknown field!');
                     return false;
@@ -2152,6 +2159,11 @@ abstract class DefaultModel
 
         if (!$cache->add($item, $cache_key)) {
             static::raiseError(get_class($cache) .'::add() returned false!');
+            return false;
+        }
+
+        if (!$this->updateItemsLookupCache($item)) {
+            static::raiseError(__CLASS__ .'::updateItemsLookupCache() returned false!');
             return false;
         }
 
@@ -2782,6 +2794,48 @@ abstract class DefaultModel
         if (!$this->update($this->model_init_values)) {
             static::raiseError(__CLASS__ .'::update() returned false!');
             return false;
+        }
+
+        return true;
+    }
+
+    protected function updateItemsLookupCache($item)
+    {
+        if (!isset($item) || empty($item) || !is_object($item)) {
+            static::raiseError(__METHOD__ .'(), $item parameter is invalid!');
+            return false;
+        }
+
+        if (!$item::hasFields()) {
+            static::raiseError(get_class($item) .'::hasFields() returned false!');
+            return false;
+        }
+
+        if (($fields = $item->getFieldNames()) === false) {
+            static::raiseError(get_class($item) .'::getFields() returned false!');
+            return false;
+        }
+
+        foreach ($fields as $field) {
+            if (!isset($this->model_items_lookup_index[$field])) {
+                $this->model_items_lookup_index[$field] = array();
+            }
+            if (($idx = $item->getId()) === false) {
+                static::raiseError(get_class($item) .'::getId() returned false!');
+                return false;
+            }
+            if (!$item->hasFieldValue($field)) {
+                continue;
+            }
+            if (($value = $item->getFieldValue($field)) === false) {
+                static::raiseError(get_class($field) .'::getFieldValue() returned false!');
+                return false;
+            }
+            if (isset($this->model_items_lookup_index[$field][$idx])) {
+                static::raiseError(__METHOD__ .'(), a lookup index entry is already present for that item!');
+                return false;
+            }
+            $this->model_items_lookup_index[$field][$idx] = $value;
         }
 
         return true;
