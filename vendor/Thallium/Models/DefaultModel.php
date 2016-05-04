@@ -1866,7 +1866,7 @@ abstract class DefaultModel
         return array_keys($this->model_items);
     }
 
-    public function getItems($offset = null, $limit = null)
+    public function getItems($offset = null, $limit = null, $filter = null)
     {
         if (!static::isHavingItems()) {
             static::raiseError(__METHOD__ .'(), model '. __CLASS__ .' is not declared to have items!');
@@ -1926,6 +1926,74 @@ abstract class DefaultModel
         if (!isset($result) || empty($result) || !is_array($result)) {
             static::raiseError(__METHOD__ .'(), no items retrieved!');
             return false;
+        }
+
+        if (!isset($filter) || is_null($filter)) {
+            return $result;
+        }
+
+        if (!is_array($filter)) {
+            static::raiseError(__METHOD__ .'(), $filter parameter is invalid!');
+            return false;
+        }
+
+        if (($items = static::filterItems($result, $filter)) === false) {
+            static::raiseError(__CLASS__ .'::filterItems() returned false!');
+            return false;
+        }
+
+        return $items;
+    }
+
+    public static function filterItems($items, $filter)
+    {
+        if (!isset($items) || empty($items) || !is_array($items)) {
+            static::raiseError(__METHOD__ .'(), $items parameter is invalid!');
+            return false;
+        }
+
+        if (!isset($filter) || empty($filter) || !is_array($filter)) {
+            static::raiseError(__METHOD__ .'(), $filter parameter is invalid!');
+            return false;
+        }
+
+        if (!static::validateItemsFilter($filter)) {
+            static::raiseError(__CLASS__ .'::validateItemsFilter() returned false!');
+            return false;
+        }
+
+        $result = array();
+        $hits = array();
+        $hits_required = count($filter);
+
+        foreach ($items as $key => $item) {
+            if (!isset($item) || empty($item) || (!is_object($item) && !is_array($item))) {
+                static::raiseError(__METHOD__ .'(), $items parameter contains an invalid іtem!');
+                return false;
+            }
+            if (!isset($hits[$key])) {
+                $hits[$key] = 0;
+            }
+            foreach ($filter as $field => $pattern) {
+                if (!$item::hasField($field)) {
+                    static::raiseError(__METHOD__ .'(), $filter parameter refers an unknown field!');
+                    return false;
+                }
+                if (($value = $item->getFieldValue($field)) === false) {
+                    static::raiseError(get_class($item) .'::getFieldValue() returned false!');
+                    return false;
+                }
+                if ($value === $pattern) {
+                    $hits[$key]++;
+                }
+            }
+        }
+
+        foreach ($hits as $key => $hits_present) {
+            if ($hits_present !== $hits_required) {
+                continue;
+            }
+            $result[$key] = $items[$key];
         }
 
         return $result;
@@ -2056,29 +2124,30 @@ abstract class DefaultModel
         }
 
         $item = $this->model_items[$idx];
+        $child_model_name = $item[FIELD_MODEL];
+
+        if (!isset($child_model_name::$model_column_prefix)) {
+            static::raiseError(__METHOD__ .'(), child model has no model_column_prefix constant!');
+            return false;
+        }
+
+        $cache_key = sprintf("%s_%s", $child_model_name::$model_column_prefix, $idx);
+
+        if ($cache->has($cache_key)) {
+            if (($item = $cache->get($cache_key)) === false) {
+                static::raiseError(get_class($cache) .'::get() returned false!');
+                return false;
+            }
+            return $item;
+        }
+
+        unset($item[FIELD_MODEL]);
 
         try {
-            $child_model_name = $item[FIELD_MODEL];
-            unset($item[FIELD_MODEL]);
             $item = new $child_model_name($item);
         } catch (\Exception $e) {
             static::raiseError(__METHOD__ ."(), failed to load {$child_model_name}!");
             return false;
-        }
-
-        if (!isset($item::$model_column_prefix)) {
-            static::raiseError(__METHOD__ .'(), child model has no model_column_prefix constant!');
-            return false;
-        }
-        if (($item_idx = $item->getId()) === false) {
-            static::raiseError(__METHOD__ .'(), child model has no idx!');
-            return false;
-        }
-
-        $cache_key = sprintf("%s_%s", $item::$model_column_prefix, $item_idx);
-
-        if ($cache->has($cache_key)) {
-            return $item;
         }
 
         if (!$cache->add($item, $cache_key)) {
@@ -2289,6 +2358,27 @@ abstract class DefaultModel
                 static::raiseError(__METHOD__ ."(), unsupported type {$type} received!");
                 return false;
                 break;
+        }
+
+        return true;
+    }
+
+    public static function validateItemsFilter($filter)
+    {
+        if (!isset($filter) || empty($filter) || !is_array($filter)) {
+            static::raiseError(__METHOD__ .'(), $filter parameter is invalid!');
+            return false;
+        }
+
+        foreach ($filter as $field => $pattern) {
+            if (!isset($field) || empty($field) || !is_string($field)) {
+                static::raiseError(__METHOD__ .'(), $filter parameter contains an invalid $field name!');
+                return false;
+            }
+            if (!isset($pattern) || empty($pattern) || (!is_string($pattern) && !is_int($pattern))) {
+                static::raiseError(__METHOD__ .'(), $filter parameter contains an invalid $pattern!' . $pattern);
+                return false;
+            }
         }
 
         return true;
