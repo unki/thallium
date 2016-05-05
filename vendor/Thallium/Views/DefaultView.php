@@ -41,6 +41,19 @@ abstract class DefaultView
         }
     }
 
+    final public function __set($name, $value)
+    {
+        global $thallium;
+
+        if (!isset($thallium::$permit_undeclared_class_properties)) {
+            static::raiseError(__METHOD__ ."(), trying to set an undeclared property {$name}!", true);
+            return;
+        }
+
+        $this->$name = $value;
+        return;
+    }
+
     protected static function validateView()
     {
         if (!isset(static::$view_default_mode) ||
