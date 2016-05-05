@@ -22,6 +22,7 @@ namespace Thallium\Controllers;
 class InstallerController extends DefaultController
 {
     protected $schema_version_before;
+    protected $framework_schema_version_before;
 
     public function setup()
     {
