@@ -2,7 +2,7 @@
  * This file is part of Thallium.
  *
  * Thallium, a PHP-based framework for web applications.
- * Copyright (C) <2015> <Andreas Unterkircher>
+ * Copyright (C) <2015-2016> <Andreas Unterkircher>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -297,8 +297,7 @@ ThalliumMessageBus.prototype.parseResponse = function (data) {
         return false;
     }
 
-    if (
-        typeof json.hash === 'undefined' ||
+    if (typeof json.hash === 'undefined' ||
         typeof json.size === 'undefined' ||
         typeof json.json === 'undefined' ||
         typeof json.count === 'undefined'
