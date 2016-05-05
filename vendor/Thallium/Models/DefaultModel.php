@@ -847,7 +847,13 @@ abstract class DefaultModel
     /* override PHP's __set() function */
     final public function __set($name, $value)
     {
+        global $thallium;
+
         if (!static::hasFields() && !static::isHavingItems()) {
+            if (!isset($thallium::$permit_undeclared_class_properties)) {
+                static::raiseError(__METHOD__ ."(), trying to set an undeclared property {$name}!", true);
+                return;
+            }
             $this->$name = $value;
             return;
         }
