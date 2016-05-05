@@ -23,6 +23,7 @@ class MessageBusController extends DefaultController
 {
     const EXPIRE_TIMEOUT = 300;
     protected $suppressOutboundMessaging = false;
+    protected $json_errors = array();
 
     public function __construct()
     {
@@ -40,7 +41,6 @@ class MessageBusController extends DefaultController
 
         // Define the JSON errors.
         $constants = get_defined_constants(true);
-        $this->json_errors = array();
         foreach ($constants["json"] as $name => $value) {
             if (!strncmp($name, "JSON_ERROR_", 11)) {
                 $this->json_errors[$value] = $name;
