@@ -445,12 +445,13 @@ class MainController extends DefaultController
         }
 
         try {
-            $GLOBALS[$global_name] =& new $controller;
+            $$global_name = new $controller;
         } catch (Exception $e) {
             static::raiseError("Failed to load {$controller_name}!", false, $e->getMessage());
             return false;
         }
 
+        $GLOBALS[$global_name] =& $$global_name;
         return true;
     }
 
