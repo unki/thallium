@@ -2113,7 +2113,7 @@ abstract class DefaultModel
         return true;
     }
 
-    public function getItem($idx)
+    public function getItem($idx, $reset = true)
     {
         global $cache;
 
@@ -2150,6 +2150,12 @@ abstract class DefaultModel
             if (($item = $cache->get($cache_key)) === false) {
                 static::raiseError(get_class($cache) .'::get() returned false!');
                 return false;
+            }
+            if (isset($reset) && $reset === true) {
+                if (!$item->resetFields()) {
+                    static::raiseError(get_class($item) .'::resetFields() returned false!');
+                    return false;
+                }
             }
             return $item;
         }
