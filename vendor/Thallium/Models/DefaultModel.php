@@ -29,6 +29,7 @@ abstract class DefaultModel
     protected static $model_has_items = false;
     protected static $model_items_model;
     protected static $model_links = array();
+    protected static $model_bulk_load_limit = 50;
     protected $model_load_by = array();
     protected $model_sort_order = array();
     protected $model_items = array();
@@ -74,8 +75,6 @@ abstract class DefaultModel
             $this->initFields();
             return;
         }
-
-        $this->model_init_values = array();
 
         if (!$this->load()) {
             static::raiseError(__CLASS__ ."::load() returned false!", true);
@@ -322,35 +321,34 @@ abstract class DefaultModel
                 return false;
             }
         } elseif (static::isHavingItems()) {
-            $fields = '*';
+            $fields = array(
+                FIELD_IDX,
+                FIELD_GUID,
+            );
         }
 
         if (!isset($fields) || empty($fields)) {
             return true;
         }
 
-        if ($fields !== '*') {
-            foreach ($fields as $field) {
-                if (($column = static::column($field)) === false) {
-                    static::raiseError(__CLASS__ .'::column() returned false!');
-                    return false;
-                }
-                if ($field == 'time') {
-                    $sql_query_columns[] = sprintf("UNIX_TIMESTAMP(%s) as %s", $column, $column);
-                    continue;
-                }
-                $sql_query_columns[$field] = $column;
+        foreach ($fields as $field) {
+            if (($column = static::column($field)) === false) {
+                static::raiseError(__CLASS__ .'::column() returned false!');
+                return false;
             }
+            if ($field == 'time') {
+                $sql_query_columns[] = sprintf("UNIX_TIMESTAMP(%s) as %s", $column, $column);
+                continue;
+            }
+            $sql_query_columns[$field] = $column;
+        }
 
-            foreach ($this->model_load_by as $field => $value) {
-                if (($column = static::column($field)) === false) {
-                    static::raiseError(__CLASS__ .'::column() returned false!');
-                    return false;
-                }
-                $sql_query_data[$column] = $value;
+        foreach ($this->model_load_by as $field => $value) {
+            if (($column = static::column($field)) === false) {
+                static::raiseError(__CLASS__ .'::column() returned false!');
+                return false;
             }
-        } else {
-            $sql_query_columns[] = '*';
+            $sql_query_data[$column] = $value;
         }
 
         $bind_params = array();
@@ -474,7 +472,6 @@ abstract class DefaultModel
                     FIELD_MODEL => $child_model_name,
                     FIELD_IDX => $row[$child_model_name::column(FIELD_IDX)],
                     FIELD_GUID => $row[$child_model_name::column(FIELD_GUID)],
-                    FIELD_DATA => $row,
                 );
 
                 if (!$this->addItem($item)) {
@@ -503,6 +500,85 @@ abstract class DefaultModel
         return true;
 
     } // load();
+
+    final protected function bulkLoad($keys)
+    {
+        global $thallium, $db;
+
+        if (!isset($keys) || empty($keys) || !is_array($keys)) {
+            static::raiseError(__METHOD__ .'(), $keys parameter is invalid!');
+            return false;
+        }
+
+        if (!array_walk(
+            $keys,
+            function ($key) {
+                if (!is_numeric($key) || !is_int($key)) {
+                    static::raiseError(__METHOD__ .'(), $keys parameter contains an invalid key!');
+                    return false;
+                }
+                return true;
+            }
+        )) {
+            static::raiseError(__METHOD__ .'(), $keys parameter failed validation!');
+            return false;
+        }
+
+        $sth = $db->prepare(sprintf(
+            "SELECT
+                *
+            FROM
+                TABLEPREFIX%s
+            WHERE
+                %s_idx IN (?)",
+            static::$model_table_name,
+            static::$model_column_prefix
+        ));
+
+        if (!$sth) {
+            static::raiseError(__METHOD__ ."(), unable to prepare query");
+            return false;
+        }
+
+        if (!$db->execute($sth, array(implode(',', $keys)))) {
+            static::raiseError(__METHOD__ ."(), unable to execute query");
+            return false;
+        }
+
+        while ($row = $sth->fetch(\PDO::FETCH_ASSOC)) {
+            $item = array();
+            if (($full_model = $thallium->getFullModelName(static::$model_items_model)) === false) {
+                static::raiseError(get_class($thallium) .'::getFullModelName() returned false!');
+                return false;
+            }
+            foreach ($row as $key => $value) {
+                if (($field = $full_model::getFieldNameFromColumn($key)) === false) {
+                    static::raiseError(__CLASS__ .'() returned false!');
+                    return false;
+                }
+                if (!$full_model::validateField($field, $value)) {
+                    static::raiseError(__CLASS__ ."::validateField() returned false for field {$field}!");
+                    return false;
+                }
+                // type casting, as fixed point numbers are returned as string!
+                /*if ($full_model::getFieldType($field) === FIELD_INT &&
+                    is_string($value) &&
+                    is_numeric($value)
+                ) {
+                    $value = intval($value);
+                }*/
+                $item[$field] = $value;
+            }
+
+            if (!$this->setItemData($item[FIELD_IDX], $item)) {
+                static::raiseError(__CLASS__ .'::setItemData() returned false!');
+                return false;
+            }
+        }
+
+        $db->freeStatement($sth);
+        return true;
+    }
 
     /**
      * update object variables via array
@@ -1977,6 +2053,13 @@ abstract class DefaultModel
             $limit
         );
 
+        if (count($keys) > static::$model_bulk_load_limit) {
+            if (!$this->bulkLoad($keys)) {
+                static::raiseError(__CLASS__ .'::buldLoad() returned false!');
+                return false;
+            }
+        }
+
         $result = array();
 
         foreach ($keys as $key) {
@@ -2193,7 +2276,7 @@ abstract class DefaultModel
         }
 
         if (!is_array($this->model_items[$idx])) {
-            static::raiseError(__METHOD__ .'(), got an unsupported item!');
+            static::raiseError(__METHOD__ .'(), found an unsupported item!');
             return false;
         }
 
@@ -2247,6 +2330,11 @@ abstract class DefaultModel
             }
         }
 
+        if (!isset($item) || empty($item)) {
+            static::raiseError(__METHOD__ .'(), no valid item found!');
+            return false;
+        }
+
         if (!$cache->add($item, $cache_key)) {
             static::raiseError(get_class($cache) .'::add() returned false!');
             return false;
@@ -2271,6 +2359,30 @@ abstract class DefaultModel
             return false;
         }
 
+        return true;
+    }
+
+    protected function setItemData($key, $data)
+    {
+        if (!isset($key) ||
+            empty($key) ||
+            (!is_integer($key) && !is_numeric($key))
+        ) {
+            static::raiseError(__METHOD__ .'(), $key parameter is invalid!');
+            return false;
+        }
+
+        if (!isset($data) || empty($data) || !is_array($data)) {
+            static::raiseError(__METHOD__ .'(), $data parameter is invalid!');
+            return false;
+        }
+
+        if (!$this->hasItem($key)) {
+            static::raiseError(__CLASS__ .'::hasItem() returned false!');
+            return false;
+        }
+
+        $this->model_items[$key][FIELD_DATA] = $data;
         return true;
     }
 
