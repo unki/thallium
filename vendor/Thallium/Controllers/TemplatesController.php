@@ -204,6 +204,10 @@ class TemplatesController extends DefaultController
 
     public function registerPlugin($type, $name, $callback, $cacheable = true)
     {
+        if (isset($this->smarty->smarty->registered_plugins[$type][$name])) {
+            return true;
+        }
+
         if (!$this->smarty->registerPlugin($type, $name, $callback, $cacheable)) {
             static::raiseError(get_class($this->smarty) .'::registerPlugin() returned false!');
             return false;
