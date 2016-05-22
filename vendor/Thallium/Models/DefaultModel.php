@@ -2564,7 +2564,9 @@ abstract class DefaultModel
                 }
                 break;
             case FIELD_DATE:
-                if (strtotime($value) === false) {
+                if ($value !== "0000-00-00" &&
+                    strtotime($value) === false
+                ) {
                     return false;
                 }
                 break;
