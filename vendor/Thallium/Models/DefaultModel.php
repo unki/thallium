@@ -985,7 +985,7 @@ abstract class DefaultModel
             return;
         }
 
-        global $ms;
+        global $thallium;
 
         if ($this->hasVirtualFields() && $this->hasVirtualField($name)) {
             if (($name = static::getFieldNamefromColumn($name)) === false) {
@@ -1079,7 +1079,7 @@ abstract class DefaultModel
         /* distinguish GUIDs */
         } elseif ($value_type == 'string' &&
             $field_type == FIELD_GUID &&
-            $ms->isValidGuidSyntax($value)
+            $thallium->isValidGuidSyntax($value)
         ) {
             $value_type = FIELD_GUID;
         /* distinguish YESNO */
