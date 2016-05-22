@@ -1078,10 +1078,15 @@ abstract class DefaultModel
             $value_type = $field_type;
         /* distinguish GUIDs */
         } elseif ($value_type == 'string' &&
-            $field_type == FIELD_GUID &&
-            $thallium->isValidGuidSyntax($value)
+            $field_type == FIELD_GUID
         ) {
-            $value_type = FIELD_GUID;
+            if (!empty($value) &&
+                $thallium->isValidGuidSyntax($value)
+            ) {
+                $value_type = FIELD_GUID;
+            } elseif (empty($value)) {
+                $value_type = FIELD_GUID;
+            }
         /* distinguish YESNO */
         } elseif ($value_type == 'string' &&
             $field_type == FIELD_YESNO &&
