@@ -314,7 +314,7 @@ class PagingController extends DefaultController
             return false;
         }
 
-        if (!isset($data) || empty($data) || !is_array($data)) {
+        if (!isset($data) || !is_array($data)) {
             static::raiseError(__METHOD__ .'(), slicing paging data failed!');
             return false;
         }
