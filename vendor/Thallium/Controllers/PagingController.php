@@ -89,11 +89,15 @@ class PagingController extends DefaultController
         }
 
         if (!$this->pagingData->hasItems()) {
-            static::raiseError(get_class($this->pagingData) .'::hasItems() returned false!');
+            return 0;
+        }
+
+        if (($count = $this->pagingData->getItemsCount()) === false) {
+            static::raiseError(get_class($this->pagingData) .'::getItemsCount() returned false!');
             return false;
         }
 
-        return $this->pagingData->getItemsCount();
+        return $count;
     }
 
     final protected function setPagingParameters($params)
