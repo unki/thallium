@@ -1061,8 +1061,8 @@ abstract class DefaultModel
         */
 
         /* positiv integers */
-        if ($value_type == 'string' &&
-            $field_type == FIELD_INT &&
+        if ($field_type == FIELD_INT &&
+            $value_type == 'string' &&
             ctype_digit($value) &&
             is_numeric($value)
         ) {
@@ -1070,15 +1070,15 @@ abstract class DefaultModel
             $value_type = $field_type;
         }
         /* negative integers */
-        if ($value_type == 'string' &&
-            $field_type == FIELD_INT &&
+        if ($field_type == FIELD_INT &&
+            $value_type == 'string' &&
             preg_match("/^-?[1-9][0-9]*$/", $value) === 1
         ) {
             $value = (int) $value;
             $value_type = $field_type;
         /* distinguish GUIDs */
-        } elseif ($value_type == 'string' &&
-            $field_type == FIELD_GUID
+        } elseif ($field_type == FIELD_GUID &&
+            $value_type == 'string'
         ) {
             if (!empty($value) &&
                 $thallium->isValidGuidSyntax($value)
@@ -1088,16 +1088,22 @@ abstract class DefaultModel
                 $value_type = FIELD_GUID;
             }
         /* distinguish YESNO */
-        } elseif ($value_type == 'string' &&
-            $field_type == FIELD_YESNO &&
+        } elseif ($field_type == FIELD_YESNO &&
+            $value_type == 'string' &&
             in_array($value, array('yes', 'no', 'Y', 'N'))
         ) {
             $value_type = 'yesno';
         /* distinguish timestamps */
-        } elseif ($value_type == 'string' &&
-            $field_type == FIELD_TIMESTAMP
+        } elseif ($field_type == FIELD_TIMESTAMP &&
+            $value_type == 'string'
         ) {
             $value_type = 'timestamp';
+        } elseif ($field_type == FIELD_TIMESTAMP &&
+            $value_type == 'double'
+        ) {
+            if (is_float($value)) {
+                $value_type = 'timestamp';
+            }
         }
 
         if ($value_type !== $field_type) {
