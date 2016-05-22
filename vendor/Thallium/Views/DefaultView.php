@@ -401,8 +401,7 @@ abstract class DefaultView
             !is_callable(array(&$data, 'isHavingItems')) ||
             !$data->isHavingItems() ||
             !method_exists($data, 'hasItems') ||
-            !is_callable(array(&$data, 'hasItems')) ||
-            !$data->hasItems()
+            !is_callable(array(&$data, 'hasItems'))
         ) {
             static::raiseError(__METHOD__ .'(), $data parameter is not a valid data model!');
             return false;
