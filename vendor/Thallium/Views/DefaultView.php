@@ -240,7 +240,7 @@ abstract class DefaultView
             return false;
         }
 
-        if (!isset($items) || empty($items) || !is_array($items)) {
+        if (!isset($items) || !is_array($items)) {
             $this->raiseError(get_class($pager) .'::getPageData() returned invalid data!');
             return false;
         }
