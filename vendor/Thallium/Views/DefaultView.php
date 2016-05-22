@@ -220,6 +220,10 @@ abstract class DefaultView
             return false;
         }
 
+        if (!$view_data->hasItems()) {
+            return $tmpl->fetch($template_name);
+        }
+
         if (!$pager->setPagingData($view_data)) {
             $this->raiseError(get_class($pager) .'::setPagingData() returned false!');
             return false;
