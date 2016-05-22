@@ -73,6 +73,10 @@ class PagingController extends DefaultController
             return false;
         }
 
+        if (!$this->pagingData->hasItems()) {
+            return array();
+        }
+
         if (($data = $this->pagingData->getItems($offset, $limit)) === false) {
             static::raiseError(get_class($this->pagingData) .'::getItems() returned false!');
             return false;
