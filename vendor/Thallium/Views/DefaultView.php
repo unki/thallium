@@ -480,6 +480,10 @@ abstract class DefaultView
 
         $smarty->assign("item", $item);
 
+        if ($item->hasId() && $item->hasGuid()) {
+            $smarty->assign("item_safe_link", "{$item->getId()}-{$item->getGuid()}");
+        }
+
         $index++;
         $smarty->assign('smarty.IB.item_list.index', $index);
         $repeat = true;
