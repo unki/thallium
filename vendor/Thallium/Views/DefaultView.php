@@ -447,6 +447,7 @@ abstract class DefaultView
 
         if (($index = $this->getListIndex($list_name, $smarty)) === false) {
             static::raiseError(__CLASS__ .'::getListIndex() returned false!');
+            $repeat = false;
             return false;
         }
 
@@ -469,6 +470,7 @@ abstract class DefaultView
             !is_numeric($items_keys[$index])
         ) {
             static::raiseError(__METHOD__ .'(), internal function went wrong!');
+            $repeat = false;
             return false;
         }
 
@@ -479,7 +481,7 @@ abstract class DefaultView
             return $content;
         }
 
-        $item =  $this->view_items[$item_idx];
+        $item = $this->view_items[$item_idx];
 
         if (!isset($item) || empty($item) || !is_object($item)) {
             $repeat = false;
@@ -488,17 +490,19 @@ abstract class DefaultView
 
         if (!$this->setCurrentItem($item)) {
             static::raiseError(__CLASS__ .'::setCurrentItem() returned false!');
+            $repeat = false;
             return false;
         }
 
         $smarty->assign("item", $item);
 
-        if ($item->hasId() && $item->hasGuid()) {
+        if ($item->hasIdx() && $item->hasGuid()) {
             $smarty->assign("item_safe_link", "{$item->getId()}-{$item->getGuid()}");
         }
 
-        if ($this->setListIndex($list_name, $index++)) {
+        if (!$this->setListIndex($list_name, $index+=1, $smarty)) {
             static::raiseError(__CLASS__ .'::setListIndex() returned false!');
+            $repeat = false;
             return false;
         }
 
