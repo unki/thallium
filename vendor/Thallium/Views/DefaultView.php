@@ -32,6 +32,7 @@ abstract class DefaultView
     protected $view_modes = array();
     protected $view_items = array();
     protected $view_data = array();
+    protected $view_current_item;
 
     public function __construct()
     {
@@ -436,10 +437,17 @@ abstract class DefaultView
 
     public function dataList($params, $content, &$smarty, &$repeat)
     {
-        $index = $smarty->getTemplateVars('smarty.IB.item_list.index');
+        if (array_key_exists('name', $params) &&
+            isset($params['name'])
+        ) {
+            $list_name = $params['name'];
+        } else {
+            $list_name = 'item_list';
+        }
 
-        if (!isset($index) || empty($index)) {
-            $index = 0;
+        if (($index = $this->getListIndex($list_name, $smarty)) === false) {
+            static::raiseError(__CLASS__ .'::getListIndex() returned false!');
+            return false;
         }
 
         if (!$this->hasViewData()) {
@@ -478,17 +486,110 @@ abstract class DefaultView
             return $content;
         }
 
+        if (!$this->setCurrentItem($item)) {
+            static::raiseError(__CLASS__ .'::setCurrentItem() returned false!');
+            return false;
+        }
+
         $smarty->assign("item", $item);
 
         if ($item->hasId() && $item->hasGuid()) {
             $smarty->assign("item_safe_link", "{$item->getId()}-{$item->getGuid()}");
         }
 
-        $index++;
-        $smarty->assign('smarty.IB.item_list.index', $index);
-        $repeat = true;
+        if ($this->setListIndex($list_name, $index++)) {
+            static::raiseError(__CLASS__ .'::setListIndex() returned false!');
+            return false;
+        }
 
+        $repeat = true;
         return $content;
+    }
+
+    protected function getListIndex($list_name, &$smarty)
+    {
+        if (!isset($list_name) || empty($list_name) || !is_string($list_name)) {
+            static::raiseError(__METHOD__ .'(), $list_name parameter is invalid!');
+            return false;
+        }
+
+        if (!isset($smarty) || empty($smarty) || !is_object($smarty)) {
+            static::raiseError(__METHOD__ .'(), $smarty parameter is invalid!');
+            return false;
+        }
+
+        $smarty_tmpl_var = sprintf('smarty.IB.%s.index', $list_name);
+
+        try {
+            $index = $smarty->getTemplateVars($smarty_tmpl_var);
+        } catch (\Exception $e) {
+            $index = false;
+        }
+
+        if (!isset($index) || empty($index)) {
+            $index = 0;
+        }
+
+        return $index;
+    }
+
+    protected function setListIndex($list_name, $index, &$smarty)
+    {
+        if (!isset($list_name) || empty($list_name) || !is_string($list_name)) {
+            static::raiseError(__METHOD__ .'(), $list_name parameter is invalid!');
+            return false;
+        }
+
+        if (!isset($index) || empty($index) || !is_numeric($index)) {
+            static::raiseError(__METHOD__ .'(), $index parameter is invalid!');
+            return false;
+        }
+
+        if (!isset($smarty) || empty($smarty) || !is_object($smarty)) {
+            static::raiseError(__METHOD__ .'(), $smarty parameter is invalid!');
+            return false;
+        }
+
+        $smarty_tmpl_var = sprintf('smarty.IB.%s.index', $list_name);
+
+        try {
+            $smarty->assign($smarty_tmpl_var, $index);
+        } catch (\Exception $e) {
+            static::raiseError(get_class($smarty) .'::assign() failed!', false, $e);
+            return false;
+        }
+
+        return true;
+    }
+
+    protected function hasCurrentItem()
+    {
+        if (!isset($this->view_current_item) || empty($this->view_current_item)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    protected function getCurrentItem()
+    {
+        if (!$this->hasCurrentItem()) {
+            static::raiseError(__CLASS__ .'::hasCurrentItem() returned false!');
+            return false;
+        }
+
+        return $this->view_current_item;
+    }
+
+    protected function setCurrentItem(&$item)
+    {
+        if (!isset($item) || empty($item)) {
+            static::raiseError(__METHOD__ .'(), $item parameter is invalid!');
+            return false;
+        }
+
+        $this->view_current_item =& $item;
+        return true;
     }
 }
 
