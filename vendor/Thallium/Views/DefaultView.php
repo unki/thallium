@@ -434,7 +434,7 @@ abstract class DefaultView
         return $this->view_data;
     }
 
-    final public function dataList($params, $content, &$smarty, &$repeat)
+    public function dataList($params, $content, &$smarty, &$repeat)
     {
         $index = $smarty->getTemplateVars('smarty.IB.item_list.index');
 
