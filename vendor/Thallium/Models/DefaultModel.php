@@ -1270,7 +1270,10 @@ abstract class DefaultModel
         }
 
         if (!isset($this->id) || empty($this->id)) {
-            $this->id = $db->getid();
+            if (($this->id = $db->getId()) === false) {
+                static::raiseError(get_class($db) .'::getId() returned false!');
+                return false;
+            }
         }
 
         if (!isset($this->model_values[FIELD_IDX]) ||
