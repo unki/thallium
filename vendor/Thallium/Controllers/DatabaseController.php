@@ -309,7 +309,7 @@ class DatabaseController extends DefaultController
         $query = str_replace("TABLEPREFIX", $this->getTablePrefix(), $query);
     }
 
-    public function getid()
+    public function getId()
     {
         if (!$this->getConnectionStatus()) {
             static::raiseError(__CLASS__ .'::getConnectionStatus() returned false!');
