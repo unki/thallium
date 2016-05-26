@@ -42,6 +42,9 @@ class AuditEntryModel extends DefaultModel
         'time' => array(
             FIELD_TYPE => FIELD_TIMESTAMP,
         ),
+        'object_guid' => array(
+            FIELD_TYPE => FIELD_STRING,
+        ),
     );
 
     protected function preSave()
@@ -183,6 +186,50 @@ class AuditEntryModel extends DefaultModel
         }
 
         if (!$this->setFieldValue('scene', $scene)) {
+            static::raiseError(__CLASS__ .'::setFieldValue() returned false!');
+            return false;
+        }
+
+        return true;
+    }
+
+    public function hasEntryGuid()
+    {
+        if (!$this->hasFieldValue('object_guid')) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function getEntryGuid()
+    {
+        if (!$this->hasEntryGuid()) {
+            static::raiseError(__CLASS__ .'::hasEntryGuid() returned false!');
+            return false;
+        }
+
+        if (($guid = $this->getFieldValue('object_guid')) === false) {
+            static::raiseError(__CLASS__ .'::getFieldValue() returned false!');
+            return false;
+        }
+
+        return $guid;
+    }
+
+    public function setEntryGuid($guid)
+    {
+        if (!isset($guid) || empty($guid) || !is_string($guid)) {
+            static::raiseError(__METHOD__ .'(), $guid parameter is invalid!');
+            return false;
+        }
+
+        if (strlen($guid) > 255) {
+            static::raiseError(__METHOD__ .'(), $guid is tooo long!');
+            return false;
+        }
+
+        if (!$this->setFieldValue('object_guid', $guid)) {
             static::raiseError(__CLASS__ .'::setFieldValue() returned false!');
             return false;
         }
