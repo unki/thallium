@@ -797,20 +797,39 @@ abstract class DefaultModel
         if (!isset($srcobj->id)) {
             return false;
         }
+
         if (!is_numeric($srcobj->id)) {
             return false;
         }
+
         if (!isset($srcobj::$model_fields)) {
             return false;
         }
 
-        foreach (array_keys($srcobj::model_fields) as $field) {
+        if (($src_fields = $srcobj->getFields()) === false) {
+            static::raiseError(get_class($srcobj) .'::getFields() returned false!');
+            return false;
+        }
+
+        foreach (array_keys($src_fields) as $field) {
             // check for a matching key in clone's model_fields array
             if (!static::hasField($field)) {
                 continue;
             }
 
-            $this->model_values[$field] = $srcobj->model_values[$field];
+            if (!$srcobj->hasFieldValue($field)) {
+                continue;
+            }
+
+            if (($src_value = $srcobj->getFieldValue($field)) === false) {
+                static::raiseError(get_class($srcobj) .'::getFieldValue() returned false!');
+                return false;
+            }
+
+            if (!$this->setFieldValue($field, $src_value)) {
+                static::raiseError(__CLASS__ .':setFieldValue() returned false!');
+                return false;
+            }
         }
 
         if (method_exists($this, 'preClone') && is_callable(array($this, 'preClone'))) {
