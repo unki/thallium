@@ -1560,6 +1560,7 @@ abstract class DefaultModel
             return false;
         }
 
+        $idx_field = static::column(FIELD_IDX);
         $guid_field = static::column(FIELD_GUID);
 
         $arr_values = array();
@@ -1598,22 +1599,20 @@ abstract class DefaultModel
                 %s <> %s
             AND
                 %s",
-            static::column(FIELD_IDX),
+            $idx_field,
             static::$model_table_name,
-            static::column(FIELD_IDX),
+            $idx_field,
             $this->id,
             $where_sql
         );
 
-        $sth = $db->prepare($sql);
-
-        if (!$sth) {
-            static::raiseError(__METHOD__ ."(), unable to prepare query");
+        if (($sth = $db->prepare($sql)) === false) {
+            static::raiseError(get_class($db) .'::prepare() returned false!');
             return false;
         }
 
         if (!$db->execute($sth, $arr_values)) {
-            static::raiseError(__METHOD__ ."(), unable to execute query");
+            static::raiseError(get_class($db) .'::execute() returned false!');
             return false;
         }
 
