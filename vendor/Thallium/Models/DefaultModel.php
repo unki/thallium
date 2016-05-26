@@ -1871,10 +1871,15 @@ abstract class DefaultModel
             return $fields;
         }
 
-        foreach ($this->model_virtual_fields as $field) {
-            if ($this->hasFieldValue($field)) {
-                if (($value = $this->getFieldValue($field)) === false) {
-                    static::raiseError(__CLASS__ .'::getFieldValue() returned false!');
+        if (($virtual_fields = $this->getVirtualFields()) === false) {
+            static::raiseError(__CLASS__ .'::getVirtualFields() returned false!');
+            return false;
+        }
+
+        foreach ($virtual_fields as $field) {
+            if ($this->hasVirtualFieldValue($field)) {
+                if (($value = $this->getVirtualFieldValue($field)) === false) {
+                    static::raiseError(__CLASS__ .'::getVirtualFieldValue() returned false!');
                     return false;
                 }
             } else {
@@ -1966,6 +1971,68 @@ abstract class DefaultModel
         }
 
         return true;
+    }
+
+    final public function hasVirtualFieldValue($field)
+    {
+        if (!isset($field) && empty($field) && !is_string($field)) {
+            static::raіseError(__METHOD__. '(), $field parameter is invalid!');
+            return false;
+        }
+
+        if (!$this->hasVirtualField($field)) {
+            static::raiseError(__CLASS__ .'::hasVirtualField() returned false!');
+            return false;
+        }
+
+        $method_name = sprintf('get%s', ucwords(strtolower($field)));
+
+        if (!method_exists($this, $method_name) ||
+            !is_callable(array($this, $method_name))
+        ) {
+            static::raiseError(__METHOD__ .'(), there is not callable get-method for that field!');
+            return false;
+        }
+
+        if (($value = $this->$method_name()) === false) {
+            static::raiseError(__CLASS__ .'::'. $method_name .'() returned false!');
+            return false;
+        }
+
+        if (!isset($value) || empty($value)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    final public function getVirtualFieldValue($field)
+    {
+        if (!isset($field) && empty($field) && !is_string($field)) {
+            static::raіseError(__METHOD__. '(), $field parameter is invalid!');
+            return false;
+        }
+
+        if (!$this->hasVirtualFieldValue($field)) {
+            static::raiseError(__CLASS__ .'::getVirtualFieldValue() returned false!');
+            return false;
+        }
+
+        $method_name = sprintf('get%s', ucwords(strtolower($field)));
+
+        if (!method_exists($this, $method_name) ||
+            !is_callable(array($this, $method_name))
+        ) {
+            static::raiseError(__METHOD__ .'(), there is not callable get-method for that field!');
+            return false;
+        }
+
+        if (($value = $this->$method_name()) === false) {
+            static::raiseError(__CLASS__ .'::'. $method_name .'() returned false!');
+            return false;
+        }
+
+        return $value;
     }
 
     final public function getVirtualFields()
@@ -2793,19 +2860,28 @@ abstract class DefaultModel
 
     final public function hasFieldValue($field)
     {
-        if (!static::hasFields()) {
+        if (!static::hasFields() && isset($this) && !$this->hasVirtualFields()) {
             static::raiseError(__METHOD__ .'(), this model has no fields!');
             return false;
         }
 
-        if (!static::hasField($field)) {
+        if (!static::hasField($field) && isset($this) && !$this->hasVirtualField($field)) {
             static::raiseError(__METHOD__ .'(), this model has not that field!');
             return false;
         }
 
-        if (!isset($this->model_values[$field]) ||
-            empty($this->model_values[$field])
-        ) {
+        if (static::hasField($field)) {
+            if (!isset($this->model_values[$field]) ||
+                empty($this->model_values[$field])
+            ) {
+                return false;
+            }
+        } elseif (isset($this) && !$this->hasVirtualField($field)) {
+            if (!$this->hasVirtualFieldValue($field)) {
+                return false;
+            }
+        } else {
+            static::raiseError(__METHOD__ .'(), do not know how to locate that field!');
             return false;
         }
 
