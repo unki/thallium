@@ -676,7 +676,7 @@ abstract class DefaultModel
         return true;
     }
 
-    final public function delete()
+    public function delete()
     {
         global $db;
 
