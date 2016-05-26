@@ -1850,9 +1850,18 @@ abstract class DefaultModel
         $fields = array();
 
         foreach (static::$model_fields as $field => $sec) {
+            if ($this->hasFieldValue($field)) {
+                if (($value = $this->getFieldValue($field)) === false) {
+                    static::raiseError(__CLASS__ .'::getFieldValue() returned false!');
+                    return false;
+                }
+            } else {
+                $value = null;
+            }
+
             $field_ary = array(
                 'name' => $field,
-                'value' => $this->model_values[$field],
+                'value' => $value,
                 'privacy' => $sec,
             );
             $fields[$field] = $field_ary;
@@ -1863,9 +1872,18 @@ abstract class DefaultModel
         }
 
         foreach ($this->model_virtual_fields as $field) {
+            if ($this->hasFieldValue($field)) {
+                if (($value = $this->getFieldValue($field)) === false) {
+                    static::raiseError(__CLASS__ .'::getFieldValue() returned false!');
+                    return false;
+                }
+            } else {
+                $value = null;
+            }
+
             $field_ary = array(
                 'name' => $field,
-                'value' => $this->model_values[$field],
+                'value' => $value,
                 'privacy' => 'public'
             );
             $fields[$field] = $field_ary;
