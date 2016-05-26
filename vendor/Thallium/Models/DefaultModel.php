@@ -601,21 +601,24 @@ abstract class DefaultModel
                 static::raiseError(__METHOD__ .'(), unknown field found!');
                 return false;
             }
+
             if (static::hasField($field)) {
                 // this will trigger the __set() method.
                 $this->$key = $value;
                 continue;
             }
+
             if ($this->hasVirtualFields() && $this->hasVirtualField($field)) {
-                $set_method = sprintf("set%s", ucwords($field));
-                if (!is_callable(array($this, $set_method))) {
-                    static::raiseError(__CLASS__ ."::{$set_method}() is not callable!");
+                if (($method_name = $this->getVirtualFieldSetMethod($field)) === false) {
+                    static::raiseError(__CLASS__ .'::getVirtualFieldSetMethod() returned false!');
                     return false;
                 }
-                if (!call_user_func(array($this, $set_method), $value)) {
-                    static::raiseError(__CLASS__ ."::{$set_method}() returned false!");
+
+                if (($retval = call_user_func(array($this, $method_name), $value)) === false) {
+                    static::raiseError(__CLASS__ ."::{$method_name}() returned false!");
                     return false;
                 }
+
                 continue;
             }
             static::raiseError(__METHOD__ .'(), model has no field like that!');
@@ -653,15 +656,16 @@ abstract class DefaultModel
                 continue;
             }
             if ($this->hasVirtualFields() && $this->hasVirtualField($field)) {
-                $set_method = sprintf("set%s", ucwords($field));
-                if (!is_callable(array($this, $set_method))) {
-                    static::raiseError(__CLASS__ ."::{$set_method}() is not callable!");
+                if (($method_name = $this->getVirtualFieldSetMethod($field)) === false) {
+                    static::raiseError(__CLASS__ .'::getVirtualFieldSetMethod() returned false!');
                     return false;
                 }
-                if (!call_user_func(array($this, $set_method), $value)) {
-                    static::raiseError(__CLASS__ ."::{$set_method}() returned false!");
+
+                if (($retval = call_user_func(array($this, $method_name), $value))) {
+                    static::raiseError(__CLASS__ ."::{$method_name}() returned false!");
                     return false;
                 }
+
                 $this->model_init_values[$key] = $value;
                 continue;
             }
@@ -993,17 +997,16 @@ abstract class DefaultModel
                 return;
             }
 
-            $method_name = 'set'.ucwords(strtolower($name));
-
-            if (!method_exists($this, $method_name) && is_callable(array($this, $method_name))) {
-                static::raiseError(__METHOD__ .'(), virtual field exists but there is no set-method for it!', true);
+            if (($method_name = $this->getVirtualFieldSetMethod($name)) === false) {
+                static::raiseError(__CLASS__ .'::getVirtualFieldSetMethod() returned false!', true);
                 return;
             }
 
-            if (!$this->$method_name($value)) {
-                static::raiseError(__CLASS__ ."::{$method_name} returned false!", true);
+            if (($retval = call_user_func(array($this, $method_name), $value)) === false) {
+                static::raiseError(__CLASS__ ."::{$method_name}() returned false!", true);
                 return;
             }
+
             return;
         }
 
@@ -1130,10 +1133,12 @@ abstract class DefaultModel
             return;
         }
 
-        if (!call_user_func(array($this, $set_method), $value)) {
+        if (($retval = call_user_func(array($this, $set_method), $value)) === false) {
             static::raiseError(__CLASS__ ."::{$set_method}() returned false!", true);
             return;
         }
+
+        return;
     }
 
     /* override PHP's __get() function */
@@ -1175,23 +1180,18 @@ abstract class DefaultModel
             return null;
         }
 
-        if (!$this->hasVirtualField($name)) {
+        if (!$this->hasVirtualField($field)) {
             return null;
         }
 
-        if (($name = static::getFieldNamefromColumn($name)) === false) {
-            static::raiseError(__CLASS__ .'::getFieldNameFromColumn() returned false!');
+        if (($method_name = $this->getVirtualFieldGetMethod($field)) === false) {
+            static::raiseError(__CLASS__ .'::getVirtualFieldGetMethod() returned false!');
             return false;
         }
 
-        $method_name = 'get'.ucwords(strtolower($name));
-
-        if (!method_exists($this, $method_name) && is_callable(array($this, $method_name))) {
-            return null;
-        }
-
-        if (($value = $this->$method_name()) === false) {
-            return null;
+        if (($value = call_user_func(array($this, $method_name), $value)) === false) {
+            static::raiseError(__CLASS__ ."::{$method_name}() returned false!", true);
+            return false;
         }
 
         return $value;
@@ -1867,7 +1867,7 @@ abstract class DefaultModel
             $fields[$field] = $field_ary;
         }
 
-        if (!$this->hasVirtualFields() || (isset($no_virtual) && $no_virtual)) {
+        if (!$this->hasVirtualFields() || (isset($no_virtual) && $no_virtual === true)) {
             return $fields;
         }
 
@@ -1893,6 +1893,7 @@ abstract class DefaultModel
             );
             $fields[$field] = $field_ary;
         }
+
 
         return $fields;
     }
@@ -1985,16 +1986,12 @@ abstract class DefaultModel
             return false;
         }
 
-        $method_name = sprintf('get%s', ucwords(strtolower($field)));
-
-        if (!method_exists($this, $method_name) ||
-            !is_callable(array($this, $method_name))
-        ) {
-            static::raiseError(__METHOD__ .'(), there is not callable get-method for that field!');
+        if (($method_name = $this->getVirtualFieldGetMethod($field)) === false) {
+            static::raiseError(__CLASS__ .'::getVirtualFieldGetMethod() returned false!');
             return false;
         }
 
-        if (($value = $this->$method_name()) === false) {
+        if (($value = call_user_func(array($this, $method_name))) === false) {
             static::raiseError(__CLASS__ .'::'. $method_name .'() returned false!');
             return false;
         }
@@ -2014,7 +2011,52 @@ abstract class DefaultModel
         }
 
         if (!$this->hasVirtualFieldValue($field)) {
+            static::raiseError(__CLASS__ .'::hasVirtualFieldValue() returned false!');
+            return false;
+        }
+
+        if (($method_name = $this->getVirtualFieldGetMethod($field)) === false) {
+            static::raiseError(__CLASS__ .'::getVirtualFieldGetMethod() returned false!');
+            return false;
+        }
+
+        if (($value = call_user_func(array($this, $method_name))) === false) {
+            static::raiseError(__CLASS__ ."::{$method_name}() returned false!", true);
+            return;
+        }
+
+        return $value;
+    }
+
+    final public function setVirtualFieldValue($field, $value)
+    {
+        if (!isset($field) && empty($field) && !is_string($field)) {
+            static::raіseError(__METHOD__. '(), $field parameter is invalid!');
+            return false;
+        }
+
+        if (!$this->hasVirtualField($field)) {
             static::raiseError(__CLASS__ .'::getVirtualFieldValue() returned false!');
+            return false;
+        }
+
+        if (($method_name = $this->getVirtualFieldSetMethod($field)) === false) {
+            static::raiseError(__CLASS__ .'::getVirtualFieldSetMethod() returned false!');
+            return false;
+        }
+
+        if (($retval = call_user_func(array($this, $method_name), $value)) === false) {
+            static::raiseError(__CLASS__ ."::{$method_name}() returned false!", true);
+            return;
+        }
+
+        return $retval;
+    }
+
+    final public function getVirtualFieldGetMethod($field)
+    {
+        if (!$this->hasVirtualField($field)) {
+            static::raiseError(__CLASS__ .'::hasVirtualField() returned false!');
             return false;
         }
 
@@ -2027,12 +2069,26 @@ abstract class DefaultModel
             return false;
         }
 
-        if (($value = $this->$method_name()) === false) {
-            static::raiseError(__CLASS__ .'::'. $method_name .'() returned false!');
+        return $method_name;
+    }
+
+    final public function getVirtualFieldSetMethod($field)
+    {
+        if (!$this->hasVirtualField($field)) {
+            static::raiseError(__CLASS__ .'::hasVirtualField() returned false!');
             return false;
         }
 
-        return $value;
+        $method_name = sprintf('set%s', ucwords(strtolower($field)));
+
+        if (!method_exists($this, $method_name) ||
+            !is_callable(array($this, $method_name))
+        ) {
+            static::raiseError(__METHOD__ .'(), there is not callable set-method for that field!');
+            return false;
+        }
+
+        return $method_name;
     }
 
     final public function getVirtualFields()
@@ -2884,13 +2940,23 @@ abstract class DefaultModel
             return false;
         }
 
-        if (!static::hasField($field)) {
+        if (!static::hasField($field) && !$this->hasVirtualField($field)) {
             static::raiseError(__METHOD__ .'(), this model has not that field!');
             return false;
         }
 
         if (!isset($value)) {
-            $this->model_values[$field] = null;
+            if (static::hasField($field)) {
+                $this->model_values[$field] = null;
+            } elseif ($this->hasVirtualField($field)) {
+                if (!$this->setVirtualFieldValue($field, null)) {
+                    static::raiseError(__CLASS__ .'::setVirtualFieldValue() returned false!');
+                    return false;
+                }
+            } else {
+                static::raiseError(__METHOD__ .'(), do not know how to set that field!');
+                return false;
+            }
             return true;
         }
 
@@ -2910,7 +2976,18 @@ abstract class DefaultModel
             }
         }
 
-        $this->model_values[$field] = $value;
+        if (static::hasField($field)) {
+            $this->model_values[$field] = $value;
+        } elseif ($this->hasVirtualField($field)) {
+            if (!$this->setVirtualFieldValue($field, $value)) {
+                static::raiseError(__CLASS__ .'::setVirtualFieldValue() returned false!');
+                return false;
+            }
+        } else {
+            static::raiseError(__METHOD__ .'(), do not know how to set that field!');
+            return false;
+        }
+
         return true;
     }
 
