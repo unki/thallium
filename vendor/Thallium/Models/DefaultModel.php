@@ -2074,22 +2074,6 @@ abstract class DefaultModel
         return true;
     }
 
-    final public function setField($field, $value)
-    {
-        if (!isset($field) || empty($field) || !is_string($field)) {
-            static::raiseError(__METHOD__ .'(), $field parameter is invalid!');
-            return false;
-        }
-
-        if (!static::hasField($field)) {
-            static::raiseError(__METHOD__ .'(), invalid field specified!');
-            return false;
-        }
-
-        $this->model_values[$field] = $value;
-        return true;
-    }
-
     public function getItemsKeys()
     {
         if (!static::isHavingItems()) {
