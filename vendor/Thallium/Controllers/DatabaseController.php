@@ -24,7 +24,7 @@ use \PDO;
 class DatabaseController extends DefaultController
 {
     const SCHEMA_VERSION = 1;
-    const FRAMEWORK_SCHEMA_VERSION = 3;
+    const FRAMEWORK_SCHEMA_VERSION = 4;
 
     protected $db;
     protected $db_cfg;
