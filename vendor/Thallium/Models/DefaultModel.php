@@ -1798,12 +1798,15 @@ abstract class DefaultModel
 
     final public function getId()
     {
-        if (!static::hasField(FIELD_IDX)) {
-            static::raiseError(__METHOD__ .'(), model has no idx field!');
-            return false;
-        }
+        error_log(__METHOD__ .'(), legacy getId() has been called, '
+            .'update your application to getIdx() to avoid this message.');
+        return $this->getIdx();
+    }
 
-        if (!isset($this->model_values[FIELD_IDX])) {
+    final public function getIdx()
+    {
+        if (!$this->hasIdx()) {
+            static::raiseError(__CLASS__ .'::getIdx() returned false!');
             return false;
         }
 
@@ -2388,16 +2391,16 @@ abstract class DefaultModel
             }
             $idx = $item[FIELD_IDX];
         } elseif (is_object($item)) {
-            if (!method_exists($item, 'getId') || !is_callable(array(&$item, 'getId'))) {
-                static::raiseError(__METHOD__ .'(), item model '. get_class($item) .' has no getId() method!');
+            if (!method_exists($item, 'getIdx') || !is_callable(array(&$item, 'getIdx'))) {
+                static::raiseError(__METHOD__ .'(), item model '. get_class($item) .' has no getIdx() method!');
                 return false;
             }
             if (!method_exists($item, 'getGuid') || !is_callable(array(&$item, 'getGuid'))) {
                 static::raiseError(__METHOD__ .'(), item model '. get_class($item) .' has no getGuid() method!');
                 return false;
             }
-            if (($idx = $item->getId()) === false) {
-                static::raiseError(get_class($item) .'::getId() returned false!');
+            if (($idx = $item->getIdx()) === false) {
+                static::raiseError(get_class($item) .'::getIdx() returned false!');
                 return false;
             }
         } else {
@@ -3149,9 +3152,14 @@ abstract class DefaultModel
                 return false;
             }
 
+            if (($idx = $this->getIdx()) === false) {
+                static::raiseError(__CLASS__ .'::getIdx() returned false!');
+                return false;
+            }
+
             try {
                 $model = new $model_name(array(
-                    $field => $this->getId()
+                    $field => $idx,
                 ));
             } catch (\Exception $e) {
                 static::raiseError(__METHOD__ ."(), failed to load {$model_name}!", false, $e);
@@ -3211,8 +3219,8 @@ abstract class DefaultModel
             if (!isset($this->model_items_lookup_index[$field])) {
                 $this->model_items_lookup_index[$field] = array();
             }
-            if (($idx = $item->getId()) === false) {
-                static::raiseError(get_class($item) .'::getId() returned false!');
+            if (($idx = $item->getIdx()) === false) {
+                static::raiseError(get_class($item) .'::getIdx() returned false!');
                 return false;
             }
             if (!$item->hasFieldValue($field)) {
