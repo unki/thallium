@@ -497,7 +497,7 @@ abstract class DefaultView
         $smarty->assign("item", $item);
 
         if ($item->hasIdx() && $item->hasGuid()) {
-            $smarty->assign("item_safe_link", "{$item->getId()}-{$item->getGuid()}");
+            $smarty->assign("item_safe_link", "{$item->getIdx()}-{$item->getGuid()}");
         }
 
         if (!$this->setListIndex($list_name, $index+=1, $smarty)) {
