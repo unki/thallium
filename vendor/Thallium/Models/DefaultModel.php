@@ -1115,6 +1115,12 @@ abstract class DefaultModel
             in_array($value, array('yes', 'no', 'Y', 'N'))
         ) {
             $value_type = 'yesno';
+        /* distinguiѕh dates */
+        } elseif ($field_type == FIELD_DATE &&
+            $value_type == 'string' &&
+            preg_match('/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/', $value)
+        ) {
+            $value_type = 'date';
         /* distinguish timestamps */
         } elseif ($field_type == FIELD_TIMESTAMP &&
             $value_type == 'string'
