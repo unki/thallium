@@ -147,6 +147,11 @@ class MainController extends DefaultController
             return;
         }
 
+        if (!$this->loadController("Views", "views")) {
+            static::raiseError(__CLASS__ .'::loadController() returned false!');
+            return false;
+        }
+
         if (!$this->processRequestMessages()) {
             static::raiseError(__CLASS__ .'::processRequestMessages() returned false!', true);
             return;
@@ -888,11 +893,6 @@ class MainController extends DefaultController
 
     protected function viewHandler()
     {
-        if (!$this->loadController("Views", "views")) {
-            static::raiseError(__CLASS__ .'::loadController() returned false!');
-            return false;
-        }
-
         global $views, $query;
 
         if (!isset($query->view) || empty($query->view)) {
