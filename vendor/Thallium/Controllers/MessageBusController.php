@@ -178,23 +178,23 @@ class MessageBusController extends DefaultController
 
         $raw_messages = array();
         foreach ($messages as $message) {
-            if (!$message->hasIdx() || ($msg_idx = $msg->getIdx()) === false) {
+            if (!$message->hasIdx() || ($msg_idx = $message->getIdx()) === false) {
                 static::raiseError(__CLASS__ .'::getIdx() returned false!');
                 return false;
             }
-            if (!$message->hasGuid() || ($msg_guid = $msg->getGuid()) === false) {
+            if (!$message->hasGuid() || ($msg_guid = $message->getGuid()) === false) {
                 static::raiseError(__CLASS__ .'::getGuid() returned false!');
                 return false;
             }
-            if (!$message->hasCommand() || ($msg_cmd = $msg->getCommand()) === false) {
+            if (!$message->hasCommand() || ($msg_cmd = $message->getCommand()) === false) {
                 static::raiseError(__CLASS__ .'::getCommand() returned false!');
                 return false;
             }
-            if (!$message->hasBody() || ($msg_body = $msg->getBody()) === false) {
+            if (!$message->hasBody() || ($msg_body = $message->getBody()) === false) {
                 static::raiseError(__CLASS__ .'::getBody() returned false!');
                 return false;
             }
-            if (!$message->hasValue() || ($msg_value = $msg->getValue()) === false) {
+            if (!$message->hasValue() || ($msg_value = $message->getValue()) === false) {
                 static::raiseError(__CLASS__ .'::getValue() returned false!');
                 return false;
             }
