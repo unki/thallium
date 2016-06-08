@@ -2136,6 +2136,11 @@ abstract class DefaultModel
 
     final public function getVirtualFieldGetMethod($field)
     {
+        if (!isset($field) || empty($field) || !is_string($field)) {
+            static::raiseError(__METHOD__ .'(), $field parameter is invalid!');
+            return false;
+        }
+
         if (!$this->hasVirtualField($field)) {
             static::raiseError(__CLASS__ .'::hasVirtualField() returned false!');
             return false;
@@ -2155,6 +2160,11 @@ abstract class DefaultModel
 
     final public function getVirtualFieldSetMethod($field)
     {
+        if (!isset($field) || empty($field) || !is_string($field)) {
+            static::raiseError(__METHOD__ .'(), $field parameter is invalid!');
+            return false;
+        }
+
         if (!$this->hasVirtualField($field)) {
             static::raiseError(__CLASS__ .'::hasVirtualField() returned false!');
             return false;
@@ -2857,6 +2867,11 @@ abstract class DefaultModel
 
     protected function hasFieldSetMethod($field)
     {
+        if (!isset($field) || empty($field) || !is_string($field)) {
+            static::raiseError(__METHOD__ .'(), $field parameter is invalid!');
+            return false;
+        }
+
         if (!static::hasFields()) {
             static::raiseError(__METHOD__ .'(), this model has no fields!');
             return false;
@@ -2888,6 +2903,11 @@ abstract class DefaultModel
 
     protected function getFieldSetMethod($field)
     {
+        if (!isset($field) || empty($field) || !is_string($field)) {
+            static::raiseError(__METHOD__ .'(), $field parameter is invalid!');
+            return false;
+        }
+
         if (!static::hasFieldSetMethod($field)) {
             static::raiseError(__CLASS__ .'::hasFieldSetMethod() returned false!');
             return false;
@@ -2898,6 +2918,11 @@ abstract class DefaultModel
 
     protected function hasFieldGetMethod($field)
     {
+        if (!isset($field) || empty($field) || !is_string($field)) {
+            static::raiseError(__METHOD__ .'(), $field parameter is invalid!');
+            return false;
+        }
+
         if (!static::hasFields()) {
             static::raiseError(__METHOD__ .'(), this model has no fields!');
             return false;
@@ -2929,6 +2954,11 @@ abstract class DefaultModel
 
     protected function getFieldGetMethod($field)
     {
+        if (!isset($field) || empty($field) || !is_string($field)) {
+            static::raiseError(__METHOD__ .'(), $field parameter is invalid!');
+            return false;
+        }
+
         if (!static::hasFieldGetMethod($field)) {
             static::raiseError(__CLASS__ .'::hasFieldGetMethod() returned false!');
             return false;
@@ -2939,6 +2969,11 @@ abstract class DefaultModel
 
     final public function hasFieldValue($field)
     {
+        if (!isset($field) || empty($field) || !is_string($field)) {
+            static::raiseError(__METHOD__ .'(), $field parameter is invalid!');
+            return false;
+        }
+
         if (!static::hasFields() && isset($this) && !$this->hasVirtualFields()) {
             static::raiseError(__METHOD__ .'(), this model has no fields!');
             return false;
@@ -3032,6 +3067,11 @@ abstract class DefaultModel
 
     final public function getFieldValue($field)
     {
+        if (!isset($field) || empty($field) || !is_string($field)) {
+            static::raiseError(__METHOD__ .'(), $field parameter is invalid!');
+            return false;
+        }
+
         if (!$this->hasFieldValue($field)) {
             static::raiseError(__CLASS__ .'::hasFieldValue() returned false!');
             return false;
@@ -3042,6 +3082,11 @@ abstract class DefaultModel
 
     final public function hasDefaultValue($field)
     {
+        if (!isset($field) || empty($field) || !is_string($field)) {
+            static::raiseError(__METHOD__ .'(), $field parameter is invalid!');
+            return false;
+        }
+
         if (!static::hasFields()) {
             static::raiseError(__METHOD__ .'(), this model has no fields!');
             return false;
@@ -3061,6 +3106,11 @@ abstract class DefaultModel
 
     final public function getDefaultValue($field)
     {
+        if (!isset($field) || empty($field) || !is_string($field)) {
+            static::raiseError(__METHOD__ .'(), $field parameter is invalid!');
+            return false;
+        }
+
         if (!$this->hasDefaultValue($field)) {
             static::raiseError(__CLASS__ .'::hasDefaultValue() returned false!');
             return false;
