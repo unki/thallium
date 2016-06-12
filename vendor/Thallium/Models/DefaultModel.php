@@ -29,7 +29,7 @@ abstract class DefaultModel
     protected static $model_has_items = false;
     protected static $model_items_model;
     protected static $model_links = array();
-    protected static $model_bulk_load_limit = 50;
+    protected static $model_bulk_load_limit = 10;
     protected $model_load_by = array();
     protected $model_sort_order = array();
     protected $model_items = array();
