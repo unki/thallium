@@ -26,6 +26,7 @@ abstract class DefaultModel
     protected static $model_table_name;
     protected static $model_column_prefix;
     protected static $model_fields = array();
+    protected static $model_fields_index = array();
     protected static $model_has_items = false;
     protected static $model_items_model;
     protected static $model_links = array();
@@ -172,6 +173,18 @@ abstract class DefaultModel
                         static::raiseError(__METHOD__ ."(), FIELD_LENGTH of {$field} is out of bound!", true);
                         return false;
                     }
+                }
+            }
+        }
+
+        if (isset(static::$model_fields_index) &&
+            !empty(static::$model_fields_index) &&
+            is_array(static::$model_fields_index)
+        ) {
+            foreach (static::$model_fields_index as $field) {
+                if (!$static::hasField($field)) {
+                    static::raiseError(__CLASS__ .'::hasField() returned false!');
+                    return false;
                 }
             }
         }
@@ -511,16 +524,15 @@ abstract class DefaultModel
             return false;
         }
 
-        if (!array_walk(
-            $keys,
-            function ($key) {
-                if (!is_numeric($key) || !is_int($key)) {
-                    static::raiseError(__METHOD__ .'(), $keys parameter contains an invalid key!');
-                    return false;
-                }
-                return true;
+        $key_check_func = function ($key) {
+            if (!is_numeric($key) || !is_int($key)) {
+                static::raiseError(__METHOD__ .'(), $keys parameter contains an invalid key!');
+                return false;
             }
-        )) {
+            return true;
+        };
+
+        if (!array_walk($keys, $key_check_func)) {
             static::raiseError(__METHOD__ .'(), $keys parameter failed validation!');
             return false;
         }
@@ -2312,7 +2324,6 @@ abstract class DefaultModel
                 return false;
             }
             array_push($result, $item);
-            continue;
         }
 
         if (!isset($result) || empty($result) || !is_array($result)) {
@@ -2571,10 +2582,6 @@ abstract class DefaultModel
             } catch (\Exception $e) {
                 static::raiseError(__METHOD__ ."(), failed to load {$item_model}!", false, $e);
                 return false;
-            }
-
-            if (array_key_exists(FIELD_MODEL, $item_data)) {
-                unset($item_data[FIELD_MODEL]);
             }
 
             if (!$item->flood($item_data)) {
@@ -3424,30 +3431,57 @@ abstract class DefaultModel
             return false;
         }
 
+        $index_fields = array(
+            FIELD_IDX,
+            FIELD_GUID,
+        );
+
+        if (isset(static::$model_fields_index) &&
+            !empty(static::$model_fields_index) &&
+            is_array(static::$model_fields_index)
+        ) {
+            foreach (static::$model_fields_index as $field) {
+                if (!$static::hasField($field)) {
+                    static::raiseError(__CLASS__ .'::hasField() returned false!');
+                    return false;
+                }
+                array_push($index_fields, $field);
+            }
+        }
+
         if (($fields = $item->getFieldNames()) === false) {
             static::raiseError(get_class($item) .'::getFields() returned false!');
             return false;
         }
 
         foreach ($fields as $field) {
+            if (!in_array($field, $index_fields)) {
+                continue;
+            }
+
             if (!isset($this->model_items_lookup_index[$field])) {
                 $this->model_items_lookup_index[$field] = array();
             }
+
             if (($idx = $item->getIdx()) === false) {
                 static::raiseError(get_class($item) .'::getIdx() returned false!');
                 return false;
             }
+
             if (!$item->hasFieldValue($field)) {
                 continue;
             }
+
             if (($value = $item->getFieldValue($field)) === false) {
                 static::raiseError(get_class($field) .'::getFieldValue() returned false!');
                 return false;
             }
+
             if (isset($this->model_items_lookup_index[$field][$idx])) {
                 static::raiseError(__METHOD__ .'(), a lookup index entry is already present for that item!');
                 return false;
             }
+
             $this->model_items_lookup_index[$field][$idx] = $value;
         }
 
