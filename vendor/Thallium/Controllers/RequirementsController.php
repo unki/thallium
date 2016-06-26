@@ -27,8 +27,10 @@ class RequirementsController extends DefaultController
     {
         if (!constant('APP_BASE')) {
             static::raiseError(__METHOD__ .'(), APP_BASE is not defined!', true);
-            return false;
+            return;
         }
+
+        return;
     }
 
     public function check()
@@ -58,7 +60,7 @@ class RequirementsController extends DefaultController
         return true;
     }
 
-    public function checkPhp()
+    protected function checkPhp()
     {
         global $config;
 
@@ -76,7 +78,7 @@ class RequirementsController extends DefaultController
         return true;
     }
 
-    public function checkDatabaseSupport()
+    protected function checkDatabaseSupport()
     {
         global $config;
 
@@ -126,7 +128,7 @@ class RequirementsController extends DefaultController
         return true;
     }
 
-    public function checkExternalLibraries()
+    protected function checkExternalLibraries()
     {
         global $config;
 
@@ -156,7 +158,7 @@ class RequirementsController extends DefaultController
         return true;
     }
 
-    public function checkDirectoryPermissions()
+    protected function checkDirectoryPermissions()
     {
         global $thallium;
         $missing = false;
