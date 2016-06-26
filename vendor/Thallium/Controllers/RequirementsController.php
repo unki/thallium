@@ -136,12 +136,6 @@ class RequirementsController extends DefaultController
 
         ini_set('track_errors', 1);
 
-        /*@include_once 'Pager.php';
-        if (isset($php_errormsg) && preg_match('/Failed opening.*for inclusion/i', $php_errormsg)) {
-            print "PEAR Pager package is missing<br />\n";
-            $missing = true;
-            unset($php_errormsg);
-        }*/
         @include_once 'smarty3/Smarty.class.php';
         if (isset($php_errormsg) && preg_match('/Failed opening.*for inclusion/i', $php_errormsg)) {
             $this->write("Smarty3 template engine is missing!", LOG_ERR);
