@@ -3517,6 +3517,37 @@ abstract class DefaultModel
 
         return array_pop($parts);
     }
+
+    public function __toString()
+    {
+        if (($model_name = static::getModelName(true)) === false) {
+            static::raiseError(__CLASS__ .'::getModelName() returned false!');
+            return false;
+        }
+
+        if (($idx = $this->getIdx()) === false) {
+            static::raiseError(__CLASS__ .'::getIdx() returend false!');
+            return false;
+        }
+
+        if (($guid = $this->getGuid()) === false) {
+            static::raiseError(__CLASS__ .'::getGuid() returend false!');
+            return false;
+        }
+
+        if (method_exists($this, 'hasName') && $this->hasName()) {
+            if (($name = $this->getName()) === false) {
+                static::raiseError(__CLASS__ .'::getName() returned false!');
+                return false;
+            }
+        }
+
+        if (!isset($name)) {
+            return sprintf('%s_%s_%s', $model_name, $idx, $guid);
+        }
+
+        return sprintf('%s_%s_%s_%s', $model_name, $name, $idx, $guid);
+    }
 }
 
 // vim: set filetype=php expandtab softtabstop=4 tabstop=4 shiftwidth=4:
