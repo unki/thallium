@@ -241,7 +241,7 @@ abstract class DefaultModel
             }
         }
 
-        if (isset(static::$model_links) || !empty(static::$model_links)) {
+        if (static::hasModelLinks()) {
             if (!is_array(static::$model_links)) {
                 static::raiseError(__METHOD__ .'(), $model_links is not an array!', true);
                 return false;
@@ -3350,7 +3350,7 @@ abstract class DefaultModel
         return true;
     }
 
-    protected static function hasModelLinks()
+    public static function hasModelLinks()
     {
         if (!isset(static::$model_links) ||
             empty(static::$model_links)
@@ -3361,11 +3361,30 @@ abstract class DefaultModel
         return true;
     }
 
+    public static function getModelLinks()
+    {
+        if (!static::hasModelLinks()) {
+            static::raiseError(__CLASS__ .'::hasModelLinks() returned false!');
+            return false;
+        }
+
+        return static::$model_links;
+    }
+
     protected function deleteModelLinks()
     {
         global $thallium;
 
-        foreach (static::$model_links as $link) {
+        if (!static::hasModelLinks()) {
+            return true;
+        }
+
+        if (($links = static::getModelLinks()) === false) {
+            static::raiseError(__CLASS__ .'::getModelLinks() returned false!');
+            return false;
+        }
+
+        foreach ($links as $link) {
             list($model, $field) = explode('/', $link);
 
             if (($model_name = $thallium->getFullModelName($model)) === false) {
