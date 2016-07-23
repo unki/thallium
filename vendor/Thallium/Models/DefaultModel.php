@@ -3506,6 +3506,17 @@ abstract class DefaultModel
 
         return true;
     }
+
+    public static function getModelName($short = false)
+    {
+        if (!isset($short) || $short === false) {
+            return static::class;
+        }
+
+        $parts = explode('\\', static::class);
+
+        return array_pop($parts);
+    }
 }
 
 // vim: set filetype=php expandtab softtabstop=4 tabstop=4 shiftwidth=4:
