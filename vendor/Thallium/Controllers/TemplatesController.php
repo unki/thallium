@@ -203,9 +203,22 @@ class TemplatesController extends DefaultController
         return true;
     }
 
+    public function hasPlugin($type, $name)
+    {
+        if (!array_key_exists($type, $this->smarty->smarty->registered_plugins)) {
+            return false;
+        }
+
+        if (!array_key_exists($name, $this->smarty->smarty->registered_plugins[$type])) {
+            return false;
+        }
+
+        return true;
+    }
+
     public function registerPlugin($type, $name, $callback, $cacheable = true)
     {
-        if (isset($this->smarty->smarty->registered_plugins[$type][$name])) {
+        if ($this->hasPlugin($type, $name)) {
             return true;
         }
 
