@@ -3688,7 +3688,7 @@ abstract class DefaultModel
             return false;
         }
 
-        if (count($parts) != 2 ||
+        if (count($parts) < 2 ||
             !isset($parts[0]) || empty($parts[0]) || !is_string($parts[0]) ||
             !isset($parts[1]) || empty($parts[1]) || !is_string($parts[1])
         ) {
