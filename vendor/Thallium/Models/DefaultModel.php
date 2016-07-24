@@ -31,6 +31,7 @@ abstract class DefaultModel
     protected static $model_items_model;
     protected static $model_links = array();
     protected static $model_bulk_load_limit = 10;
+    protected static $model_friendly_name;
     protected $model_load_by = array();
     protected $model_sort_order = array();
     protected $model_items = array();
@@ -3759,6 +3760,33 @@ abstract class DefaultModel
         $called_class = get_called_class();
 
         return $called_class::$model_items_model;
+    }
+
+    final public static function hasModelFriendlyName()
+    {
+        $called_class = get_called_class();
+
+        if (!property_exists($called_class, 'model_friendly_name') ||
+            !isset($called_class::$model_friendly_name) ||
+            empty($called_class::$model_friendly_name) ||
+            !is_string($called_class::$model_friendly_name)
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    final public static function getModelFriendlyName()
+    {
+        if (!static::hasModelFriendlyName()) {
+            static::raiseError(__CLASS__ .'::hasModelFriendlyName() returned false!');
+            return false;
+        }
+
+        $called_class = get_called_class();
+
+        return $called_class::$model_friendly_name;
     }
 }
 
