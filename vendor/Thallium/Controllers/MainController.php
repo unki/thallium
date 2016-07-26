@@ -97,21 +97,7 @@ class MainController extends DefaultController
             return;
         }
 
-        if (isset($mode) and $mode == "queue_only") {
-            if (!$this->loadController("Import", "import")) {
-                static::raiseError(__CLASS__ .'::loadController() returned false!', true);
-                return false;
-            }
-
-            global $import;
-
-            if (!$import->handleQueue()) {
-                static::raiseError("ImportController::handleQueue returned false!", true);
-                return;
-            }
-
-            unset($import);
-        } elseif (isset($mode) and $mode == "install") {
+        if (isset($mode) and $mode == "install") {
             if (!$this->loadController("Installer", "installer")) {
                 static::raiseError(__CLASS__ .'::loadController() returned false!', true);
                 return false;
