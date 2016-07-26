@@ -19,12 +19,28 @@
 
 namespace Thallium\Controllers;
 
+/**
+ * This is the main class of Thallium. MainController initials all
+ * the other classes containing Controllers, Models and Views.
+ *
+ * @package Thallium\Controllers\MainController
+ * @subpackage Controllers
+ * @license AGPL3
+ * @copyright 2015-2016 Andreas Unterkircher <unki@netshadow.net>
+ * @author Andreas Unterkircher <unki@netshadow.net>
+ */
 class MainController extends DefaultController
 {
+    /** @var string FRAMEWORK_VERSION contains the application software level */
     const FRAMEWORK_VERSION = "1.1";
 
+    /** @var int $verbosity_level declares the loglevel */
     protected $verbosity_level = LOG_WARNING;
+
+    /** @var string $override_namespace_prefix override __NAMESPACE__ if necessary */
     protected $override_namespace_prefix;
+
+    /** @var array $registeredModels contains the Thallium-internal models */
     protected $registeredModels = array(
         'auditentry' => 'AuditEntryModel',
         'auditlog' => 'AuditLogModel',
@@ -33,16 +49,27 @@ class MainController extends DefaultController
         'messagebusmodel' => 'MessageBusModel',
         'messagemodel' => 'MessageModel',
     );
+
+    /** @var array $registeredHandlers contains the online-registered handlers */
     protected $registeredHandlers = array();
+
+    /** @var bool $backgroundJobsRunning true if currently background jobs are running, false if not */
     protected $backgroundJobsRunning;
 
+    /**
+     * class constructor
+     *
+     * @param string $mode allow specifying the mode Thallium starts into
+     * @return void
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function __construct($mode = null)
     {
         $GLOBALS['thallium'] =& $this;
 
         if (!$this->loadController("Config", "config")) {
             static::raiseError(__CLASS__ .'::loadController() returned false!', true);
-            return false;
+            return;
         }
 
         global $config;
@@ -54,13 +81,14 @@ class MainController extends DefaultController
 
         if (!$this->loadController("Requirements", "requirements")) {
             static::raiseError(__CLASS__ .'::loadController() returned false!', true);
-            return false;
+            return;
         }
 
         global $requirements;
 
         if (!$requirements->check()) {
             static::raiseError("Error - not all requirements are met. Please check!", true);
+            return;
         }
 
         // no longer needed
@@ -68,24 +96,27 @@ class MainController extends DefaultController
 
         if (!$this->loadController("Audit", "audit")) {
             static::raiseError(__CLASS__ .'::loadController() returned false!', true);
-            return false;
+            return;
         }
 
         if (!$this->loadController("Database", "db")) {
             static::raiseError(__CLASS__ .'::loadController() returned false!', true);
-            return false;
+            return;
         }
 
         if (!$this->isCmdline()) {
             if (!$this->loadController("HttpRouter", "router")) {
                 static::raiseError(__CLASS__ .'::loadController() returned false!');
-                return false;
+                return;
             }
+
             global $router;
+
             if (($GLOBALS['query'] = $router->select()) === false) {
                 static::raiseError(__METHOD__ .'(), HttpRouterController::select() returned false!', true);
                 return;
             }
+
             global $query;
         }
 
@@ -134,8 +165,8 @@ class MainController extends DefaultController
         }
 
         if (!$this->loadController("Views", "views")) {
-            static::raiseError(__CLASS__ .'::loadController() returned false!');
-            return false;
+            static::raiseError(__CLASS__ .'::loadController() returned false!', true);
+            return;
         }
 
         if (!$this->processRequestMessages()) {
@@ -147,13 +178,20 @@ class MainController extends DefaultController
             $this->registerHandler('rpc', array($this, 'rpcHandler'));
             $this->registerHandler('view', array($this, 'viewHandler'));
         } catch (\Exception $e) {
-            static::raiseError(__METHOD__ .'(), failed to register handlers!', true);
+            static::raiseError(__METHOD__ .'(), failed to register handlers!', true, $e);
             return;
         }
 
         return;
     }
 
+    /**
+     * startup methods by which Thallium is actually starting to perform.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function startup()
     {
         if (!ob_start()) {
@@ -195,6 +233,14 @@ class MainController extends DefaultController
         return true;
     }
 
+    /**
+     * this method triggers JobControllers runJobs() method to execute
+     * scheduled or pending jobs.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function runBackgroundJobs()
     {
         global $jobs;
@@ -212,16 +258,44 @@ class MainController extends DefaultController
         return true;
     }
 
+    /**
+     * method to change the default verbosity level
+     *
+     * @param int $level LOG_INFO, LOG_WARNING, LOG_DEBUG
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function setVerbosity($level)
     {
-        /*if (!in_array($level, array(0 => LOG_INFO, 1 => LOG_WARNING, 2 => LOG_DEBUG))) {
-            static::raiseError("Unknown verbosity level ". $level);
+        $valid_log_levels = array(
+            0 => LOG_INFO,
+            1 => LOG_WARNING,
+            2 => LOG_DEBUG,
+        );
+
+        if (!isset($level) || !is_numeric($level)) {
+            static::raiseError(__METHOD__ .'(), $level parameter is invalid!');
+            return false;
         }
 
-        $this->verbosity_level = $level;*/
+        if (!in_array($level, $valid_log_levels)) {
+            static::raiseError(__METHOD__ .'(), unsupported verbosity level specified!');
+            return false;
+        }
 
-    } // setVerbosity()
+        $this->verbosity_level = $level;
+        return true;
 
+    }
+
+    /**
+     * method loads the RpcController and calls perform() to handle RPC
+     * requests.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     protected function rpcHandler()
     {
         if (!$this->loadController("Rpc", "rpc")) {
@@ -239,6 +313,14 @@ class MainController extends DefaultController
         return true;
     }
 
+    /**
+     * method loads the UploadController and calls perform() to handle file
+     * upload requests;
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     protected function uploadHandler()
     {
         if (!$this->loadController("Upload", "upload")) {
@@ -257,6 +339,14 @@ class MainController extends DefaultController
         return true;
     }
 
+    /**
+     * method to validate an Thallium internal id.
+     * This has to be an numeric value - either provided as int or string.
+     *
+     * @param int|string $id
+     * @return bool
+     * @throws none
+     */
     public function isValidId($id)
     {
         if (!isset($id) || is_null($id)) {
@@ -278,6 +368,14 @@ class MainController extends DefaultController
         return true;
     }
 
+    /**
+     * method to check if the provided $model_name is an valid and registered
+     * model.
+     *
+     * @param string $model_name
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function isValidModel($model_name)
     {
         if (!isset($model_name) ||
@@ -296,25 +394,46 @@ class MainController extends DefaultController
             $model = $model_name;
         }
 
-        if ($this->isRegisteredModel($nick, $model)) {
-            return true;
+        if (!$this->isRegisteredModel($nick, $model)) {
+            return false;
         }
 
-        return false;
+        return true;
     }
 
+    /**
+     * method to validate an Thallium internal global unique identifier (GUID).
+     *
+     * @param string
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function isValidGuidSyntax($guid)
     {
-        if (strlen($guid) == 64) {
-            return true;
+        if (!isset($guid) || empty($guid) || !is_string($guid)) {
+            return false;
         }
 
-        return false;
+        if (strlen($guid) != 64) {
+            return false;
+        }
+
+        return true;
     }
 
+    /**
+     * this method allow an string of modelname-id-guid to be parsed
+     * into its individual parts.
+     * startup methods by which Thallium is actually starting to perform.
+     *
+     * @param string $id
+     * @return bool|stdClass
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function parseId($id)
     {
-        if (!isset($id) || empty($id)) {
+        if (!isset($id) || empty($id) || !is_string($id)) {
+            static::raiseError(__METHOD__ .'(), $id parameter is invalid!');
             return false;
         }
 
@@ -337,6 +456,13 @@ class MainController extends DefaultController
         return $id_obj;
     }
 
+    /**
+     * method to generate a new global unique identifier (GUID)
+     *
+     * @param none
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function createGuid()
     {
         if (!function_exists("openssl_random_pseudo_bytes")) {
@@ -353,8 +479,34 @@ class MainController extends DefaultController
         return $guid;
     }
 
+    /**
+     * method to load a specific model. if no further parameters have been
+     * specified, a new model is initiated. Otherwise an existing model
+     * identified by $id and/or $guid is getting loaded.
+     *
+     * @param string $model_name
+     * @param int|null $id
+     * @param string|null $guid
+     * @return object|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function loadModel($model_name, $id = null, $guid = null)
     {
+        if (!isset($model_name) || empty($model_name) || !is_string($model_name)) {
+            static::raiseError(__METHOD__ .'(), $model_name parameter is invalid!');
+            return false;
+        }
+
+        if (isset($id) && !empty($id) && !$this->isValidId($id)) {
+            static::raiseError(__CLASS__ .'::isValidId() returned false!');
+            return false;
+        }
+
+        if (isset($guid) && !empty($guid) && !$this->isValidGuid($guid)) {
+            static::raiseError(__CLASS__ .'::isValidGuid() returned false!');
+            return false;
+        }
+
         if (($prefix = $this->getNamespacePrefix()) === false) {
             static::raiseError(__METHOD__ .'(), failed to fetch namespace prefix!');
             return false;
@@ -374,7 +526,7 @@ class MainController extends DefaultController
             $model = $model_name;
         }
 
-        $model = $prefix .'\\Models\\'. $model;
+        $model = '\\'. $prefix .'\\Models\\'. $model;
 
         $load_by = array();
         if (isset($id) && !empty($id)) {
@@ -387,23 +539,31 @@ class MainController extends DefaultController
         try {
             $obj = new $model($load_by);
         } catch (\Exception $e) {
-            static::raiseError("Failed to load model {$object_name}!", false, $e);
+            static::raiseError(sprintf("%s(), failed to load model %s", __METHOD__, $object_name), false, $e);
             return false;
         }
 
-        if (isset($obj)) {
-            return $obj;
+        if (!isset($obj) || !is_object($obj)) {
+            static::raiseError(__METHOD__ .'(), an unknown error occured!');
+            return false;
         }
 
-        return false;
+        return $obj;
     }
 
+    /**
+     * method to check if there is a pending upgrade that needs to be executed.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function checkUpgrade()
     {
         global $db, $config;
 
         if (($base_path = $config->getWebPath()) === false) {
-            static::raiseError("ConfigController::getWebPath() returned false!");
+            static::raiseError(get_class($config) .'::getWebPath() returned false!');
             return false;
         }
 
@@ -446,14 +606,24 @@ class MainController extends DefaultController
         return false;
     }
 
+    /**
+     * method to load a specific controller. if no further parameters have been
+     *
+     * @param string $controller
+     * @param string $global_name
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function loadController($controller, $global_name)
     {
-        if (empty($controller)) {
-            static::raiseError(__METHOD__ .'(), $controller parameter is invalid!', true);
+        if (!isset($controller) || empty($controller) || !is_string($controller)) {
+            static::raiseError(__METHOD__ .'(), $controller parameter is invalid!');
             return false;
         }
 
-        if (isset($GLOBALS[$global_name]) && !empty($GLOBALS[$global_name])) {
+        if (isset($GLOBALS[$global_name]) &&
+            !empty($GLOBALS[$global_name])
+        ) {
             return true;
         }
 
@@ -471,8 +641,8 @@ class MainController extends DefaultController
 
         try {
             $$global_name = new $controller;
-        } catch (Exception $e) {
-            static::raiseError("Failed to load {$controller_name}!", false, $e->getMessage());
+        } catch (\Exception $e) {
+            static::raiseError(_MMETHOD__ .'(), failed to load controller!', false, $e);
             return false;
         }
 
@@ -480,50 +650,92 @@ class MainController extends DefaultController
         return true;
     }
 
+    /**
+     * returns the numeric user-id of the current process.
+     *
+     * @param none
+     * @return int|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function getProcessUserId()
     {
         if (($uid = posix_getuid()) === false) {
+            static::raiseError(__METHOD__ .'(), posix_getuid() returned false!');
             return false;
         }
 
         return $uid;
     }
 
+    /**
+     * returns the numeric group-id of the current process.
+     *
+     * @param none
+     * @return int|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function getProcessGroupId()
     {
         if (($gid = posix_getgid()) === false) {
+            static::raiseError(__METHOD__ .'(), posix_getgid() returned false!');
             return false;
         }
 
         return $gid;
     }
 
+    /**
+     * returns the user-name of the current process.
+     *
+     * @param none
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function getProcessUserName()
     {
         if (($uid = $this->getProcessUserId()) === false) {
+            static::raiseError(__CLASS__ .'::getProcessUserId() returned false!');
             return false;
         }
 
         if (($user = posix_getpwuid($uid)) === false) {
+            static::raiseError(__METHOD__ .'(), posix_getpwuid() returned false!');
             return false;
         }
 
         return $user['name'];
     }
 
+    /**
+     * returns the group-name of the current process.
+     *
+     * @param none
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function getProcessGroupName()
     {
         if (($uid = $this->getProcessGroupId()) === false) {
+            static::raiseError(__CLASS__ .'::getProcessGroupId() returned false!');
             return false;
         }
 
         if (($group = posix_getgrgid($uid)) === false) {
+            static::raiseError(__METHOD__ .'(), posix_getgrgid() returned false!');
             return false;
         }
 
         return $group['name'];
     }
 
+    /**
+     * method processes messages that have been submitted via the MessageBus
+     * interface using MessageBusController.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function processRequestMessages()
     {
         global $mbus;
@@ -538,7 +750,10 @@ class MainController extends DefaultController
         }
 
         foreach ($messages as $message) {
-            $message->setProcessingFlag();
+            if (!$message->setProcessingFlag()) {
+                static::raiseError(get_class($message) .'::setProcessingFlag() returned false!');
+                return false;
+            }
 
             if (!$message->save()) {
                 static::raiseError(get_class($message) .'::save() returned false!');
@@ -546,7 +761,7 @@ class MainController extends DefaultController
             }
 
             if (!$this->handleMessage($message)) {
-                static::raiseError('handleMessage() returned false!');
+                static::raiseError(__CLASS__ .'::handleMessage() returned false!');
                 return false;
             }
 
@@ -559,17 +774,29 @@ class MainController extends DefaultController
         return true;
     }
 
+    /**
+     * handle a message.
+     *
+     * @param \Thallium\Models\MessageModel $message
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     protected function handleMessage(&$message)
     {
         global $jobs;
 
+        if (!isset($message) || empty($message) || !is_object($message)) {
+            static::raiseError(__METHOD__ .'(), $message pararmeter is invalid!');
+            return false;
+        }
+
         if (get_class($message) != 'Thallium\\Models\\MessageModel') {
-            static::raiseError(__METHOD__ .' requires a MessageModel reference as parameter!');
+            static::raiseError(__METHOD__ .'(), requires a MessageModel reference as parameter!');
             return false;
         }
 
         if (!$message->isClientMessage()) {
-            static::raiseError(__METHOD__ .' can only handle client requests!');
+            static::raiseError(__METHOD__ .'(), can only handle client requests!');
             return false;
         }
 
@@ -610,6 +837,14 @@ class MainController extends DefaultController
         return true;
     }
 
+    /**
+     * returns the current namespace prefix. if not overriden,
+     * this will usually return __NAMESPACE__.
+     *
+     * @param none
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     final public function getNamespacePrefix()
     {
         if (isset($this->override_namespace_prefix) &&
@@ -633,13 +868,20 @@ class MainController extends DefaultController
             empty($namespace_parts[0]) ||
             !is_string($namespace_parts[0])
         ) {
-            static::raiseError('Failed to extract prefix from NAMESPACE constant!');
+            static::raiseError(__METHOD__ .'(), failed to extract prefix from __NAMESPACE__ constant!');
             return false;
         }
 
         return $namespace_parts[0];
     }
 
+    /**
+     * override the default namespace.
+     *
+     * @param string $prefix
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     final public function setNamespacePrefix($prefix)
     {
         if (!isset($prefix) || empty($prefix) || !is_string($prefix)) {
@@ -651,6 +893,13 @@ class MainController extends DefaultController
         return true;
     }
 
+    /**
+     * method returns a list of all registered models.
+     *
+     * @param none
+     * @return array|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     final public function getRegisteredModels()
     {
         if (!isset($this->registeredModels) ||
@@ -664,6 +913,14 @@ class MainController extends DefaultController
         return $this->registeredModels;
     }
 
+    /**
+     * method to registere a model into Thallium.
+     *
+     * @param string $nick
+     * @param string $model
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     final public function registerModel($nick, $model)
     {
         if (!isset($this->registeredModels) ||
@@ -704,6 +961,15 @@ class MainController extends DefaultController
         return true;
     }
 
+    /**
+     * method to check if a model is registered in Thallium. the lookup can happen
+     * by using the models nickname and/or the modelname.
+     *
+     * @param string $nick
+     * @param string $model
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     final public function isRegisteredModel($nick = null, $model = null)
     {
         if ((!isset($nick) || empty($nick) || !is_string($nick)) &&
@@ -747,6 +1013,13 @@ class MainController extends DefaultController
         return true;
     }
 
+    /**
+     * method to return the full modelname by using the models nickname.
+     *
+     * @param string $nick
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function getModelByNick($nick)
     {
         if (!isset($nick) || empty($nick) || !is_string($nick)) {
@@ -766,14 +1039,28 @@ class MainController extends DefaultController
         return $known_models[$nick];
     }
 
+    /**
+     * method to check if the directory provided in as $dir parameter is hierarchical
+     * below the $topmost directory.
+     *
+     * @param string $dir
+     * @param string|null $topmost
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function isBelowDirectory($dir, $topmost = null)
     {
-        if (empty($dir)) {
+        if (!isset($dir) || empty($dir) || !is_string($dir)) {
             static::raiseError(__METHOD__ .'(), $dir parameter is invalid!');
             return false;
         }
 
-        if (empty($topmost)) {
+        if (isset($topmost) && !empty($topmost) && !is_string($topmost)) {
+            static::raiseError(__METHOD__ .'(), $topmost parameter is invalid!');
+            return false;
+        }
+
+        if (!isset($topmost) || empty($topmost)) {
             $topmost = APP_BASE;
         }
 
@@ -794,13 +1081,21 @@ class MainController extends DefaultController
         $cnt_dir = count(explode('/', $dir));
         $cnt_dir_top = count(explode('/', $dir_top));
 
-        if ($cnt_dir > $cnt_dir_top) {
-            return true;
+        if ($cnt_dir <= $cnt_dir_top) {
+            return false;
         }
 
-        return false;
+        return true;
     }
 
+    /**
+     * method to register a handler to Thallium.
+     *
+     * @param string $handler_name
+     * @param string|array $handler
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     protected function registerHandler($handler_name, $handler)
     {
         if (!isset($handler_name) || empty($handler_name) || !is_string($handler_name)) {
@@ -833,6 +1128,13 @@ class MainController extends DefaultController
         $this->registeredHandlers[$handler_name] = $handler;
     }
 
+    /**
+     * method to unregister a handler from Thallium.
+     *
+     * @param string $handler_name
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     protected function unregisterHandler($handler_name)
     {
         if (!isset($handler_name) || empty($handler_name) || !is_string($handler_name)) {
@@ -848,6 +1150,13 @@ class MainController extends DefaultController
         return true;
     }
 
+    /**
+     * method to check if a handler is register to Thallium.
+     *
+     * @param string $handler_name
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     protected function isRegisteredHandler($handler_name)
     {
         if (!isset($handler_name) || empty($handler_name) || !is_string($handler_name)) {
@@ -861,6 +1170,14 @@ class MainController extends DefaultController
 
         return true;
     }
+
+    /**
+     * method returns the handler identified by the provided $handler_name.
+     *
+     * @param string $handler_name
+     * @return array|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
 
     protected function getHandler($handler_name)
     {
@@ -877,6 +1194,13 @@ class MainController extends DefaultController
         return $this->registeredHandlers[$handler_name];
     }
 
+    /**
+     * a generic view-handler
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     protected function viewHandler()
     {
         global $views, $query;
@@ -887,7 +1211,7 @@ class MainController extends DefaultController
         }
 
         if (($page = $views->load($query->view)) === false) {
-            static::raiseError("ViewController:load() returned false!");
+            static::raiseError(get_class($views) .'::load() returned false!');
             return false;
         }
 
@@ -903,6 +1227,13 @@ class MainController extends DefaultController
         return true;
     }
 
+    /**
+     * this methods gets called once by startup() method.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     protected function callHandlers()
     {
         global $router;
@@ -929,6 +1260,13 @@ class MainController extends DefaultController
         return true;
     }
 
+    /**
+     * method that actually executes an registered handler
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     protected function callHandler($handler_name)
     {
         if (!isset($handler_name) || empty($handler_name) || !is_string($handler_name)) {
@@ -962,6 +1300,13 @@ class MainController extends DefaultController
         return true;
     }
 
+    /**
+     * method to flush the output buffer to the client.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function flushOutputBufferToLog()
     {
         if (($size = ob_get_length()) === false || empty($size)) {
@@ -984,6 +1329,13 @@ class MainController extends DefaultController
         return true;
     }
 
+    /**
+     * method returns the full modelname if models nickname is provided.
+     *
+     * @param string $model
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function getFullModelName($model)
     {
         if (!$this->isRegisteredModel($model, $model)) {
