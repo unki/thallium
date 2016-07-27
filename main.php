@@ -17,6 +17,17 @@
  * GNU Affero General Public License for more details.
  */
 
+/**
+ * This file is the starting point for application.
+ * It registers the autoloader and initializes the
+ * applications MainController - which then takes
+ * over control.
+ *
+ * @license AGPL3
+ * @copyright 2015-2016 Andreas Unterkircher <unki@netshadow.net>
+ * @author Andreas Unterkircher <unki@netshadow.net>
+ */
+
 require_once 'vendor/Thallium/static.php';
 require_once 'vendor/autoload.php';
 
@@ -34,7 +45,7 @@ if (isset($_SERVER) &&
 
 try {
     $thallium = new \Thallium\Controllers\MainController($mode);
-} catch (Exception $e) {
+} catch (\Exception $e) {
     print $e->getMessage();
     exit(1);
 }
