@@ -44,6 +44,10 @@ class ExceptionController extends \Exception
      */
     public function __construct($message, $captured_exception = null)
     {
+        if ($captured_exception !== null) {
+            $this->previous = $captured_exception;
+        }
+
         parent::__construct($message, null, $captured_exception);
     }
 
@@ -58,14 +62,29 @@ class ExceptionController extends \Exception
     {
         $text = "";
 
-        if ($previous = $this->getPrevious()) {
-            $text.= "<br /><br />". str_replace("\n", "<br />\n", $previous->getMessage()) ."<br /><br />\n";
-            $text.= "Backtrace:<br />\n". str_replace("\n", "<br />\n", $previous->getTraceAsString());
+        if (($previous = $this->getPrevious()) !== null &&
+            is_a($previous, 'Exception')
+        ) {
+            $text.= sprintf(
+                '<br /><br />%s<br /><br />\n',
+                str_replace("\n", "<br />\n", $previous->getMessage())
+            );
+            $text.= sprintf(
+                'Backtrace:<br />\n%s',
+                str_replace("\n", "<br />\n", $previous->getTraceAsString())
+            );
             return $text;
         }
 
-        $text.= "<br /><br />". str_replace("\n", "<br />\n", $this->getMessage()) ."<br /><br />\n";
-        $text.= "Backtrace:<br />\n". str_replace("\n", "<br />\n", parent::getTraceAsString());
+        $text.= sprintf(
+            '<br /><br />%s<br /><br />\n',
+            str_replace("\n", "<br />\n", $this->getMessage())
+        );
+        $text.= sprintf(
+            'Backtrace:<br />\n%s',
+            str_replace("\n", "<br />\n", parent::getTraceAsString())
+        );
+
         return $text;
     }
 
@@ -80,7 +99,9 @@ class ExceptionController extends \Exception
     {
         $text = array();
 
-        if ($previous = $this->getPrevious()) {
+        if (($previous = $this->getPrevious()) !== null &&
+            is_a($previous, 'Exception')
+        ) {
             $text = $previous->getMessage();
             $trace = $previous->getTraceAsString();
         } else {
