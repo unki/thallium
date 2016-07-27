@@ -19,18 +19,45 @@
 
 namespace Thallium\Controllers;
 
+/**
+ * Dispite its name, ExceptionController class is not based on
+ * Thalliums DefaultController but rather extends PHPs own Exception class.
+ *
+ * @package Thallium\Controllers\ExceptionController
+ * @subpackage Controllers
+ * @license AGPL3
+ * @copyright 2015-2016 Andreas Unterkircher <unki@netshadow.net>
+ * @author Andreas Unterkircher <unki@netshadow.net>
+ */
 class ExceptionController extends \Exception
 {
+    /** @var string $previous keeps track of the last error message. */
     protected $previous;
 
+    /**
+     * class constructor
+     *
+     * @param string $message
+     * @param \Exception $captured_exception
+     * @return void
+     * @throws \Exception
+     */
     public function __construct($message, $captured_exception = null)
     {
         parent::__construct($message, null, $captured_exception);
     }
 
+    /**
+     * this method returns a formated text containing the exception details.
+     *
+     * @param none
+     * @return string
+     * @throws none
+     */
     public function getText()
     {
         $text = "";
+
         if ($previous = $this->getPrevious()) {
             $text.= "<br /><br />". str_replace("\n", "<br />\n", $previous->getMessage()) ."<br /><br />\n";
             $text.= "Backtrace:<br />\n". str_replace("\n", "<br />\n", $previous->getTraceAsString());
@@ -42,6 +69,13 @@ class ExceptionController extends \Exception
         return $text;
     }
 
+    /**
+     * this method returns a JSON-formated text containing the exception details.
+     *
+     * @param none
+     * @return string
+     * @throws none
+     */
     public function getJson()
     {
         $text = array();
@@ -54,13 +88,29 @@ class ExceptionController extends \Exception
             $trace = parent::getTraceAsString();
         }
 
-        if (($json = json_encode(array('error' => 1, 'text' => $text, 'trace' => $trace))) === false) {
+        $json_data = array(
+            'error' => 1,
+            'text' => $text,
+            'trace' => $trace,
+        );
+
+        if (($json = json_encode($json_data)) === false) {
             exit("json_encode() failed!");
         }
 
         return $json;
     }
 
+    /**
+     * From php.net: The __toString() method allows a class to decide how it will
+     * react when it is treated like a string. For example, what echo $obj; will
+     * print. This method must return a string, as otherwise a fatal
+     * E_RECOVERABLE_ERROR level error is emitted.
+     *
+     * @param none
+     * @return string
+     * @throws none
+     */
     public function __toString()
     {
         global $thallium, $router;
