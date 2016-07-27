@@ -19,17 +19,56 @@
 
 namespace Thallium\Controllers;
 
+/**
+ * DefaultController is an abstract class that is used by all
+ * the other Thallium Controllers.
+ *
+ * It declares some common methods, properties and constants.
+ *
+ * @package Thallium\Controllers\DefaultController
+ * @subpackage Controllers
+ * @license AGPL3
+ * @copyright 2015-2016 Andreas Unterkircher <unki@netshadow.net>
+ * @author Andreas Unterkircher <unki@netshadow.net>
+ */
 abstract class DefaultController
 {
+    /**
+     * @var string CONFIG_DIRECTORY declares the path to the config directory.
+     * APP_BASE is from static.php
+     */
     const CONFIG_DIRECTORY = APP_BASE ."/config";
+
+    /**
+     * @var string CACHE_DIRECTORY declares the path to the cache directory.
+     * APP_BASE is from static.php
+     */
     const CACHE_DIRECTORY = APP_BASE ."/cache";
+
+    /** @var string LOG_LEVEL declares the default log-level */
     const LOG_LEVEL = LOG_WARNING;
 
+    /**
+     * class constructor
+     *
+     * @param none
+     * @return void
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function __construct()
     {
         return;
     }
 
+    /**
+     * method __set() is called on anything writting to a
+     * undeclared class property.
+     *
+     * @param string $name
+     * @param mixed $value
+     * @return void
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public function __set($name, $value)
     {
         global $thallium;
@@ -43,21 +82,46 @@ abstract class DefaultController
         return;
     }
 
+    /**
+     * this method provides a generic interface to send a
+     * message to the client via the MessageBusController.
+     *
+     * @param string $command
+     * @param string $body
+     * @param string $data
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public function sendMessage($command, $body, $value = null)
     {
-        global $mbus;
+        global $thallium, $mbus;
 
-        if (!isset($command) || empty($command) || !is_string($command)) {
-            static::raiseError(__METHOD__ .', parameter \$command is mandatory and has to be a string!');
+        if (($prefix = $thallium->getNamespacePrefix()) === false) {
+            static::raiseError(__METHOD__ .'(), failed to fetch namespace prefix!');
             return false;
         }
+
+        if (!isset($mbus) ||
+            empty($mbus) ||
+            !is_object($mbus) ||
+            !is_a($mbus, sprintf('%s\Controllers\MessageBusController', $prefix))
+        ) {
+            static::raiseError(__METHOD__ .'(), MessageBusController is not initialized!');
+            return false;
+        }
+
+        if (!isset($command) || empty($command) || !is_string($command)) {
+            static::raiseError(__METHOD__ .'(), parameter $command is invalid!');
+            return false;
+        }
+
         if (!isset($body) || empty($body) || !is_string($body)) {
-            static::raiseError(__METHOD__ .', parameter \$body is mandatory and has to be a string!');
+            static::raiseError(__METHOD__ .'(), parameter $body is invalid!');
             return false;
         }
 
         if (isset($value) && !empty($value) && !is_string($value)) {
-            static::raiseError(__METHOD__ .', parameter \$value has to be a string!');
+            static::raiseError(__METHOD__ .'(), parameter $value is invalid!');
             return false;
         }
 
@@ -69,6 +133,15 @@ abstract class DefaultController
         return true;
     }
 
+    /**
+     * methods raises an exception by throwing a ExceptionController exception.
+     *
+     * @param string $text
+     * @param bool $stop_execution
+     * @param callable|null $catched_exception
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public static function raiseError($text, $stop_execution = false, $catched_exception = null)
     {
         if (defined('DB_NOERROR')) {
@@ -81,13 +154,26 @@ abstract class DefaultController
             print $e;
         }
 
-        if ($stop_execution) {
+        if (isset($stop_execution) && $stop_execution === true) {
             exit(1);
         }
 
         return true;
     }
 
+    /**
+     * this method provides a generic output method.
+     *
+     * depending on configuration, output will be stdout, webservers error_log
+     * (by using error_log() function) or a specific log file.
+     *
+     * @param string $logtext
+     * @param int $loglevel
+     * @param bool|null $override_output
+     * @param bool|null $no_newline
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function write($logtext, $loglevel = LOG_INFO, $override_output = null, $no_newline = null)
     {
         if (isset($this->config->logging)) {
@@ -124,35 +210,65 @@ abstract class DefaultController
 
         return true;
 
-    } // write()
+    }
 
+    /**
+     * this method detects if itself has been executed from within
+     * the command line.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function isCmdline()
     {
-        if (php_sapi_name() == 'cli') {
-            return true;
+        if (php_sapi_name() !== 'cli') {
+            return false;
         }
 
-        return false;
+        return true;
 
-    } // isCmdline()
+    }
 
+    /**
+     * this method returns the current log verbosity.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function getVerbosity()
     {
         return self::LOG_LEVEL;
 
-    } // getVerbosity()
+    }
 
+    /**
+     * this method returns true if the provided object $obj is
+     * based on the model $model.
+     *
+     * @todo nothing seems to used this method right now. maybe removable?
+     *
+     * @param object $obj
+     * @param string $model
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function requireModel($obj, $model)
     {
         global $thallium;
 
-        if (!isset($obj) || empty($obj) || !is_object($obj) ||
-            !isset($model) || empty($model) || !is_string($model)) {
-            static::raiseError(__METHOD__ .'(), parameters are invalid!');
+        if (!isset($obj) || empty($obj) || !is_object($obj)) {
+            static::raiseError(__METHOD__ .'(), parameter $obj is invalid!');
             return false;
         }
 
-        if (!($prefix = $thallium->getNamespacePrefix())) {
+        if (!isset($model) || empty($model) || !is_string($model)) {
+            static::raiseError(__METHOD__ .'(), parameter $model is invalid!');
+            return false;
+        }
+
+        if (($prefix = $thallium->getNamespacePrefix()) === false) {
             static::raiseError(get_class($thallium) .'::getNamespacePrefix() returned false!');
             return false;
         }
