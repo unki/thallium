@@ -17,8 +17,34 @@
  * GNU Affero General Public License for more details.
  */
 
+/**
+ * This file contains the autoloader function that PHP uses to find and
+ * load all Thalliums - and also other vendors - clases.
+ *
+ * @license AGPL3
+ * @copyright 2015-2016 Andreas Unterkircher <unki@netshadow.net>
+ * @author Andreas Unterkircher <unki@netshadow.net>
+ */
+
+/**
+ * generic autoloader
+ *
+ * @param string $class
+ * @return void
+ * @throws \Extension
+ */
 function autoload($class)
 {
+    if (!isset($class) || empty($class) || !is_string($class)) {
+        throw new \Exception(__METHOD__ .'(), $class parameter is invalid!');
+        return;
+    }
+
+    if (!defined('APP_BASE')) {
+        throw new \Exception(__METHOD__ .'(), constant APP_BASE is not defined!');
+        return;
+    }
+
     $prefixes = array(
         'Thallium',
     );
@@ -27,6 +53,7 @@ function autoload($class)
     $parts = explode('/', $class);
 
     if (!is_array($parts) || empty($parts)) {
+        throw new \Exception(__METHOD__ .'(), $class explode() failed!');
         return;
     }
 
@@ -37,20 +64,24 @@ function autoload($class)
 
     $filename = APP_BASE;
     $filename.= "/vendor/";
-    if (isset($subdir) || !empty($subdir)) {
-        $filename.= $subdir;
-    }
+
     $filename.= implode('/', $parts);
     $filename.= '.php';
 
     if (!file_exists($filename)) {
-        return;
-    }
-    if (!is_readable($filename)) {
+        throw new \Exception(sprintf('%s(), file %s not found!', __METHOD__, $filename));
         return;
     }
 
-    require_once $filename;
+    if (!is_readable($filename)) {
+        throw new \Exception(sprintf('%s(), file %s not readable!', __METHOD__, $filename));
+        return;
+    }
+
+    if (!require_once($filename)) {
+        throw new \Exception(sprintf('%s(), require() failed on file %s!', __METHOD__, $filename));
+        return;
+    }
 }
 
 // vim: set filetype=php expandtab softtabstop=4 tabstop=4 shiftwidth=4:
