@@ -17,6 +17,14 @@
  * GNU Affero General Public License for more details.
  */
 
+/**
+ * This file defines some constants that are required by Thallium.
+ *
+ * @license AGPL3
+ * @copyright 2015-2016 Andreas Unterkircher <unki@netshadow.net>
+ * @author Andreas Unterkircher <unki@netshadow.net>
+ */
+
 define('APP_BASE', realpath(__DIR__ .'/../../'));
 
 define('FIELD_SET', 'set');
