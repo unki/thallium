@@ -19,12 +19,33 @@
 
 namespace Thallium\Controllers;
 
+/**
+ * ConfigController handles loading configuration files.
+ *
+ * @package Thallium\Controllers\ConfigController
+ * @subpackage Controllers
+ * @license AGPL3
+ * @copyright 2015-2016 Andreas Unterkircher <unki@netshadow.net>
+ * @author Andreas Unterkircher <unki@netshadow.net>
+ */
 class ConfigController extends DefaultController
 {
+    /** @var string $config_file_local */
     protected static $config_file_local = "config.ini";
+
+    /** @var string $config_file_dist */
     protected static $config_file_dist = "config.ini.dist";
+
+    /** @var array $config result of the merge of $config_file_local and $config_file_dist */
     protected $config;
 
+    /**
+     * class constructor
+     *
+     * @param none
+     * @return void
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function __construct()
     {
         if (!file_exists(static::CONFIG_DIRECTORY)) {
@@ -93,6 +114,15 @@ class ConfigController extends DefaultController
         return;
     }
 
+    /**
+     * this method loads the requested configuration file and awaits
+     * a path to an ini-style-formated file to have been provided
+     * for this.
+     *
+     * @param string $config_target
+     * @return array|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     protected function readConfig($config_target)
     {
         $config_file = sprintf('config_file_%s', $config_target);
@@ -160,6 +190,14 @@ class ConfigController extends DefaultController
         return $config_ary;
     }
 
+    /**
+     * returns the [database] section of the loaded configuration
+     * as array
+     *
+     * @param none
+     * @return array|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function getDatabaseConfiguration()
     {
         if (!isset($this->config['database']) ||
@@ -172,6 +210,14 @@ class ConfigController extends DefaultController
         return $this->config['database'];
     }
 
+    /**
+     * returns the 'type' parameter from within the [database] section
+     * of the loaded configuration as string.
+     *
+     * @param none
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function getDatabaseType()
     {
         if (($dbconfig = $this->getDatabaseConfiguration()) === false) {
@@ -188,6 +234,14 @@ class ConfigController extends DefaultController
         return $dbconfig['type'];
     }
 
+    /**
+     * returns the 'base_web_path' parameter from within the [app] section
+     * of the loaded configuration as string.
+     *
+     * @param none
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function getWebPath()
     {
         if (!isset($this->config['app']['base_web_path']) ||
@@ -200,6 +254,14 @@ class ConfigController extends DefaultController
         return $this->config['app']['base_web_path'];
     }
 
+    /**
+     * returns the 'page_title' parameter from within the [app] section
+     * of the loaded configuration as string.
+     *
+     * @param none
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function getPageTitle()
     {
         if (!isset($this->config['app']['page_title']) ||
@@ -212,6 +274,14 @@ class ConfigController extends DefaultController
         return $this->config['app']['page_title'];
     }
 
+    /**
+     * returns true if the provided $value represents the logical
+     * state 'enabled'.
+     *
+     * @param string $value
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     protected function isEnabled($value)
     {
         if (!in_array($value, array('yes','y','true','on','1'))) {
@@ -221,6 +291,14 @@ class ConfigController extends DefaultController
         return true;
     }
 
+    /**
+     * returns true if the provided $value represents the logical
+     * state 'disabled'.
+     *
+     * @param string $value
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     protected function isDisabled($value)
     {
         if (!in_array($value, array('no','n','false','off','0'))) {
@@ -230,6 +308,14 @@ class ConfigController extends DefaultController
         return true;
     }
 
+    /**
+     * returns true if parameter 'maintenance_mode' from within the [app] section
+     * of the loaded configuration is set to 'enabled'.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function inMaintenanceMode()
     {
         if (!isset($this->config['app']['maintenance_mode']) ||
