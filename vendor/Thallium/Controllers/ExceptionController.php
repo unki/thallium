@@ -20,7 +20,7 @@
 namespace Thallium\Controllers;
 
 /**
- * Dispite its name, ExceptionController class is not based on
+ * Despite its name, ExceptionController class is not based on
  * Thalliums DefaultController but rather extends PHPs own Exception class.
  *
  * @package Thallium\Controllers\ExceptionController
