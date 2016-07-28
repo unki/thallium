@@ -229,22 +229,6 @@ class HttpRouterController extends DefaultController
             return $this->query;
         }
 
-        //
-        // Previews (.../preview/${id})
-        //
-
-        if ($this->query->view == "preview") {
-            $this->query->call_type = "preview";
-            return $this->query;
-
-        //
-        // Documents retrieval (.../show/${id})
-        //
-        } elseif ($this->query->view == "document") {
-            $this->query->call_type = "document";
-            return $this->query;
-        }
-
         $this->query->call_type = "common";
         return $this->query;
     }
@@ -263,23 +247,6 @@ class HttpRouterController extends DefaultController
         return false;
     }
 
-    public function isImageCall()
-    {
-        if (isset($this->query->call_type) && $this->query->call_type == "preview") {
-            return true;
-        }
-
-        return false;
-    }
-
-    public function isDocumentCall()
-    {
-        if (isset($this->query->call_type) && $this->query->call_type == "document") {
-            return true;
-        }
-
-        return false;
-    }
 
     public function isUploadCall()
     {
