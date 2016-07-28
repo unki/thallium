@@ -21,29 +21,78 @@ namespace Thallium\Controllers;
 
 use \PDO;
 
+/**
+ * DatabaseController handles all the database specific tasks like
+ * storing and retriving something from the database.
+ *
+ * @package Thallium\Controllers\DatabaseController
+ * @subpackage Controllers
+ * @license AGPL3
+ * @copyright 2015-2016 Andreas Unterkircher <unki@netshadow.net>
+ * @author Andreas Unterkircher <unki@netshadow.net>
+ */
 class DatabaseController extends DefaultController
 {
+    /** @var int SCHEMA_VERSION */
     const SCHEMA_VERSION = 1;
+
+    /** @var int FRAMEWORK_SCHEMA_VERSION */
     const FRAMEWORK_SCHEMA_VERSION = 4;
 
+    /** @var \PDO $db */
     protected $db;
+
+    /** @var array $db_cfg */
     protected $db_cfg;
+
+    /** @var bool $is_connected */
     protected $is_connected = false;
+
+    /** @var bool $is_open_transaction */
     protected $is_open_transaction = false;
 
+    /** @var bool $supported_fetch_methods */
+    protected static $supported_fetch_methods = array(
+        \PDO::FETCH_LAZY,
+        \PDO::FETCH_ASSOC,
+        \PDO::FETCH_NAMED,
+        \PDO::FETCH_NUM,
+        \PDO::FETCH_BOTH,
+        \PDO::FETCH_OBJ,
+        \PDO::FETCH_COLUMN,
+        \PDO::FETCH_CLASS,
+        \PDO::FETCH_INTO,
+    );
+
+    /**
+     * class constructor
+     *
+     * @param none
+     * @return void
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function __construct()
     {
         global $config;
 
+        if (!isset($config) ||
+            empty($config) ||
+            !is_object($config) ||
+            !is_a($config, 'Thallium\Controllers\ConfigController')
+        ) {
+            static::raiseError(__METHOD__ .'(), looks like ConfigController has not be loaded!', true);
+            return;
+        }
+
         $this->is_connected = false;
 
-        if (!($dbconfig = $config->getDatabaseConfiguration())) {
+        if (($dbconfig = $config->getDatabaseConfiguration()) === false) {
             static::raiseError(
                 "Database configuration is missing or incomplete"
                 ." - please check configuration!",
                 true
             );
-            return false;
+            return;
         }
 
         if (!isset(
@@ -57,30 +106,37 @@ class DatabaseController extends DefaultController
                 "Incomplete database configuration - please check configuration!",
                 true
             );
-            return false;
+            return;
         }
 
         $this->db_cfg = $dbconfig;
 
         if (!$this->connect()) {
-            static::raiseError(__CLASS__ ."::connect() returned false!");
-            return false;
+            static::raiseError(__CLASS__ .'::connect() returned false!', true);
+            return;
         }
 
         if (!$this->checkDatabaseSoftwareVersion()) {
-            static::raiseError(__CLASS__ ."::checkDatabaseSoftwareVersion() returned false!");
-            return false;
+            static::raiseError(__CLASS__ .'::checkDatabaseSoftwareVersion() returned false!', true);
+            return;
         }
 
-        return true;
+        return;
     }
 
-    protected function connect()
+    /**
+     * opens a connection to the database.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    final protected function connect()
     {
         $options = array(
-                'debug' => 2,
-                'portability' => 'DB_PORTABILITY_ALL'
-                );
+            'debug' => 2,
+            'portability' => 'DB_PORTABILITY_ALL'
+        );
 
         switch ($this->db_cfg['type']) {
             default:
@@ -99,56 +155,127 @@ class DatabaseController extends DefaultController
 
         try {
             $this->db = new \PDO($dsn, $user, $pass);
-            $this->db->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-            $this->db->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_OBJ);
         } catch (\PDOException $e) {
             static::raiseError(__METHOD__ .'(), unable to connect to database!', true, $e);
             return false;
+        } catch (\Exception $e) {
+            static::raiseError(__METHOD__ .'(), an unspecific error occurred!', false, $e);
+            return false;
         }
 
-        $this->SetConnectionStatus(true);
+        if (!$this->db->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION)) {
+            static::raiseError(get_class($this->db) .'::setAttribute() returned false!');
+            return false;
+        }
+
+        if (!$this->db->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_OBJ)) {
+            static::raiseError(get_class($this->db) .'::setAttribute() returned false!');
+            return false;
+        }
+
+        if (!$this->setConnectionStatus(true)) {
+            static::raiseError(__CLASS__ .'::setConnectionStatus() returned false!');
+            return false;
+        }
+
         return true;
     }
 
-    protected function setConnectionStatus($status)
+    /**
+     * sets or clears the internal connected-flag.
+     *
+     * @param bool $status
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    final protected function setConnectionStatus($status)
     {
+        if (!isset($status) || !is_bool($status)) {
+            static::raiseError(__METHOD__ .'(), $status parameter is invalid!');
+            return false;
+        }
+        
         $this->is_connected = $status;
+        return true;
     }
 
-    protected function getConnectionStatus()
+    /**
+     * returns the state of the internal connected-flag.
+     *
+     * @param bool $status
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    final protected function getConnectionStatus()
     {
+        if (!isset($this->is_connected) || !is_bool($this->is_connected)) {
+            return false;
+        }
+
         return $this->is_connected;
     }
 
-    public function query($query = "", $mode = \PDO::FETCH_OBJ)
+    /**
+     * executes a SQL query.
+     *
+     * @param string $query
+     * @param int $mode
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    public function query($query, $mode = \PDO::FETCH_OBJ)
     {
+        if (!isset($query) || empty($query) || !is_string($query)) {
+            static::raiseError(__METHOD__ .'(), $query parameter is invalid!');
+            return false;
+        }
+
+        if (!isset($mode) || empty($mode) || !is_int($mode)) {
+            static::raiseError(__METHOD__ .'(), $mode parameter is invalid!');
+            return false;
+        }
+
+        if (!in_array($mode, static::$supported_fetch_methods)) {
+            static::raiseError(__METHOD__ .'(), $mode contains an unsupported fetch method!');
+            return false;
+        }
+
         if (!$this->getConnectionStatus()) {
-            $this->connect();
+            if (!$this->connect()) {
+                static::raiseError(__CLASS__ .'::connect() returned false!');
+                return false;
+            }
         }
 
-        if ($this->hasTablePrefix()) {
-            $this->insertTablePrefix($query);
+        if ($this->hasTablePrefix() && !$this->insertTablePrefix($query)) {
+            static::raiseError(__CLASS__ .'::insertTablePrefix() returned false!');
+            return false;
         }
 
-        /* for manipulating queries use exec instead of query. can save
-         * some resource because nothing has to be allocated for results.
+        /* for manipulating queries use exec instead of query. this can save some resource
+         * because nothing has to be allocated for results.
          */
         if (preg_match('/^[[:blank:]]*(update|insert|create|replace|truncate|delete|alter)[[:blank:]]/i', $query)) {
             try {
                 $result = $this->db->exec($query);
             } catch (\PDOException $e) {
                 static::raiseError(__METHOD__ .'(), query failed!', false, $e);
+                return false;
+            } catch (\Exception $e) {
+                static::raiseError(__METHOD__ .'(), an unspecific error occurred!', false, $e);
+                return false;
             }
 
             /* PDO::exec() sometimes returns false even if operation was successful.
              * http://php.net/manual/de/pdo.exec.php#118156
              * so overrule fow now.
              */
-
             return true;
+
             if (!isset($result) || $result === false) {
                 return false;
             }
+
             return $result;
         }
 
@@ -156,6 +283,10 @@ class DatabaseController extends DefaultController
             $result = $this->db->query($query, $mode);
         } catch (\PDOException $e) {
             static::raiseError(__METHOD__ .'(), query failed!', false, $e);
+            return false;
+        } catch (\Exception $e) {
+            static::raiseError(__METHOD__ .'(), an unspecific error occurred!', false, $e);
+            return false;
         }
 
         if (!isset($result) || $result === false) {
@@ -165,15 +296,28 @@ class DatabaseController extends DefaultController
         return $result;
     }
 
-    public function prepare($query = "")
+    /**
+     * prepares an SQL statement.
+     *
+     * @param string $query
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    final public function prepare($query)
     {
+        if (!isset($query) || empty($query) || !is_string($query)) {
+            static::raiseError(__METHOD__ .'(), $query parameter is invalid!');
+            return false;
+        }
+
         if (!$this->getConnectionStatus()) {
             static::raiseError(__CLASS__ .'::getConnectionStatus() returned false!');
             return false;
         }
 
-        if ($this->hasTablePrefix()) {
-            $this->insertTablePrefix($query);
+        if ($this->hasTablePrefix() && !$this->insertTablePrefix($query)) {
+            static::raiseError(__CLASS__ .'::insertTablePrefix() returned false!');
+            return false;
         }
 
         try {
@@ -181,12 +325,23 @@ class DatabaseController extends DefaultController
         } catch (\PDOException $e) {
             static::raiseError(__METHOD__ .'(), unable to prepare statement!', false, $e);
             return false;
+        } catch (\Exception $e) {
+            static::raiseError(__METHOD__ .'(), an unspecific error occurred!', false, $e);
+            return false;
         }
 
         return $result;
 
-    } // db_prepare()
+    }
 
+    /**
+     * executes an previously prepared SQL statement.
+     *
+     * @param \PDOStatement $sth
+     * @param array $data
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function execute($sth, $data = array())
     {
         if (!$this->getConnectionStatus()) {
@@ -194,11 +349,13 @@ class DatabaseController extends DefaultController
             return false;
         }
 
-        if (!is_object($sth)) {
+        if (!isset($sth) || empty($sth) || !is_object($sth)) {
+            static::raiseError(__METHOD__ .'(), $sth parameter is invalid!');
             return false;
         }
 
-        if (get_class($sth) != "PDOStatement") {
+        if (!is_a($sth, 'PDOStatement')) {
+            static::raiseError(__METHOD__ .'(), $sth parameter does not contain a PDOStatement!');
             return false;
         }
 
@@ -222,45 +379,76 @@ class DatabaseController extends DefaultController
         } catch (\PDOException $e) {
             static::raiseError(__METHOD__ .'(), unable to execute statement!', false, $e);
             return false;
-        }
-
-        return $result;
-
-    } // execute()
-
-    public function freeStatement($sth)
-    {
-        if (!is_object($sth)) {
+        } catch (\Exception $e) {
+            static::raiseError(__METHOD__ .'(), an unspecific error occurred!', false, $e);
             return false;
         }
 
-        if (get_class($sth) != "PDOStatement") {
+        return $result;
+    }
+
+    /**
+     * frees the resources of a SQL result.
+     *
+     * @param \PDOStatement $sth
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    final public function freeStatement($sth)
+    {
+        if (!isset($sth) || empty($sth) || !is_object($sth)) {
+            static::raiseError(__METHOD__ .'(), $sth parameter is invalid!');
+            return false;
+        }
+
+        if (!is_a($sth, 'PDOStatement')) {
+            static::raiseError(__METHOD__ .'(), $sth parameter does not contain a PDOStatement!');
             return false;
         }
 
         try {
             $sth->closeCursor();
-        } catch (Exception $e) {
-            $sth = null;
+        } catch (\Exception $e) {
+            unset($sth);
             return false;
         }
 
         return true;
 
-    } // freeStatement()
+    }
 
-    public function fetchSingleRow($query = "", $mode = \PDO::FETCH_OBJ)
+    /**
+     * frees the resources of a SQL result.
+     *
+     * @param string $query
+     * @param int $mode
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    final public function fetchSingleRow($query = "", $mode = \PDO::FETCH_OBJ)
     {
+        if (!isset($query) || empty($query) || !is_string($query)) {
+            static::raiseError(__METHOD__ .'(), $query parameter is invalid!');
+            return false;
+        }
+
+        if (!isset($mode) || empty($mode) || !is_int($mode)) {
+            static::raiseError(__METHOD__ .'(), $mode parameter is invalid!');
+            return false;
+        }
+
+        if (!in_array($mode, static::$supported_fetch_methods)) {
+            static::raiseError(__METHOD__ .'(), $mode contains an unsupported fetch method!');
+            return false;
+        }
+
         if (!$this->getConnectionStatus()) {
             static::raiseError(__CLASS__ .'::getConnectionStatus() returned false!');
             return false;
         }
 
-        if (empty($query)) {
-            return false;
-        }
-
         if (($result = $this->query($query, $mode)) === false) {
+            static::raiseError(__CLASS__ .'::query() returned false!');
             return false;
         }
 
@@ -273,13 +461,23 @@ class DatabaseController extends DefaultController
         } catch (\PDOException $e) {
             static::raiseError(__METHOD__ .'(), unable to fetch from database!', false, $e);
             return false;
+        } catch (\Exception $e) {
+            static::raiseError(__METHOD__ .'(), an unspecific error occurred!', false, $e);
+            return false;
         }
 
         return $row;
 
-    } // fetchSingleRow()
+    }
 
-    public function hasTablePrefix()
+    /**
+     * returns true if an table-prefix has been specified in the configuration.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    final public function hasTablePrefix()
     {
         if (isset($this->db_cfg['table_prefix']) &&
             !empty($this->db_cfg['table_prefix']) &&
@@ -291,25 +489,59 @@ class DatabaseController extends DefaultController
         return false;
     }
 
-    public function getTablePrefix()
+    /**
+     * returns the table-prefix that has been specified in the configuration.
+     *
+     * @param none
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    final public function getTablePrefix()
     {
-        if (!isset($this->db_cfg) || empty($this->db_cfg)) {
-            return false;
-        }
-
-        if (!isset($this->db_cfg['table_prefix']) || empty($this->db_cfg['table_prefix'])) {
+        if (!$this->hasTablePrefix()) {
+            static::raiseError(__CLASS__ .'::hasTablePrefix() returned false!');
             return false;
         }
 
         return $this->db_cfg['table_prefix'];
     }
 
-    public function insertTablePrefix(&$query)
+    /**
+     * changes the provided query string and replaces the occurances of the
+     * keyword TABLEPREFIX by the actual table-prefix.
+     *
+     * @param string $query
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    final public function insertTablePrefix(&$query)
     {
+        if (!isset($query) || empty($query) || !is_string($query)) {
+            static::raiseError(__METHOD__ .'(), $query parameter is invalid!');
+            return false;
+        }
+
+        if (!$this->hasTablePrefix()) {
+            return true;
+        }
+
+        if (($prefix = $this->getTablePrefix()) === false) {
+            static::raiseError(__CLASS__ .'::getTablePrefix() returend false!');
+            return false;
+        }
+    
         $query = str_replace("TABLEPREFIX", $this->getTablePrefix(), $query);
+        return true;
     }
 
-    public function getId()
+    /**
+     * returns the primary key of the latest performed SQL query.
+     *
+     * @param none
+     * @return int|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    final public function getId()
     {
         if (!$this->getConnectionStatus()) {
             static::raiseError(__CLASS__ .'::getConnectionStatus() returned false!');
@@ -319,7 +551,10 @@ class DatabaseController extends DefaultController
         try {
             $lastid = $this->db->lastInsertId();
         } catch (\PDOException $e) {
-            static::raiseError(__METHOD__ .'(), unable to detect last inserted row ID!');
+            static::raiseError(__METHOD__ .'(), unable to detect last inserted row ID!', false, $e);
+            return false;
+        } catch (\Exception $e) {
+            static::raiseError(__METHOD__ .'(), an unspecific error occurred!', false, $e);
             return false;
         }
 
@@ -327,20 +562,33 @@ class DatabaseController extends DefaultController
         return $lastid;
     }
 
-    public function checkTableExists($table_name)
+    /**
+     * returns true if table $table_name exists in database.
+     *
+     * @param string $table_name
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    final public function checkTableExists($table_name)
     {
+        if (!isset($table_name) || empty($table_name) || !is_string($table_name)) {
+            static::raiseError(__METHOD__ .'(), $table_name parameter is invalid!');
+            return false;
+        }
+
         if (!$this->getConnectionStatus()) {
             static::raiseError(__CLASS__ .'::getConnectionStatus() returned false!');
+            return false;
+        }
+
+        if ($this->hasTablePrefix() && !$this->insertTablePrefix($table_name)) {
+            static::raiseError(__CLASS__ .'::insertTablePrefix() returned false!');
             return false;
         }
 
         if (($tables = $this->getDatabaseTables()) === false) {
             static::raiseError(__CLASS__ .'::getDatabaseTables() returned false!');
             return false;
-        }
-
-        if ($this->hasTablePrefix()) {
-            $table_name = str_replace("TABLEPREFIX", $this->getTablePrefix(), $table_name);
         }
 
         if (!in_array($table_name, $tables)) {
@@ -350,12 +598,19 @@ class DatabaseController extends DefaultController
         return true;
     }
 
-    public function getDatabaseTables()
+    /**
+     * retrieves all existing tables from database.
+     *
+     * @param none
+     * @return array|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    final public function getDatabaseTables()
     {
         $tables = array();
 
-        if (!($result = $this->query("SHOW TABLES"))) {
-            static::raiseError(__METHOD__ .'(), SHOW TABLES query failed!');
+        if (($result = $this->query("SHOW TABLES")) == false) {
+            static::raiseError(__CLASS__ .'::query() returned false!');
             return false;
         }
 
@@ -372,7 +627,14 @@ class DatabaseController extends DefaultController
         return $tables;
     }
 
-    public function getApplicationDatabaseSchemaVersion()
+    /**
+     * retrieves the application schema version from the meta table.
+     *
+     * @param none
+     * @return int|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    final public function getApplicationDatabaseSchemaVersion()
     {
         if (!$this->getConnectionStatus()) {
             static::raiseError(__CLASS__ .'::getConnectionStatus() returned false!');
@@ -402,7 +664,14 @@ class DatabaseController extends DefaultController
         return 0;
     }
 
-    public function getFrameworkDatabaseSchemaVersion()
+    /**
+     * retrieves the framework schema version from the meta table.
+     *
+     * @param none
+     * @return int|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    final public function getFrameworkDatabaseSchemaVersion()
     {
         if (!$this->getConnectionStatus()) {
             static::raiseError(__CLASS__ .'::getConnectionStatus() returned false!');
@@ -432,8 +701,37 @@ class DatabaseController extends DefaultController
         return 0;
     }
 
-    public function setDatabaseSchemaVersion($version = null, $mode = 'application')
+    /**
+     * sets the schema version for the application or framework schema in the
+     * meta table.
+     *
+     * @param int $version
+     * @param string $mode
+     * @return int|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    final public function setDatabaseSchemaVersion($version, $mode = 'application')
     {
+        $valid_schemas = array(
+            'application',
+            'framework',
+        );
+
+        if (!isset($version) || empty($version) || !is_numeric($version)) {
+            static::raiseError(__METHOD__ .'(), $version parameter is invalid!');
+            return false;
+        }
+
+        if (!isset($mode) || empty($mode) || !is_string($mode)) {
+            static::raiseError(__METHOD__ .'(), $mode parameter is invalid!');
+            return false;
+        }
+
+        if (!in_array($mode, $valid_schemas)) {
+            static::raiseError(__METHOD__ .'(), $mode parameter contains an invalid schema!');
+            return false;
+        }
+
         if (!$this->checkTableExists("TABLEPREFIXmeta")) {
             static::raiseError(__METHOD__ .'(), can not set schema version as "meta" table does not exist!');
             return false;
@@ -443,16 +741,22 @@ class DatabaseController extends DefaultController
             $key = 'schema_version';
         } elseif ($mode == 'framework') {
             $key = 'framework_schema_version';
-        } else {
-            static::raiseError(__METHOD__ .'(), unsupported $mode parameter!');
-            return false;
         }
 
         if (!isset($version) || empty($version)) {
             if ($mode == 'application') {
-                $version = $this->getApplicationSoftwareSchemaVersion();
+                $get_method = 'getApplicationSoftwareSchemaVersion';
             } elseif ($mode == 'framework') {
-                $version = $this->getFrameworkSoftwareSchemaVersion();
+                $get_method = 'getFrameworkSoftwareSchemaVersion';
+            }
+
+            if (($version = $this->$get_method()) === false) {
+                static::raiseError(sprintf(
+                    '%s:%s returned false!',
+                    __CLASS__,
+                    $get_method
+                ));
+                return false;
             }
         }
 
@@ -474,17 +778,38 @@ class DatabaseController extends DefaultController
         return true;
     }
 
-    public function getApplicationSoftwareSchemaVersion()
+    /**
+     * returns the application schema version number
+     *
+     * @param none
+     * @return int
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    final public function getApplicationSoftwareSchemaVersion()
     {
         return static::SCHEMA_VERSION;
     }
 
-    public function getFrameworkSoftwareSchemaVersion()
+    /**
+     * returns the framework schema version number
+     *
+     * @param none
+     * @return int
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    final public function getFrameworkSoftwareSchemaVersion()
     {
-        return self::FRAMEWORK_SCHEMA_VERSION;
+        return static::FRAMEWORK_SCHEMA_VERSION;
     }
 
-    public function truncateDatabaseTables()
+    /**
+     * truncates all tables in the database and wipes out any data in them.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    final public function truncateDatabaseTables()
     {
         if (($tables = $this->getDatabaseTables()) === false) {
             static::raiseError(__CLASS__ .'::getDatabaseTables() returned false!');
@@ -501,7 +826,14 @@ class DatabaseController extends DefaultController
         return true;
     }
 
-    public function checkDatabaseSoftwareVersion()
+    /**
+     * checks what kind of database software is in use and if it is supported.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    final public function checkDatabaseSoftwareVersion()
     {
         if (!$version = $this->db->getAttribute(\PDO::ATTR_SERVER_VERSION)) {
             static::raiseError(__METHOD__ .'(), failed to detect database software version!');
@@ -527,20 +859,27 @@ class DatabaseController extends DefaultController
         return true;
     }
 
-    public function quote($text)
+    /**
+     * uses the PDO internal quote() method to ecape the provided string
+     *
+     * @param string $text
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    final public function quote($text)
     {
         if (!method_exists($this->db, 'quote')) {
             static::raiseError(__METHOD__ .'(), PDO driver does not provide quote method!');
             return false;
         }
 
-        if (!is_string($text)) {
-            static::raiseError(__METHOD__ .'(), \$text is not a string!');
+        if (!isset($text) || empty($text) || !is_string($text)) {
+            static::raiseError(__METHOD__ .'(), $text parameter is invalid!');
             return false;
         }
 
         if (($quoted = $this->db->quote($text)) === false) {
-            static::raiseError(__METHOD__ .'(), PDO driver does not support quote!');
+            static::raiseError(get_class($db) .'::quote() returned false!');
             return false;
         }
 
@@ -552,6 +891,14 @@ class DatabaseController extends DefaultController
         return $text;
     }
 
+    /**
+     * returns true if the specificed $column exists in table $table_name
+     *
+     * @param string $table_name
+     * @param string $column
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function checkColumnExists($table_name, $column)
     {
         if (!$this->getConnectionStatus()) {
@@ -559,14 +906,17 @@ class DatabaseController extends DefaultController
             return false;
         }
 
-        if (!isset($table_name) || empty($table_name) ||
-            !isset($column) || empty($column)
-        ) {
-            static::raiseError(__METHOD__ .'(), incomplete parameters!');
+        if (!isset($table_name) || empty($table_name) || !is_string($table_name)) {
+            static::raiseError(__METHOD__ .'(), $table_name parameter is invalid!');
             return false;
         }
 
-        if (!($result = $this->query("DESC ". $table_name, \PDO::FETCH_NUM))) {
+        if (!isset($column) || empty($column) || !is_string($column)) {
+            static::raiseError(__METHOD__ .'(), $column parameter is invalid!');
+            return false;
+        }
+
+        if (($result = $this->query("DESC ". $table_name, \PDO::FETCH_NUM)) === false) {
             static::raiseError(__METHOD__ .'(), failed to fetch table structure!');
             return false;
         }
@@ -580,7 +930,19 @@ class DatabaseController extends DefaultController
         return false;
     }
 
-    public function buildQuery(
+    /**
+     * constructs an SQL query by the provided parameters
+     *
+     * @param string $type
+     * @param string $table_name
+     * @param string|array $query_columns
+     * @param array $query_data
+     * @param array $bind_params
+     * @param string $extend_where_query
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    final public function buildQuery(
         $type,
         $table_name,
         $query_columns = "*",
@@ -696,6 +1058,13 @@ class DatabaseController extends DefaultController
         return $sql;
     }
 
+    /**
+     * returns a list of all columns within a table.
+     *
+     * @param string $table_name
+     * @return array|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function getColumns($table_name)
     {
         if (!$this->getConnectionStatus()) {
@@ -703,15 +1072,27 @@ class DatabaseController extends DefaultController
             return false;
         }
 
-        if (!($result = $this->query("DESC ". $table_name, \PDO::FETCH_NUM))) {
+        if (($result = $this->query("DESC ". $table_name, \PDO::FETCH_NUM)) === false) {
             static::raiseError(__METHOD__ .'(), failed to fetch table structure!');
             return false;
         }
 
-        return $result->fetchAll();
+        if (($columns = $result->fetchAll()) === false) {
+            static::raiseError(get_class($result) .'::fetchAll() returned false!');
+            return false;
+        }
+
+        return $columns;
     }
 
-    public function newTransaction()
+    /**
+     * starts a database transaction
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    final public function newTransaction()
     {
         if (!$this->getConnectionStatus()) {
             static::raiseError(__CLASS__ .'::getConnectionStatus() returned false!');
@@ -728,12 +1109,22 @@ class DatabaseController extends DefaultController
         } catch (\PDOException $e) {
             static::raiseError(get_class($this->db) .'::beginTransaction() failed!', false, $e);
             return false;
+        } catch (\Exception $e) {
+            static::raiseError(__METHOD__ .'(), an unspecific error occurred!', false, $e);
+            return false;
         }
 
         $this->is_open_transaction = true;
         return true;
     }
 
+    /**
+     * closes a database transaction
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function closeTransaction()
     {
         if (!isset($this->is_open_transaction) or $this->is_open_transaction !== true) {
@@ -745,12 +1136,22 @@ class DatabaseController extends DefaultController
         } catch (\PDOException $e) {
             static::raiseError(get_class($this->db) .'::commit() failed!', false, $e);
             return false;
+        } catch (\Exception $e) {
+            static::raiseError(__METHOD__ .'(), an unspecific error occurred!', false, $e);
+            return false;
         }
 
         $this->is_open_transaction = false;
         return true;
     }
 
+    /**
+     * returns the database name.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function getDatabaseName()
     {
         return $this->db_cfg['db_name'];
