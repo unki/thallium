@@ -19,14 +19,31 @@
 
 namespace Thallium\Controllers;
 
+/**
+ * HttpRouterController parses client requests and takes in user data
+ * that is provided by $_GET, $_POST, etc.
+ *
+ * @package Thallium\Controllers\HttpRouterController
+ * @subpackage Controllers
+ * @license AGPL3
+ * @copyright 2015-2016 Andreas Unterkircher <unki@netshadow.net>
+ * @author Andreas Unterkircher <unki@netshadow.net>
+ */
 class HttpRouterController extends DefaultController
 {
+    /** @var \stdClass $query holds meta information about the HTTP query */
     protected $query;
+
+    /** @var array $query_parts holds the exploded parts of the HTTP request query */
     protected $query_parts;
+
+    /** @var array $valid_request_methods supported list of HTTP request methods */
     protected static $valid_request_methods = array(
         'GET',
         'POST',
     );
+
+    /** @var array $valid_request_methods supported list of actions to be trigged by a HTTP request */
     protected static $valid_request_actions = array(
         'overview',
         'login',
@@ -37,6 +54,8 @@ class HttpRouterController extends DefaultController
         'edit',
         'rpc.html',
     );
+
+    /** @var array $valid_rpc_actions supported list of remote procedure calls (RPC) */
     protected $valid_rpc_actions = array(
         'add',
         'update',
@@ -55,6 +74,13 @@ class HttpRouterController extends DefaultController
         'idle',*/
     );
 
+    /**
+     * class constructor
+     *
+     * @param none
+     * @return void
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function __construct()
     {
         global $thallium, $config;
@@ -62,18 +88,24 @@ class HttpRouterController extends DefaultController
         $this->query = new \stdClass();
 
         // check HTTP request method
-        if (!isset($_SERVER['REQUEST_URI']) || empty($_SERVER['REQUEST_URI'])) {
+        if (!isset($_SERVER['REQUEST_URI']) ||
+            empty($_SERVER['REQUEST_URI']) ||
+            !is_string($_SERVER['REQUEST_URI'])
+        ) {
             static::raiseError(__METHOD__ .'(), $_SERVER["REQUEST_URI"] is not set!', true);
             return;
         }
 
-        if (!isset($_SERVER['REQUEST_METHOD']) || empty($_SERVER['REQUEST_METHOD'])) {
+        if (!isset($_SERVER['REQUEST_METHOD']) ||
+            empty($_SERVER['REQUEST_METHOD']) ||
+            !is_string($_SERVER['REQUEST_METHOD'])
+        ) {
             static::raiseError(__METHOD__ .'(), $_SERVER["REQUEST_METHOD"] is not set!', true);
             return;
         }
 
         if (!static::isValidRequestMethod($_SERVER['REQUEST_METHOD'])) {
-            static::raiseError(__METHOD__ .'(), unspported request method found!', true);
+            static::raiseError(__METHOD__ .'(), unsupported request method found!', true);
             return;
         }
 
@@ -192,8 +224,17 @@ class HttpRouterController extends DefaultController
         foreach ($query_parts_params as $param) {
             array_push($this->query->params, $param);
         }
+
+        return;
     }
 
+    /**
+     * select() method controlls how to react on a HTTP request
+     *
+     * @param none
+     * @return \stdClass|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function select()
     {
         //
@@ -236,7 +277,9 @@ class HttpRouterController extends DefaultController
     /**
      * return true if current request is a RPC call
      *
+     * @param none
      * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
      */
     public function isRpcCall()
     {
@@ -248,6 +291,13 @@ class HttpRouterController extends DefaultController
     }
 
 
+    /**
+     * return true if current request is a file-upload request
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function isUploadCall()
     {
         if (isset($this->query->method) &&
@@ -261,6 +311,13 @@ class HttpRouterController extends DefaultController
         return false;
     }
 
+    /**
+     * return true if requested action is a supported action
+     *
+     * @param string $action
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     protected static function isValidAction($action)
     {
         if (!isset($action) ||
@@ -277,6 +334,13 @@ class HttpRouterController extends DefaultController
         return true;
     }
 
+    /**
+     * register an additional RPC action
+     *
+     * @param string $action
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function addValidRpcAction($action)
     {
         if (!isset($action) || empty($action) || !is_string($action)) {
@@ -292,6 +356,13 @@ class HttpRouterController extends DefaultController
         return true;
     }
 
+    /**
+     * return true if requested RPC action is a supported action
+     *
+     * @param string $action
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function isValidRpcAction($action)
     {
         if (!isset($action) || empty($action) || !is_string($action)) {
@@ -306,6 +377,13 @@ class HttpRouterController extends DefaultController
         return true;
     }
 
+    /**
+     * return a list of supported RPC actions as array.
+     *
+     * @param none
+     * @return array|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function getValidRpcActions()
     {
         if (!isset($this->valid_rpc_actions)) {
@@ -315,6 +393,14 @@ class HttpRouterController extends DefaultController
         return $this->valid_rpc_actions;
     }
 
+    /**
+     * helper method that may be called from Views to return an
+     * array containing HTTP request query details.
+     *
+     * @param none
+     * @return array|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function parseQueryParams()
     {
         if (!isset($this->query->params) ||
@@ -347,28 +433,50 @@ class HttpRouterController extends DefaultController
         );
     }
 
+    /**
+     * outputs a Location: header to redirect a client to another place.
+     *
+     * @param string $page
+     * @param string $mode
+     * @param string $id
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function redirectTo($page, $mode, $id)
     {
         global $config;
 
-        $url = $config->getWebPath();
-
-        if (isset($page) && !empty($page)) {
-            $url.= '/'.$page;
+        if (($url = $config->getWebPath()) === false) {
+            static::raiseError(get_class($config) .'::getWebPath() returned false!');
+            return false;
         }
 
-        if (isset($mode) && !empty($mode)) {
-            $url.= '/'.$mode;
+        if (!isset($page) || empty($page) || !is_string($page)) {
+            static::raiseError(__METHOD__ .'(), $page parameter is invalid!');
+            return false;
         }
 
-        if (isset($id) && !empty($id)) {
-            $url.= '/'.$id;
+        if (!isset($mode) || empty($mode) || !is_string($mode)) {
+            static::raiseError(__METHOD__ .'(), $mode parameter is invalid!');
+            return false;
+        }
+
+        if (!isset($id) || empty($id) || !is_string($id)) {
+            static::raiseError(__METHOD__ .'(), $id parameter is invalid!');
+            return false;
         }
 
         Header("Location: ". $url);
         return true;
     }
 
+    /**
+     * return true if current request is a valid request method.
+     *
+     * @param string $method
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     protected static function isValidRequestMethod($method)
     {
         if (!isset($method) ||
@@ -385,22 +493,27 @@ class HttpRouterController extends DefaultController
         return true;
     }
 
+    /**
+     * return true if current request is a valid request method.
+     *
+     * @param string $update_object
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     protected function isValidUpdateObject($update_object)
     {
         global $thallium;
 
-        if (($models = $thallium->getRegisteredModels()) === false) {
-            static::raiseError(get_class($thallium) .'::getRegisteredModels() returned false!');
+        if (!isset($update_object) || empty($update_object) || !is_string($update_object)) {
+            static::raiseError(__METHOD__ .'(), $update_object parameter is invalid!');
             return false;
         }
 
-        $valid_update_objects = array_keys($models);
-
-        if (in_array($update_object, $valid_update_objects)) {
-            return true;
+        if (!$thallium->isValidModel(null, $update_object)) {
+            return false;
         }
 
-        return false;
+        return true;
     }
 }
 
