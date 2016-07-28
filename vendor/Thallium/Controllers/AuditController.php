@@ -19,10 +19,56 @@
 
 namespace Thallium\Controllers;
 
+/**
+ * AuditController
+ *
+ * @package Thallium\Controllers\AuditController
+ * @subpackage Controllers
+ * @license AGPL3
+ * @copyright 2015-2016 Andreas Unterkircher <unki@netshadow.net>
+ * @author Andreas Unterkircher <unki@netshadow.net>
+ */
 class AuditController extends DefaultController
 {
+    /**
+     * log an audit entry
+     *
+     * @param string $message
+     * @param string $entry_type
+     * @param string $scene
+     * @param string|null $guid
+     * @return bool
+     * @throws \MasterShaper\Controller\ExceptionController
+     */
     public function log($message, $entry_type, $scene, $guid = null)
     {
+        global $thallium;
+
+        if (!isset($message) || empty($message) || !is_string($message)) {
+            static::raiseError(__METHOD__ .'(), $message parameter is invalid!');
+            return false;
+        }
+
+        if (!isset($entry_type) || empty($entry_type) || !is_string($entry_type)) {
+            static::raiseError(__METHOD__ .'(), $entry_type parameter is invalid!');
+            return false;
+        }
+
+        if (!isset($scene) || empty($scene) || !is_string($scene)) {
+            static::raiseError(__METHOD__ .'(), $scene parameter is invalid!');
+            return false;
+        }
+
+        if (isset($guid) && !empty($guid) && !is_string($guid)) {
+            static::raiseError(__METHOD__ .'(), $guid parameter is invalid!');
+            return false;
+        }
+
+        if (isset($guid) && !$thallium->isValidGuidSyntax($guid)) {
+            static::raiseError(__METHOD__ .'(), $guid parameter is not a valid GUID!');
+            return false;
+        }
+
         try {
             $entry = new \Thallium\Models\AuditEntryModel;
         } catch (\Exception $e) {
@@ -31,39 +77,51 @@ class AuditController extends DefaultController
         }
 
         if (!$entry->setMessage($message)) {
-            static::raiseError("AuditEntryModel::setMessage() returned false!");
+            static::raiseError(get_class($entry) .'::setMessage() returned false!');
             return false;
         }
 
-        if (!empty($guid) && !$entry->setEntryGuid($guid)) {
-            static::raiseError("AuditEntryModel::setEntryGuid() returned false!");
+        if (isset($guid) && !empty($guid) && !$entry->setEntryGuid($guid)) {
+            static::raiseError(get_class($entry) .'::setEntryGuid() returned false!');
             return false;
         }
 
         if (!$entry->setEntryType($entry_type)) {
-            static::raiseError("AuditEntryModel::setEntryType() returned false!");
+            static::raiseError(get_class($entry) .'::setEntryType() returned false!');
             return false;
         }
 
         if (!$entry->setScene($scene)) {
-            static::raiseError("AuditEntryModel::setScene() returned false!");
+            static::raiseError(get_class($entry) .'::setScene() returned false!');
             return false;
         }
 
         if (!$entry->save()) {
-            static::raiseError("AuditEntryModel::save() returned false!");
+            static::raiseError(get_class($entry) .'::save() returned false!');
             return false;
         }
 
         return true;
     }
 
+    /**
+     * returns the audit log entries for a specific GUID
+     *
+     * @param string $guid
+     * @return array|bool
+     * @throws \MasterShaper\Controller\ExceptionController
+     */
     public function retrieveAuditLog($guid)
     {
         global $thallium;
 
-        if (empty($guid) || !$thallium->isValidGuidSyntax($guid)) {
-            static::raiseError(__METHOD__ .' requires a valid GUID as first parameter!');
+        if (!isset($guid) || empty($guid) || !is_string($guid)) {
+            static::raiseError(__METHOD__ .'(), $guid parameter is invalid!');
+            return false;
+        }
+
+        if (!$thallium->isValidGuidSyntax($guid)) {
+            static::raiseError(__METHOD__ .'(), $guid parameter does not contain a valid GUID!');
             return false;
         }
 
@@ -77,7 +135,7 @@ class AuditController extends DefaultController
         }
 
         if (!$log->hasItems()) {
-            return 'No audit log entries available!';
+            return array();
         }
 
         if (($entries = $log->getItems()) === false) {
@@ -91,7 +149,7 @@ class AuditController extends DefaultController
         }
 
         if (empty($entries)) {
-            return 'No audit log entries available!';
+            return array();
         }
 
         $txt_ary = array();
