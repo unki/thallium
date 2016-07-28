@@ -19,11 +19,69 @@
 
 namespace Thallium\Controllers;
 
+/**
+ * InstallerController is mainly used to install the database
+ * table schema into the configured database.
+ *
+ * @package Thallium\Controllers\InstallerController
+ * @subpackage Controllers
+ * @license AGPL3
+ * @copyright 2015-2016 Andreas Unterkircher <unki@netshadow.net>
+ * @author Andreas Unterkircher <unki@netshadow.net>
+ */
 class InstallerController extends DefaultController
 {
+    /**
+     * @var int $schema_version_before holds the version number of the application
+     * schema before the upgrade has been performed
+     */
     protected $schema_version_before;
+
+    /**
+     * @var int $framework_schema_version_before holds the version number of the
+     * framework schema before the upgrade has been performed
+     */
     protected $framework_schema_version_before;
 
+    /**
+     * class constructor
+     *
+     * @param string $mode allow specifying the mode Thallium starts into
+     * @return void
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    public function __construct()
+    {
+        global $db, $config;
+
+        if (!isset($db) ||
+            empty($db) ||
+            !is_object($db) ||
+            !is_a($db, 'Thallium\Controller\DatabaseController')
+        ) {
+            static::raiseError(__METHOD__ .'(), it looks like DatabaseController is not available!', true);
+            return;
+        }
+
+        if (!isset($config) ||
+            empty($config) ||
+            !is_object($config) ||
+            !is_a($config, 'Thallium\Controller\ConfigController')
+        ) {
+            static::raiseError(__METHOD__ .'(), it looks like ConfigController is not available!', true);
+            return;
+        }
+
+        return;
+    }
+
+    /**
+     * this is the public accessible method that triggers the installation process.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function setup()
     {
         global $db, $config;
@@ -66,35 +124,69 @@ class InstallerController extends DefaultController
         }
 
         if (!empty($this->schema_version_before)) {
-            print "Application database schema version before upgrade: {$this->schema_version_before}<br />\n";
+            $this->write(sprintf(
+                'Application database schema version before upgrade: %s<br />\n',
+                $this->schema_version_before
+            ));
         }
-        print "Application software supported schema version: {$db->getApplicationSoftwareSchemaVersion()}<br />\n";
-        print "Application database schema version after upgrade: {$db->getApplicationDatabaseSchemaVersion()}<br />\n";
-        print "<br /><br />";
-        if (!empty($this->framework_schema_version_before)) {
-            print "Framework database schema version before upgrade: {$this->framework_schema_version_before}<br />\n";
-        }
-        print "Framework software supported schema version: {$db->getFrameworkSoftwareSchemaVersion()}<br />\n";
-        print "Framework database schema version after upgrade: {$db->getFrameworkDatabaseSchemaVersion()}<br />\n";
 
-        if (!($base_path = $config->getWebPath())) {
+        $this->write(sprintf(
+            'Application software supported schema version: %s<br />\n',
+            $db->getApplicationSoftwareSchemaVersion()
+        ));
+
+        $this->write(sprintf(
+            'Application database schema version after upgrade: %s<br />\n',
+            $db->getApplicationDatabaseSchemaVersion()
+        ));
+
+        $this->write('<br /><br />');
+
+        if (!empty($this->framework_schema_version_before)) {
+            $this->write(sprintf(
+                'Framework database schema version before upgrade: %s<br />\n',
+                $this->framework_schema_version_before
+            ));
+        }
+
+        $this->write(sprintf(
+            'Framework software supported schema version: %s<br />\n',
+            $db->getFrameworkSoftwareSchemaVersion()
+        ));
+
+        $this->write(sprintf(
+            'Framework database schema version after upgrade: %s<br />\n',
+            $db->getFrameworkDatabaseSchemaVersion()
+        ));
+
+        if (($base_path = $config->getWebPath()) === true) {
             static::raiseError(get_class($config) .'"::getWebPath() returned false!');
             return false;
         }
 
-        print "<a href='{$base_path}'>Return to application</a><br />\n";
+        $this->write(sprintf(
+            '"<a href="%s">Return to application</a><br />\n',
+            $base_path
+        ));
 
         return true;
     }
 
-    protected function createDatabaseTables()
+    /**
+     * creates application- and framework-specific tables in the database
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    final protected function createDatabaseTables()
     {
-        if (!($this->createFrameworkDatabaseTables())) {
+        if (!$this->createFrameworkDatabaseTables()) {
             static::raiseError(__CLASS__ .'::createFrameworkDatabaseTables() returned false!');
             return false;
         }
 
-        if (!($this->createApplicationDatabaseTables())) {
+        if (!$this->createApplicationDatabaseTables()) {
             static::raiseError(__CLASS__ .'::createApplicationDatabaseTables() returned false!');
             return false;
         }
@@ -102,6 +194,13 @@ class InstallerController extends DefaultController
         return true;
     }
 
+    /**
+     * creates framework-specific tables in the database
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     final protected function createFrameworkDatabaseTables()
     {
         global $db;
@@ -207,13 +306,30 @@ class InstallerController extends DefaultController
         return true;
     }
 
+    /**
+     * creates application-specific tables in the database.
+     * normally this method has to be overriden with a new
+     * method that actually knows about wapplication-
+     * specific tables.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     protected function createApplicationDatabaseTables()
     {
         /* this method should be overloaded to install application specific tables. */
         return true;
     }
 
-    protected function upgradeDatabaseSchema()
+    /**
+     * upgrades application- and framework-specific tables in the database
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    final protected function upgradeDatabaseSchema()
     {
         global $db;
 
@@ -230,11 +346,18 @@ class InstallerController extends DefaultController
         return true;
     }
 
+    /**
+     * upgrades application-specific tables in the database
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     protected function upgradeApplicationDatabaseSchema()
     {
         global $db;
 
-        if (!$software_version = $db->getApplicationSoftwareSchemaVersion()) {
+        if (($software_version = $db->getApplicationSoftwareSchemaVersion()) === false) {
             static::raiseError(get_class($db) .'::getSoftwareSchemaVersion() returned false!');
             return false;
         }
@@ -259,9 +382,19 @@ class InstallerController extends DefaultController
             if (!method_exists($this, $method_name)) {
                 static::raiseError(__METHOD__ .'(), no upgrade method found for version '. $i);
                 return false;
-            } else {
-                print "Invoking {$method_name}().<br />\n";
             }
+
+            if (!is_callable(array($this, $method_name))) {
+                static::raiseError(sprintf(
+                    '%s(), %s::%s() is not callable!',
+                    __METHOD__,
+                    __CLASS__,
+                    $method_name
+                ));
+                return false;
+            }
+
+            $this->write("Invoking {$method_name}().<br />\n");
 
             if (!$this->$method_name()) {
                 static::raiseError(__CLASS__ ."::{$method_name}() returned false!");
@@ -272,11 +405,18 @@ class InstallerController extends DefaultController
         return true;
     }
 
+    /**
+     * upgrades framework-specific tables in the database
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     final protected function upgradeFrameworkDatabaseSchema()
     {
         global $db;
 
-        if (!$software_version = $db->getFrameworkSoftwareSchemaVersion()) {
+        if (($software_version = $db->getFrameworkSoftwareSchemaVersion()) === false) {
             static::raiseError(get_class($db) .'::getFrameworkSoftwareSchemaVersion() returned false!');
             return false;
         }
@@ -301,9 +441,19 @@ class InstallerController extends DefaultController
             if (!method_exists($this, $method_name)) {
                 static::raiseError(__METHOD__ .'(), no upgrade method found for version '. $i);
                 return false;
-            } else {
-                print "Invoking {$method_name}().<br />\n";
             }
+
+            if (!is_callable(array($this, $method_name))) {
+                static::raiseError(sprintf(
+                    '%s(), %s::%s() is not callable!',
+                    __METHOD__,
+                    __CLASS__,
+                    $method_name
+                ));
+                return false;
+            }
+
+            $this->write("Invoking {$method_name}().<br />\n");
 
             if (!$this->$method_name()) {
                 static::raiseError(__CLASS__ ."::{$method_name}() returned false!");
@@ -314,7 +464,14 @@ class InstallerController extends DefaultController
         return true;
     }
 
-    protected function upgradeFrameworkDatabaseSchemaV2()
+    /**
+     * upgrade to framework schema v2
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    final protected function upgradeFrameworkDatabaseSchemaV2()
     {
         global $db;
 
@@ -337,7 +494,7 @@ class InstallerController extends DefaultController
         );
 
         if ($result === false) {
-            static::raiseError(__METHOD__ ." failed!");
+            static::raiseError(__METHOD__ .'() failed!');
             return false;
         }
 
@@ -345,7 +502,14 @@ class InstallerController extends DefaultController
         return true;
     }
 
-    protected function upgradeFrameworkDatabaseSchemaV3()
+    /**
+     * upgrade to framework schema v3
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    final protected function upgradeFrameworkDatabaseSchemaV3()
     {
         global $db;
 
@@ -357,7 +521,7 @@ class InstallerController extends DefaultController
         );
 
         if ($result === false) {
-            static::raiseError(__METHOD__ ." failed!");
+            static::raiseError(__METHOD__ .'() failed!');
             return false;
         }
 
@@ -368,12 +532,18 @@ class InstallerController extends DefaultController
                 `job_parameters` varchar(4096) DEFAULT NULL"
         );
 
-
         $db->setDatabaseSchemaVersion(3, 'framework');
         return true;
     }
 
-    protected function upgradeFrameworkDatabaseSchemaV4()
+    /**
+     * upgrade to framework schema v4
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    final protected function upgradeFrameworkDatabaseSchemaV4()
     {
         global $db;
 
@@ -387,7 +557,7 @@ class InstallerController extends DefaultController
         );
 
         if ($result === false) {
-            static::raiseError(__METHOD__ ." failed!");
+            static::raiseError(__METHOD__ .'() failed!');
             return false;
         }
 
