@@ -19,31 +19,65 @@
 
 namespace Thallium\Controllers;
 
+/**
+ * PagingController acts similar as the PEAR class Pager.
+ * On providing data to the controller, it also the split
+ * this data into pages so that long lists can be paged.
+ *
+ * @package Thallium\Controllers\PagingController
+ * @subpackage Controllers
+ * @license AGPL3
+ * @copyright 2015-2016 Andreas Unterkircher <unki@netshadow.net>
+ * @author Andreas Unterkircher <unki@netshadow.net>
+ */
 class PagingController extends DefaultController
 {
+    /** @var array $pagingData */
     protected $pagingData = array();
+
+    /** @var array $pagingParameters */
     protected $pagingParameters = array();
+
+    /** @var int $currentPage */
     protected $currentPage;
+
+    /** @var int $currentItemsLimit */
     protected $currentItemsLimit;
+
+    /** @var array $itemsPerPageLimits */
     protected static $itemsPerPageLimits = array(
         10, 25, 50, 100, 0
     );
 
+    /**
+     * class constructor
+     *
+     * @param array $params
+     * @return void
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     final public function __construct($params)
     {
         if (!isset($params) || empty($params) || !is_array($params)) {
             static::raiseError(__CLASS__ .'::__construct(), $params parameter is invalid!', true);
-            return false;
+            return;
         }
 
         if (!$this->setPagingParameters($params)) {
             static::raiseError(__CLASS__ .'::setPagingParameters() returned false!', true);
-            return false;
+            return;
         }
 
-        return true;
+        return;
     }
 
+    /**
+     * sets data that will be paged
+     *
+     * @param object $data
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     final public function setPagingData(&$data)
     {
         if (!isset($data) || empty($data) || !is_object($data)) {
@@ -67,9 +101,28 @@ class PagingController extends DefaultController
         return true;
     }
 
+    /**
+     * startup methods by which Thallium is actually starting to perform.
+     *
+     * @param int $offset
+     * @param int $limit
+     * @return arary
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     final protected function getPagingData($offset, $limit)
     {
+        if (!isset($offset) || !is_numeric($offset)) {
+            static::raiseError(__METHOD__ .'(), $offset parameter is invalid!');
+            return false;
+        }
+
+        if (!isset($limit) || empty($limit) || !is_numeric($limit)) {
+            static::raiseError(__METHOD__ .'(), $limit parameter is invalid!');
+            return false;
+        }
+
         if (!$this->hasPagingData()) {
+            static::raiseError(__CLASS__ .'::hasPagingData() returned false!');
             return false;
         }
 
@@ -85,6 +138,13 @@ class PagingController extends DefaultController
         return $data;
     }
 
+    /**
+     * returns how many items in total are available in the paged data
+     *
+     * @param none
+     * @return int
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     final protected function getPagingDataCount()
     {
         if (!$this->hasPagingData()) {
@@ -104,6 +164,13 @@ class PagingController extends DefaultController
         return $count;
     }
 
+    /**
+     * startup methods by which Thallium is actually starting to perform.
+     *
+     * @param array $params
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     final protected function setPagingParameters($params)
     {
         if (!isset($params) || empty($params) || !is_array($params)) {
@@ -117,7 +184,7 @@ class PagingController extends DefaultController
         }
 
         foreach ($params as $key => $value) {
-            if (!($this->setParameter($key, $value))) {
+            if (!$this->setParameter($key, $value)) {
                 static::raiseError(__CLASS__ .'::setParameter() returned false!');
                 return false;
             }
@@ -126,13 +193,23 @@ class PagingController extends DefaultController
         return true;
     }
 
+    /**
+     * internal set parameter for paging.
+     *
+     * @param string $key
+     * @param string $value
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     final protected function setParameter($key, $value)
     {
-        if (!isset($key) || empty($key) || !is_string($key) ||
-            !isset($value) || empty($value) ||
-            (!is_string($value) && !is_numeric($value))
-        ) {
-            static::raiseError(__METHOD__ .'(), $key and/or $value parameters are invalid!');
+        if (!isset($key) || empty($key) || !is_string($key)) {
+            static::raiseError(__METHOD__ .'(), $key parameter is invalid!');
+            return false;
+        }
+
+        if (!isset($value) || empty($value) || (!is_string($value) && !is_numeric($value))) {
+            static::raiseError(__METHOD__ .'(), $value parameter is invalid!');
             return false;
         }
 
@@ -140,7 +217,14 @@ class PagingController extends DefaultController
         return true;
     }
 
-    final public function getParameter($key)
+    /**
+     * returns the requested internal paging parameter.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    final protected function getParameter($key)
     {
         if (!isset($key) || empty($key) || !is_string($key)) {
             static::raiseError(__METHOD__ .'(), $key parameter is invalid!');
@@ -154,6 +238,14 @@ class PagingController extends DefaultController
         return $this->pagingParameters[$key];
     }
 
+    /**
+     * returns the number of pages based on the total number of items
+     * and the items-per-page limit.
+     *
+     * @param none
+     * @return int|false
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     final public function getNumberOfPages()
     {
         if (!$this->hasPagingData()) {
@@ -207,6 +299,13 @@ class PagingController extends DefaultController
         return $totalPages;
     }
 
+    /**
+     * returns the current page number.
+     *
+     * @param none
+     * @return int|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     final public function getCurrentPage()
     {
         if (!isset($this->currentPage) ||
@@ -222,8 +321,20 @@ class PagingController extends DefaultController
         return $this->currentPage;
     }
 
+    /**
+     * returns true if the provided page number matches the current page number
+     *
+     * @param int $pageno
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     final public function isCurrentPage($pageno)
     {
+        if (!isset($pageno) || !is_numeric($pageno)) {
+            static::raiseError(__METHOD__ .'(), $pageno parameter is invalid!');
+            return false;
+        }
+
         if (($curpage = $this->getCurrentPage()) === false) {
             return false;
         }
@@ -235,33 +346,46 @@ class PagingController extends DefaultController
         return true;
     }
 
+    /**
+     * startup methods by which Thallium is actually starting to perform.
+     *
+     * @param int $pageno
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     final public function setCurrentPage($pageno)
     {
-        if (!isset($pageno) ||
-            empty($pageno) ||
-            !is_numeric($pageno) ||
-            $pageno < 1
-        ) {
+        if (!isset($pageno) || empty($pageno) || !is_numeric($pageno) || $pageno < 1) {
             static::raiseError(__METHOD__ .'(), $pageno parameter is invalid!');
             return false;
         }
 
-        if ($this->hasPagingData()) {
-            if (($total = $this->getNumberOfPages()) === false) {
-                static::raiseError(__CLASS__ .'::getNumberOfPages() returned false!');
-                return false;
-            }
-
-            if ($pageno > $total) {
-                $this->currentPage = 1;
-                return true;
-            }
+        if (!$this->hasPagingData()) {
+            $this->currentPage = $pageno;
+            return true;
         }
 
-        $this->currentPage = $pageno;
+        if (($total = $this->getNumberOfPages()) === false) {
+            static::raiseError(__CLASS__ .'::getNumberOfPages() returned false!');
+            return false;
+        }
+
+        if ($pageno > $total) {
+            $this->currentPage = 1;
+        } else {
+            $this->currentPage = $pageno;
+        }
+
         return true;
     }
 
+    /**
+     * returns the whole data that has been submited as paging data.
+     *
+     * @param none
+     * @return array
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     final public function getPageData()
     {
         if (($page = $this->getCurrentPage()) === false) {
@@ -327,6 +451,13 @@ class PagingController extends DefaultController
         return $data;
     }
 
+    /**
+     * returns true if there is paging data set.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     final public function hasPagingData()
     {
         if (!isset($this->pagingData) ||
@@ -339,6 +470,13 @@ class PagingController extends DefaultController
         return true;
     }
 
+    /**
+     * returns the number of the next, following page.
+     *
+     * @param none
+     * @return int|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     final public function getNextPageNumber()
     {
         if (($page = $this->getCurrentPage()) === false) {
@@ -366,6 +504,13 @@ class PagingController extends DefaultController
         return $page+1;
     }
 
+    /**
+     * returns the number of the previous page
+     *
+     * @param none
+     * @return int|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     final public function getPreviousPageNumber()
     {
         if (($page = $this->getCurrentPage()) === false) {
@@ -385,11 +530,25 @@ class PagingController extends DefaultController
         return $page-1;
     }
 
+    /**
+     * returns the number of the first page. usually 1.
+     *
+     * @param none
+     * @return int
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     final public function getFirstPageNumber()
     {
         return 1;
     }
 
+    /**
+     * returns the number of the last page
+     *
+     * @param none
+     * @return int|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     final public function getLastPageNumber()
     {
         if (($pages = $this->getNumberOfPages()) === false) {
@@ -399,6 +558,14 @@ class PagingController extends DefaultController
         return $pages;
     }
 
+    /**
+     * returns the number of pages.
+     *
+     * @param none
+     * @return int|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     * @todo is this duplicate to getNumberofPages()?
+     */
     final public function getPageNumbers()
     {
         if (($total = $this->getNumberOfPages()) === false) {
@@ -423,6 +590,13 @@ class PagingController extends DefaultController
         return $pages;
     }
 
+    /**
+     * returns the delta page number.
+     *
+     * @param none
+     * @return int|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     final public function getDeltaPageNumbers()
     {
         if (($pages = $this->getPageNumbers()) === false) {
@@ -477,6 +651,13 @@ class PagingController extends DefaultController
         return $deltaPages;
     }
 
+    /**
+     * returns the currently set items-per-page limit.
+     *
+     * @param none
+     * @return int|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     final public function getCurrentItemsLimit()
     {
         if (!isset($this->currentItemsLimit)) {
@@ -486,11 +667,25 @@ class PagingController extends DefaultController
         return $this->currentItemsLimit;
     }
 
+    /**
+     * returns an array of possible items-per-page limits.
+     *
+     * @param none
+     * @return array
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     final public function getItemsLimits()
     {
         return static::$itemsPerPageLimits;
     }
 
+    /**
+     * set the items-per-page limit.
+     *
+     * @param int $limit
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     final public function setItemsLimit($limit)
     {
         if (!isset($limit) || !is_numeric($limit)) {
@@ -517,6 +712,14 @@ class PagingController extends DefaultController
         return true;
     }
 
+    /**
+     * returns true if the provided $limit matches the one that is currently
+     * selected in the controller
+     *
+     * @param int $limit
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     final public function isCurrentItemsLimit($limit)
     {
         if (!isset($limit) || !is_numeric($limit)) {
