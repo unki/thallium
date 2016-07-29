@@ -19,38 +19,74 @@
 
 namespace Thallium\Controllers;
 
+/**
+ * ViewsController takes care of loading views and mapping the
+ * clients page requests to a specific view.
+ *
+ * @package Thallium\Controllers\ViewsController
+ * @subpackage Controllers
+ * @license AGPL3
+ * @copyright 2015-2016 Andreas Unterkircher <unki@netshadow.net>
+ * @author Andreas Unterkircher <unki@netshadow.net>
+ */
 class ViewsController extends DefaultController
 {
+    /** @var array $page_map */
     protected static $page_map = array(
         '/^$/' => 'MainView',
         '/^main$/' => 'MainView',
         '/^about$/' => 'AboutView',
     );
+
+    /** @var object $page_skeleton */
     protected $page_skeleton;
+
+    /** @var array $loaded_views */
     protected $loaded_views = array();
 
+    /**
+     * class constructor
+     *
+     * @param none
+     * @return void
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     *
+     */
     public function __construct()
     {
         global $thallium;
 
         if (!$thallium->loadController('Templates', 'tmpl')) {
             static::raiseError(get_class($thallium) .'::loadController() returned false!', true);
-            return false;
+            return;
         }
 
         try {
             $this->page_skeleton = new \Thallium\Views\SkeletonView;
         } catch (\Exception $e) {
             static::raiseError(__CLASS__ .', unable to load SkeletonView!', true, $e);
-            return false;
+            return;
         }
 
-        return true;
+        return;
     }
 
-    public static function getViewName($view)
+    /**
+     * returns the name of a view that is responsible for handling
+     * a specific page request.
+     *
+     * @param string $view
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    protected static function getViewName($view)
     {
         global $thallium;
+
+        if (!isset($view) || empty($view) || !is_string($view)) {
+            static::raiseError(__METHOD__ .'(), $view parameter is invalid!');
+            return false;
+        }
 
         foreach (array_keys(static::$page_map) as $entry) {
             if (($result = preg_match($entry, $view)) === false) {
@@ -84,6 +120,13 @@ class ViewsController extends DefaultController
         return false;
     }
 
+    /**
+     * loads the view specified as $view
+     *
+     * @param string $view
+     * @return object|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function getView($view)
     {
         if (!isset($view) || empty($view) || !is_string($view)) {
@@ -116,20 +159,40 @@ class ViewsController extends DefaultController
         return $view_obj;
     }
 
+    /**
+     * returns the output of a view, either with or without the page
+     * skeleton structure.
+     *
+     * @param string $view
+     * @param bool $skeleton
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
     public function load($view, $skeleton = true)
     {
         global $thallium, $tmpl;
+
+        if (!isset($view) || empty($view) || !is_string($view)) {
+            static::raiseError(__METHOD__ .'(), $view parameter is invalid!');
+            return false;
+        }
+
+        if (!isset($skeleton) || !is_bool($skeleton)) {
+            static::raiseError(__METHOD__ .'(), $skeleton parameter is invalid!');
+            return false;
+        }
 
         if (($page = $this->getView($view)) === false) {
             static::raiseError(__CLASS__ .'::getView() returned false!');
             return false;
         }
 
-        if (!$skeleton) {
+        if ($skeleton === false) {
             return $page->show();
         }
 
         if (($content = $page->show()) === false) {
+            static::raiseError(get_class($page) .'::show() returned false!');
             return false;
         }
 
@@ -145,23 +208,53 @@ class ViewsController extends DefaultController
         return $this->page_skeleton->show();
     }
 
-    protected function isLoadedView($name)
+    /**
+     * returns true if the specified view has already been loaded and is
+     * present in the $loaded_views property.
+     *
+     * @param string $view
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    protected function isLoadedView($view)
     {
-        if (!isset($this->loaded_views[$name]) || empty($this->loaded_views[$name])) {
+        if (!isset($view) || empty($view) || !is_string($view)) {
+            static::raiseError(__METHOD__ .'(), $view parameter is invalid!');
+            return false;
+        }
+
+        if (!array_key_exists($view, $this->loaded_views) ||
+            !isset($this->loaded_views[$view]) ||
+            empty($this->loaded_views[$view]) ||
+            !is_object($this->loaded_views[$view])
+        ) {
             return false;
         }
 
         return true;
     }
 
-    protected function getLoadedView($name)
+    /**
+     * returns a view that has already been cached in property $loaded_views
+     * a specific page request.
+     *
+     * @param string $view
+     * @return object|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    protected function getLoadedView($view)
     {
-        if (!$this->isLoadedView($name)) {
+        if (!isset($view) || empty($view) || !is_string($view)) {
+            static::raiseError(__METHOD__ .'(), $view parameter is invalid!');
+            return false;
+        }
+
+        if (!$this->isLoadedView($view)) {
             static::raiseError(__CLASS__ .'::isViewLoaded() returned false!');
             return false;
         }
 
-        return $this->loaded_views[$name];
+        return $this->loaded_views[$view];
     }
 }
 
