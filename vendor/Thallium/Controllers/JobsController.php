@@ -19,52 +19,85 @@
 
 namespace Thallium\Controllers;
 
+/**
+ * JobsController handles a queue ob jobs that act on various
+ * internal tasks that may be triggered by client or internally.
+ *
+ * @package Thallium\Controllers\JobController
+ * @subpackage Controllers
+ * @license AGPL3
+ * @copyright 2015-2016 Andreas Unterkircher <unki@netshadow.net>
+ * @author Andreas Unterkircher <unki@netshadow.net>
+ */
 class JobsController extends DefaultController
 {
+    /** @var int EXPIRE_TIMEOUT how long a job may wait for execution */
     const EXPIRE_TIMEOUT = 300;
 
+    /** @var string $currentjobGuid */
     protected $currentJobGuid;
+
+    /** @var array $registeredHandlers */
     protected $registeredHandlers = array();
+
+    /** @var array $json_errors */
     protected $json_errors;
 
+    /**
+     * class constructor
+     *
+     * @param none
+     * @return void
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function __construct()
     {
         if (!$this->removeExpiredJobs()) {
-            static::raiseError('removeExpiredJobs() returned false!', true);
-            return false;
+            static::raiseError(__CLASS__ .'::removeExpiredJobs() returned false!', true);
+            return;
         }
 
-        try {
-            $this->registerHandler('delete-request', array($this, 'handleDeleteRequest'));
-            $this->registerHandler('save-request', array($this, 'handleSaveRequest'));
-        } catch (\Exception $e) {
-            static::raiseError(__METHOD__ .'(), failed to register handlers!', true);
-            return false;
+        if (!$this->registerHandler('delete-request', array($this, 'handleDeleteRequest'))) {
+            static::raiseError(__CLASS__ .'::registerHandler() returned false!', true);
+            return;
+        }
+
+        if (!$this->registerHandler('save-request', array($this, 'handleSaveRequest'))) {
+            static::raiseError(__CLASS__ .'::registerHandler() returned false!', true);
+            return;
         }
 
         // Define the JSON errors.
         $constants = get_defined_constants(true);
+
         $this->json_errors = array();
+
         foreach ($constants["json"] as $name => $value) {
             if (!strncmp($name, "JSON_ERROR_", 11)) {
                 $this->json_errors[$value] = $name;
             }
         }
 
-        parent::__construct();
-        return true;
+        return;
     }
 
+    /**
+     * remove expired jobs from job queue
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     protected function removeExpiredJobs()
     {
         try {
             $jobs = new \Thallium\Models\JobsModel;
         } catch (\Exception $e) {
-            static::raiseError('Failed to load JobsModel!');
+            static::raiseError(__METHOD__ .'(), failed to load JobsModel!', false, $e);
             return false;
         }
 
-        if (!$jobs->deleteExpiredJobs(self::EXPIRE_TIMEOUT)) {
+        if (!$jobs->deleteExpiredJobs(static::EXPIRE_TIMEOUT)) {
             static::raiseError(get_class($jobs) .'::deleteExpiredJobs() returned false!');
             return false;
         }
@@ -72,31 +105,51 @@ class JobsController extends DefaultController
         return true;
     }
 
+    /**
+     * remove expired jobs from job queue
+     *
+     * @param string $command
+     * @param array $parameters
+     * @param string $sessionid
+     * @param string $request_guid
+     * @return object|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function createJob($command, $parameters = null, $sessionid = null, $request_guid = null)
     {
         global $thallium;
 
         if (!isset($command) || empty($command) || !is_string($command)) {
-            static::raiseError(__METHOD__ .'(), parameter $commmand is required!');
+            static::raiseError(__METHOD__ .'(), $commmand parameter is invalid!');
+            return false;
+        }
+
+        if (isset($parameters) && (
+            empty($parameters) ||
+            !is_array($parameters)
+        )) {
+            static::raiseError(__METHOD__ .'(), $parameters parameter is invalid!');
             return false;
         }
 
         if (isset($sessionid) && (empty($sessionid) || !is_string($sessionid))) {
-            static::raiseError(__METHOD__ .'(), parameter $sessionid has to be a string!');
+            static::raiseError(__METHOD__ .'(), $sessionid parameter is invalid!');
             return false;
         }
 
-        if (isset($request_guid) &&
-           (empty($request_guid) || !$thallium->isValidGuidSyntax($request_guid))
-        ) {
-            static::raiseError(__METHOD__ .'(), parameter $request_guid is invalid!');
+        if (isset($request_guid) && (
+            empty($request_guid) ||
+            !is_string($request_guid) ||
+            !$thallium->isValidGuidSyntax($request_guid)
+        )) {
+            static::raiseError(__METHOD__ .'(), $request_guid parameter is invalid!');
             return false;
         }
 
         try {
             $job = new \Thallium\Models\JobModel;
         } catch (\Exception $e) {
-            static::raiseError(__METHOD__ .'(), unable to load JobModel!');
+            static::raiseError(__METHOD__ .'(), unable to load JobModel!', false, $e);
             return false;
         }
 
@@ -115,11 +168,9 @@ class JobsController extends DefaultController
             return false;
         }
 
-        if (isset($parameters) && !empty($parameters)) {
-            if (!$job->setParameters($parameters)) {
-                static::raiseError(get_class($job) .'::setParameters() returned false!');
-                return false;
-            }
+        if (isset($parameters) && !$job->setParameters($parameters)) {
+            static::raiseError(get_class($job) .'::setParameters() returned false!');
+            return false;
         }
 
         if (!$job->save()) {
@@ -127,7 +178,7 @@ class JobsController extends DefaultController
             return false;
         }
 
-        if (!$job->hasGuid() || !$thallium->isValidGuidSyntax($job->getGuid())) {
+        if (!$job->hasGuid()) {
             static::raiseError(get_class($job) .'::save() has not lead to a valid GUID!');
             return false;
         }
@@ -135,12 +186,23 @@ class JobsController extends DefaultController
         return $job;
     }
 
+    /**
+     * delete a job from job queue
+     *
+     * @param string $job_guid
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function deleteJob($job_guid)
     {
         global $thallium;
 
-        if (!isset($job_guid) || empty($job_guid) || !$thallium->isValidGuidSyntax($job_guid)) {
-            static::raiseError(__METHOD__ .', first parameter has to be a valid GUID!');
+        if (!isset($job_guid) ||
+            empty($job_guid) ||
+            !is_string($job_guid) ||
+            !$thallium->isValidGuidSyntax($job_guid)
+        ) {
+            static::raiseError(__METHOD__ .'(), $job_guid parameter is invalid!');
             return false;
         }
 
@@ -149,7 +211,7 @@ class JobsController extends DefaultController
                 'guid' => $job_guid
             ));
         } catch (\Exception $e) {
-            static::raiseError(__METHOD__ .", failed to load JobModel(null, {$job_guid})");
+            static::raiseError(__METHOD__ .'(), failed to load JobModel!', false, $e);
             return false;
         }
 
@@ -158,21 +220,35 @@ class JobsController extends DefaultController
             return false;
         }
 
-        if ($this->hasCurrentJob() && ($cur_guid = $this->getCurrentJob())) {
-            if ($cur_guid == $job_guid) {
-                $this->clearCurrentJob();
+        if ($this->hasCurrentJob() &&
+            ($cur_guid = $this->getCurrentJob()) !== false &&
+            $cur_guid == $job_guid
+        ) {
+            if (!$this->clearCurrentJob()) {
+                static::raiseError(__CLASS__ .'::clearCurrentJob() returned false!');
+                return false;
             }
         }
 
         return true;
     }
 
+    /**
+     * set the current-job-flag
+     *
+     * @param string $job_guid
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function setCurrentJob($job_guid)
     {
         global $thallium;
 
-        if (!isset($job_guid) || empty($job_guid) || !$thallium->isValidGuidSyntax($job_guid)) {
-            static::raiseError(__METHOD__ .', first parameter has to be a valid GUID!');
+        if (!isset($job_guid) ||
+            empty($job_guid) ||
+            !is_string($job_guid) ||
+            !$thallium->isValidGuidSyntax($job_guid)) {
+            static::raiseError(__METHOD__ .'(), $job_guid parameter is invalid!');
             return false;
         }
 
@@ -180,15 +256,30 @@ class JobsController extends DefaultController
         return true;
     }
 
+    /**
+     * get the current-job from the current-job-flag
+     *
+     * @param none
+     * @return string
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function getCurrentJob()
     {
         if (!$this->hasCurrentJob()) {
+            static::raiseError(__CLASS__ .'::hasCurrentJob() returned false!');
             return false;
         }
 
         return $this->currentJobGuid;
     }
 
+    /**
+     * return true if there is a job in the current-job-flag.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function hasCurrentJob()
     {
         if (!isset($this->currentJobGuid) || empty($this->currentJobGuid)) {
@@ -198,30 +289,57 @@ class JobsController extends DefaultController
         return true;
     }
 
+    /**
+     * clears the current-job-flag.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function clearCurrentJob()
     {
         $this->currentJobGuid = null;
         return true;
     }
 
-    public function runJob($job)
+    /**
+     * run a specific job.
+     *
+     * @param string|object $run_job
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    public function runJob($run_job)
     {
         global $thallium, $mbus;
 
-        if (is_string($job) && $thallium->isValidGuidSyntax($job)) {
-            try {
-                $job = new \Thallium\Models\JobModel(array(
-                    'guid' => $job
-                ));
-            } catch (\Exception $e) {
-                static::raiseError(__METHOD__ .'(), failed to load JobModel!');
-                return false;
-            }
+        if (!isset($run_job) ||
+            empty($run_job) ||
+            (!is_string($run_job) && !is_object($run_job))
+        ) {
+            static::raiseError(__METHOD__ .'(), $run_job parameter is invalid!');
+            return false;
         }
 
-        if (!is_object($job)) {
-            static::raiseError(__METHOD__ .'(), no valid JobModel provided!');
+        if (is_object($run_job) && !is_a($run_job, 'Thallium\Models\JobModel')) {
+            static::raiseError(__METHOD__ .'(), $run_job is not a JobModel!');
             return false;
+        }
+
+        if (is_string($run_job) && !$thallium->isValidGuidSyntax($run_job)) {
+            static::raiseError(__METHOD__ .'(), $run_job is not a valid GUID!');
+            return false;
+        }
+
+        if (is_string($run_job)) {
+            try {
+                $job = new \Thallium\Models\JobModel(array(
+                    'guid' => $run_job
+                ));
+            } catch (\Exception $e) {
+                static::raiseError(__METHOD__ .'(), failed to load JobModel!', false, $e);
+                return false;
+            }
         }
 
         if (($command = $job->getCommand()) === false) {
@@ -258,7 +376,10 @@ class JobsController extends DefaultController
         }
 
         if (!$job->hasSessionId()) {
-            $state = $mbus->suppressOutboundMessaging(true);
+            if (($state = $mbus->suppressOutboundMessaging(true)) === null) {
+                static::raiseError(get_class($mbus) .'::suppressOutboundMessaging() returned null!');
+                return false;
+            }
         }
 
         if (!call_user_func($handler, $job)) {
@@ -267,18 +388,28 @@ class JobsController extends DefaultController
         }
 
         if (!$job->hasSessionId()) {
-            $mbus->suppressOutboundMessaging($state);
+            if ($mbus->suppressOutboundMessaging($state) === null) {
+                static::raiseError(get_class($mbus) .'::suppressOutboundMessaging() returned null!');
+                return false;
+            }
         }
 
         return true;
     }
 
+    /**
+     * run job that are waiting in the job queue.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function runJobs()
     {
         try {
             $jobs = new \Thallium\Models\JobsModel;
         } catch (\Exception $e) {
-            static::raiseError(__METHOD__ .'(), failed to load JobsModel!');
+            static::raiseError(__METHOD__ .'(), failed to load JobsModel!', false, $e);
             return false;
         }
 
@@ -311,7 +442,12 @@ class JobsController extends DefaultController
                 return false;
             }
 
-            if (!$this->setCurrentJob($job->getGuid())) {
+            if (($job_guid = $job->getGuid()) === false) {
+                static::raiseError(get_class($job) .'::getGuid() returned false!');
+                return false;
+            }
+
+            if (!$this->setCurrentJob($job_guid)) {
                 static::raiseError(__CLASS__ .'::setCurrentJob() returned false!');
                 return false;
             }
@@ -335,6 +471,14 @@ class JobsController extends DefaultController
         return true;
     }
 
+    /**
+     * registers a handler that act on specific jobs.
+     *
+     * @param string $job_name
+     * @param string|array $handler
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function registerHandler($job_name, $handler)
     {
         if (!isset($job_name) || empty($job_name) || !is_string($job_name)) {
@@ -365,8 +509,16 @@ class JobsController extends DefaultController
         }
 
         $this->registeredHandlers[$job_name] = $handler;
+        return true;
     }
 
+    /**
+     * unregisteres a handler
+     *
+     * @param string $job_name
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function unregisterHandler($job_name)
     {
         if (!isset($job_name) || empty($job_name) || !is_string($job_name)) {
@@ -382,6 +534,13 @@ class JobsController extends DefaultController
         return true;
     }
 
+    /**
+     * returns true if the provided handler name is already registered.
+     *
+     * @param string $job_name
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function isRegisteredHandler($job_name)
     {
         if (!isset($job_name) || empty($job_name) || !is_string($job_name)) {
@@ -396,6 +555,13 @@ class JobsController extends DefaultController
         return true;
     }
 
+    /**
+     * returns the handler name for a specific job.
+     *
+     * @param string $job_name
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function getHandler($job_name)
     {
         if (!isset($job_name) || empty($job_name) || !is_string($job_name)) {
@@ -411,6 +577,13 @@ class JobsController extends DefaultController
         return $this->registeredHandlers[$job_name];
     }
 
+    /**
+     * a generic handler that handles delete-object requests
+     *
+     * @param array $job
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     protected function handleDeleteRequest($job)
     {
         global $thallium, $mbus;
@@ -420,8 +593,12 @@ class JobsController extends DefaultController
             return false;
         }
 
-        if (empty($job) || !is_a($job, 'Thallium\Models\JobModel')) {
-            static::raiseError(__METHOD__ .'() requires a JobModel reference as parameter!');
+        if (!isset($job) ||
+            empty($job) ||
+            !is_object($job) ||
+            !is_a($job, 'Thallium\Models\JobModel')
+        ) {
+            static::raiseError(__METHOD__ .'(), $job parameter is invalid!');
             return false;
         }
 
@@ -442,26 +619,19 @@ class JobsController extends DefaultController
             return false;
         }
 
-        if ($delete_request->id != 'all' &&
-            !$thallium->isValidId($delete_request->id)
-        ) {
-            static::raiseError(__METHOD__ .'() \$id is invalid!');
+        if ($delete_request->id !== 'all' && !$thallium->isValidId($delete_request->id)) {
+            static::raiseError(__METHOD__ .'(), job id is invalid!');
             return false;
         }
 
-        if ($delete_request->guid != 'all' &&
-            !$thallium->isValidGuidSyntax($delete_request->guid)
-        ) {
-            static::raiseError(__METHOD__ .'() \$guid is invalid!');
+        if ($delete_request->guid !== 'all' && !$thallium->isValidGuidSyntax($delete_request->guid)) {
+            static::raiseError(__METHOD__ .'() job $guid is invalid!');
             return false;
         }
 
-        if (!$mbus->sendMessageToClient('delete-reply', 'Deleting...', '20%')) {
-            static::raiseError(get_class($mbus) .'::sendMessageToClient() returned false!');
-            return false;
-        }
-
-        if (!isset($delete_request->model) || empty($delete_request->model) || !is_string($delete_request->model)) {
+        if (!isset($delete_request->model) ||
+            empty($delete_request->model) ||
+            !is_string($delete_request->model)) {
             static::raiseError(__METHOD__ .'(), delete-request does not contain model information!');
             return false;
         }
@@ -475,6 +645,11 @@ class JobsController extends DefaultController
         $id = $delete_request->id;
         $guid = $delete_request->guid;
 
+        if (!$mbus->sendMessageToClient('delete-reply', 'Deleting...', '20%')) {
+            static::raiseError(get_class($mbus) .'::sendMessageToClient() returned false!');
+            return false;
+        }
+
         if (($obj = $thallium->loadModel($model, $id, $guid)) === false) {
             static::raiseError(get_class($thallium) .'::loadModel() returned false!');
             return false;
@@ -485,20 +660,23 @@ class JobsController extends DefaultController
             return false;
         }
 
-        if ($id == 'all' && $guid == 'all') {
+        if ($id === 'all' && $guid === 'all') {
             if (method_exists($obj, 'flush')) {
                 $rm_method = 'flush';
             } else {
                 $rm_method = 'delete';
             }
+
             if (!$obj->$rm_method()) {
                 static::raiseError(get_class($obj) ."::${rm_method}() returned false!");
                 return false;
             }
+
             if (!$mbus->sendMessageToClient('delete-reply', 'Done', '100%')) {
                 static::raiseError(get_class($mbus) .'::sendMessageToClient() returned false!');
                 return false;
             }
+
             return true;
         }
 
@@ -515,12 +693,23 @@ class JobsController extends DefaultController
         return true;
     }
 
+    /**
+     * a generic handler that saves data into an object.
+     *
+     * @param array $job
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     protected function handleSaveRequest($job)
     {
         global $thallium, $mbus;
 
-        if (empty($job) || !is_a($job, 'Thallium\Models\JobModel')) {
-            static::raiseError(__METHOD__ .'() requires a JobModel reference as parameter!');
+        if (!isset($job) ||
+            empty($job) ||
+            !is_object($job) ||
+            !is_a($job, 'Thallium\Models\JobModel')
+        ) {
+            static::raiseError(__METHOD__ .'(), $job parameter is invalid!');
             return false;
         }
 
@@ -537,17 +726,17 @@ class JobsController extends DefaultController
         if (!isset($save_request->id) || empty($save_request->id) ||
             !isset($save_request->guid) || empty($save_request->guid)
         ) {
-            static::raiseError(__METHOD__ .'() save-request is incomplete!');
+            static::raiseError(__METHOD__ .'(), save-request is incomplete!');
             return false;
         }
 
         if ($save_request->id !== "new" && !$thallium->isValidId($save_request->id)) {
-            static::raiseError(__METHOD__ .'() \$id is invalid!');
+            static::raiseError(__METHOD__ .'(), job $id is invalid!');
             return false;
         }
 
         if ($save_request->guid !== "new" && !$thallium->isValidGuidSyntax($save_request->guid)) {
-            static::raiseError(__METHOD__ .'() \$guid is invalid!');
+            static::raiseError(__METHOD__ .'(), job $guid is invalid!');
             return false;
         }
 
@@ -564,19 +753,27 @@ class JobsController extends DefaultController
         }
 
         $model = $save_request->model;
-        if ($save_request->id !== "new") {
+
+        if ($save_request->id !== 'new') {
             $id = $save_request->id;
         } else {
             $id = null;
         }
-        if ($save_request->guid !== "new") {
+
+        if ($save_request->guid !== 'new') {
             $guid = $save_request->guid;
         } else {
             $guid = null;
         }
+
         unset($save_request->model);
         unset($save_request->id);
         unset($save_request->guid);
+
+        if (!$mbus->sendMessageToClient('save-reply', 'Saving...', '20%')) {
+            static::raiseError(get_class($mbus) .'::sendMessageToClient() returned false!');
+            return false;
+        }
 
         if (($obj = $thallium->loadModel($model, $id, $guid)) === false) {
             static::raiseError(get_class($thallium) .'::loadModel() returned false!');
