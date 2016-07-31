@@ -21,40 +21,105 @@ namespace Thallium\Models;
 
 use \PDO;
 
+/**
+ * DefaultModel is an abstract class that is used by all
+ * the other Thallium Models.
+ *
+ * It declares some common methods, properties and constants.
+ *
+ * @package Thallium\Models\DefaultModel
+ * @subpackage Models
+ * @license AGPL3
+ * @copyright 2015-2016 Andreas Unterkircher <unki@netshadow.net>
+ * @author Andreas Unterkircher <unki@netshadow.net>
+ */
 abstract class DefaultModel
 {
+    /** @var string $model_table_name */
     protected static $model_table_name;
+
+    /** @var string $model_column_prefix */
     protected static $model_column_prefix;
+
+    /** @var array $model_fields */
     protected static $model_fields = array();
+
+    /** @var array $model_fields_index */
     protected static $model_fields_index = array();
+
+    /** @var bool $model_has_items */
     protected static $model_has_items = false;
+
+    /** @var string $model_items_model */
     protected static $model_items_model;
+
+    /** @var array $model_links */
     protected static $model_links = array();
+
+    /** @var int $model_bulk_load_limit */
     protected static $model_bulk_load_limit = 10;
+
+    /** @var string $model_friendly_name */
     protected static $model_friendly_name;
+
+    /** @var array $model_load_by */
     protected $model_load_by = array();
+
+    /** @var array $model_sort_order */
     protected $model_sort_order = array();
+
+    /** @var array $model_items */
     protected $model_items = array();
+
+    /** @var array $model_items_lookup_index */
     protected $model_items_lookup_index = array();
+
+    /** @var bool $model_permit_rpc_updates */
     protected $model_permit_rpc_updates = false;
+
+    /** @var array $model_rpc_allowed_fields */
     protected $model_rpc_allowed_fields = array();
+
+    /** @var array $model_rpc_allowed_actions */
     protected $model_rpc_allowed_actions = array();
+
+    /** @var array $model_virtual_fields */
     protected $model_virtual_fields = array();
+
+    /** @var array $model_init_values */
     protected $model_init_values = array();
+
+    /** @var array $model_values */
     protected $model_values = array();
+
+    /** @var int $id */
     protected $id;
 
+    /** @var array $child_names */
     protected $child_names;
+
+    /** @var bool $ignore_child_on_clone */
     protected $ignore_child_on_clone;
 
+    /**
+     * class constructor
+     *
+     * @param array $load_by
+     * @param array $sort_order
+     * @return void
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function __construct($load_by = array(), $sort_order = array())
     {
-        if (!isset($load_by) || (!is_array($load_by) && !is_null($load_by))) {
+        if (!isset($load_by) ||
+            (isset($load_by) && !is_array($load_by))
+        ) {
             static::raiseError(__METHOD__ .'(), parameter $load_by has to be an array!', true);
             return;
         }
 
-        if (!isset($sort_order) || (!is_array($sort_order) && !is_null($sort_order))) {
+        if (!isset($sort_order) ||
+            (isset($sort_order) && !is_array($sort_order) && !is_null($sort_order))) {
             static::raiseError(__METHOD__ .'(), parameter $sort_order has to be an array!', true);
             return;
         }
@@ -70,23 +135,33 @@ abstract class DefaultModel
         }
 
         if (!$this->validateModelSettings()) {
+            static::raiseError(__CLASS__ .'::validateModelSettings() returned false!', true);
             return;
         }
 
         if (static::hasFields() && $this->isNewModel()) {
-            $this->initFields();
+            if (!$this->initFields()) {
+                static::raiseError(__CLASS__ .'::initFields() returned false!', true);
+                return;
+            }
             return;
         }
 
         if (!$this->load()) {
-            static::raiseError(__CLASS__ ."::load() returned false!", true);
-            return false;
+            static::raiseError(__CLASS__ .'::load() returned false!', true);
+            return;
         }
 
-        return true;
+        return;
+    }
 
-    } // __construct()
-
+    /**
+     * validate model settings
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     protected function validateModelSettings()
     {
         global $thallium;
@@ -95,7 +170,7 @@ abstract class DefaultModel
             empty(static::$model_table_name) ||
             !is_string(static::$model_table_name)
         ) {
-            static::raiseError(__METHOD__ .'(), missing property "model_table_name"', true);
+            static::raiseError(__METHOD__ .'(), missing property "model_table_name"');
             return false;
         }
 
@@ -103,12 +178,12 @@ abstract class DefaultModel
             empty(static::$model_column_prefix) ||
             !is_string(static::$model_column_prefix)
         ) {
-            static::raiseError(__METHOD__ .'(), missing property "model_column_prefix"', true);
+            static::raiseError(__METHOD__ .'(), missing property "model_column_prefix"');
             return false;
         }
 
         if (static::hasFields() && static::hasModelItems()) {
-            static::raiseError(__METHOD__ .'(), model must no have fields and items at the same times!', true);
+            static::raiseError(__METHOD__ .'(), model must no have fields and items at the same times!');
             return false;
         }
 
@@ -117,13 +192,13 @@ abstract class DefaultModel
                 ($items_model = static::getModelItemsModel()) === false ||
                 !$thallium->isRegisteredModel(null, $items_model)
             ) {
-                static::raiseError(__METHOD__ .'(), $model_items_model is invalid!', true);
+                static::raiseError(__METHOD__ .'(), $model_items_model is invalid!');
                 return false;
             }
         }
 
         if (!isset(static::$model_fields) || !is_array(static::$model_fields)) {
-            static::raiseError(__METHOD__ .'(), missing property "model_fields"', true);
+            static::raiseError(__METHOD__ .'(), missing property "model_fields"');
             return false;
         }
 
@@ -145,32 +220,34 @@ abstract class DefaultModel
                     !is_string($field) ||
                     !preg_match('/^[a-zA-Z0-9_]+$/', $field)
                 ) {
-                    static::raiseError(__METHOD__ .'(), invalid field entry (field name) found!', true);
+                    static::raiseError(__METHOD__ .'(), invalid field entry (field name) found!');
                     return false;
                 }
+
                 if (!isset($params) || empty($params) || !is_array($params)) {
-                    static::raiseError(__METHOD__ .'(), invalid field params found!', true);
+                    static::raiseError(__METHOD__ .'(), invalid field params found!');
                     return false;
                 }
+
                 if (!isset($params[FIELD_TYPE]) ||
                     empty($params[FIELD_TYPE]) ||
                     !is_string($params[FIELD_TYPE]) ||
                     !ctype_alnum($params[FIELD_TYPE])
                 ) {
-                    static::raiseError(__METHOD__ .'(), invalid field type found!', true);
+                    static::raiseError(__METHOD__ .'(), invalid field type found!');
                     return false;
                 }
                 if (!in_array($params[FIELD_TYPE], $known_field_types)) {
-                    static::raiseError(__METHOD__ .'(), unknown field type found!', true);
+                    static::raiseError(__METHOD__ .'(), unknown field type found!');
                     return false;
                 }
                 if (array_key_exists(FIELD_LENGTH, $params)) {
                     if (!is_int($params[FIELD_LENGTH])) {
-                        static::raiseError(__METHOD__ ."(), FIELD_LENGTH of {$field} is not an integer!", true);
+                        static::raiseError(__METHOD__ ."(), FIELD_LENGTH of {$field} is not an integer!");
                         return false;
                     }
                     if ($params[FIELD_LENGTH] < 0 && $params[FIELD_LENGTH] < 16384) {
-                        static::raiseError(__METHOD__ ."(), FIELD_LENGTH of {$field} is out of bound!", true);
+                        static::raiseError(__METHOD__ ."(), FIELD_LENGTH of {$field} is out of bound!");
                         return false;
                     }
                 }
@@ -190,7 +267,7 @@ abstract class DefaultModel
         }
 
         if (!isset($this->model_load_by) || !is_array($this->model_load_by)) {
-            static::raiseError(__METHOD__ .'(), missing property "model_load_by"', true);
+            static::raiseError(__METHOD__ .'(), missing property "model_load_by"');
             return false;
         }
 
@@ -200,7 +277,7 @@ abstract class DefaultModel
                     empty($field) ||
                     !is_string($field)
                 ) {
-                    static::raiseError(__METHOD__ .'(), $model_load_by contains an invalid field!', true);
+                    static::raiseError(__METHOD__ .'(), $model_load_by contains an invalid field!');
                     return false;
                 }
                 if ((isset($this) && $this->hasVirtualFields() && !$this->hasVirtualField($field)) &&
@@ -210,11 +287,11 @@ abstract class DefaultModel
                     ($full_model = $thallium->getFullModelName($items_model)) !== false &&
                     !$full_model::hasField($field))
                 ) {
-                    static::raiseError(__METHOD__ .'(), $model_load_by contains an unknown field!', true);
+                    static::raiseError(__METHOD__ .'(), $model_load_by contains an unknown field!');
                     return false;
                 }
                 if (static::hasField($field) && !$this->validateField($field, $value)) {
-                    static::raiseError(__METHOD__ .'(), $model_load_by contains an invalid value!', true);
+                    static::raiseError(__METHOD__ .'(), $model_load_by contains an invalid value!');
                     return false;
                 }
             }
@@ -226,19 +303,22 @@ abstract class DefaultModel
                     static::raiseError(__CLASS__ .'::getModelItemsModel() returned false!');
                     return false;
                 }
+
                 if (($full_model = $thallium->getFullModelName($items_model)) === false) {
-                    static::raiseError(get_class($thallium) .'::getFullModelName() returned false!', true);
+                    static::raiseError(get_class($thallium) .'::getFullModelName() returned false!');
                     return false;
                 }
+
                 if (!isset($field) ||
                     empty($field) ||
                     !is_string($field) ||
                     !$full_model::hasFields() ||
                     !$full_model::hasField($field)
                 ) {
-                    static::raiseError(__METHOD__ ."(), \$model_sort_order contains an invalid field {$field}!", true);
+                    static::raiseError(__METHOD__ ."(), \$model_sort_order contains an invalid field {$field}!");
                     return false;
                 }
+
                 if (!in_array(strtoupper($mode), array('ASC', 'DESC'))) {
                     static::raiseError(__METHOD__ .'(), \$order is invalid!');
                     return false;
@@ -248,27 +328,28 @@ abstract class DefaultModel
 
         if (static::hasModelLinks()) {
             if (!is_array(static::$model_links)) {
-                static::raiseError(__METHOD__ .'(), $model_links is not an array!', true);
+                static::raiseError(__METHOD__ .'(), $model_links is not an array!');
                 return false;
             }
+
             foreach (static::$model_links as $target => $field) {
                 if (!isset($target) || empty($target) || !is_string($target)) {
-                    static::raiseError(__METHOD__ .'(), $model_links link target is invalid!', true);
+                    static::raiseError(__METHOD__ .'(), $model_links link target is invalid!');
                     return false;
                 }
 
                 if (!isset($field) || empty($field) || !is_string($field)) {
-                    static::raiseError(__METHOD__ .'(), $model_links link field is invalid!', true);
+                    static::raiseError(__METHOD__ .'(), $model_links link field is invalid!');
                     return false;
                 }
 
                 if (!static::hasField($field)) {
-                    static::raiseError(__METHOD__ .'(), $model_links link field is unknown!', true);
+                    static::raiseError(__METHOD__ .'(), $model_links link field is unknown!');
                     return false;
                 }
 
                 if (($parts = explode('/', $target)) === false) {
-                    static::raiseError(__METHOD__ .'(), failed to explode() $model_links target!', true);
+                    static::raiseError(__METHOD__ .'(), failed to explode() $model_links target!');
                     return false;
                 }
 
@@ -281,30 +362,29 @@ abstract class DefaultModel
                 $target_field = $parts[1];
 
                 if (!isset($target_model) || empty($target_model) || !is_string($target_model)) {
-                    static::raiseError(__METHOD__ .'(), $model_links member model value is invalid!', true);
+                    static::raiseError(__METHOD__ .'(), $model_links member model value is invalid!');
                     return false;
                 }
 
                 if (!$thallium->isValidModel($target_model)) {
                     static::raiseError(
-                        __METHOD__ .'(), $model_links member model value refers an unknown model!',
-                        true
+                        __METHOD__ .'(), $model_links member model value refers an unknown model!'
                     );
                     return false;
                 }
 
                 if (($target_full_model = $thallium->getFullModelName($target_model)) === false) {
-                    static::raiseError(get_class($thallium) .'::getFullModelName() returned false!', true);
+                    static::raiseError(get_class($thallium) .'::getFullModelName() returned false!');
                     return false;
                 }
 
                 if (!isset($target_field) || empty($target_field) || !is_string($target_field)) {
-                    static::raiseError(__METHOD__ .'(), $model_links member model field is invalid!', true);
+                    static::raiseError(__METHOD__ .'(), $model_links member model field is invalid!');
                     return false;
                 }
 
                 if (!$target_full_model::hasModelItems() && !$target_full_model::hasField($target_field)) {
-                    static::raiseError(sprintf('%s::hasField() returned false!', $target_full_model), true);
+                    static::raiseError(sprintf('%s::hasField() returned false!', $target_full_model));
                     return false;
                 }
             }
@@ -314,8 +394,11 @@ abstract class DefaultModel
     }
 
     /**
-     * load
+     * loads data from database into a model
      *
+     * @param string $extend_query_where
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
      */
     protected function load($extend_query_where = null)
     {
@@ -386,10 +469,12 @@ abstract class DefaultModel
                 static::raiseError(__CLASS__ .'::column() returned false!');
                 return false;
             }
+
             if ($field == 'time') {
                 $sql_query_columns[] = sprintf("UNIX_TIMESTAMP(%s) as %s", $column, $column);
                 continue;
             }
+
             $sql_query_columns[$field] = $column;
         }
 
@@ -398,6 +483,7 @@ abstract class DefaultModel
                 static::raiseError(__CLASS__ .'::column() returned false!');
                 return false;
             }
+
             $sql_query_data[$column] = $value;
         }
 
@@ -419,23 +505,38 @@ abstract class DefaultModel
             !empty($order_by) &&
             is_array($order_by)
         ) {
-            $sql.= ' ORDER BY '. implode(', ', $order_by);
+            $sql.= sprintf(' ORDER BY %s', implode(', ', $order_by));
         }
 
         try {
             $sth = $db->prepare($sql);
+        } catch (\PDOException $e) {
+            static::raiseError(get_class($db) .'::prepare() failed!', false, $e);
+            return false;
         } catch (\Exception $e) {
-            static::raiseError(__METHOD__ .'(), unable to prepare database query!');
+            static::raiseError(get_class($db) .'::prepare() failed!', false, $e);
             return false;
         }
 
-        if (!$sth) {
+        if (!isset($sth) ||
+            empty($sth) ||
+            !is_object($sth) ||
+            !is_a($sth, 'PDOStatement')
+        ) {
             static::raiseError(get_class($db) ."::prepare() returned invalid data!");
             return false;
         }
 
         foreach ($bind_params as $key => $value) {
-            $sth->bindParam($key, $value);
+            try {
+                $sth->bindParam($key, $value);
+            } catch (\PDOException $e) {
+                static::raiseError(get_class($sth) .'::bindParam() failed!', false, $e);
+                return false;
+            } catch (\Exception $e) {
+                static::raiseError(get_class($sth) .'::bindParam() failed!', false, $e);
+                return false;
+            }
         }
 
         if (!$db->execute($sth, $bind_params)) {
@@ -458,7 +559,7 @@ abstract class DefaultModel
             }
         }
 
-        if ($num_rows == 0) {
+        if ($num_rows === 0) {
             $db->freeStatement($sth);
             return true;
         }
@@ -477,14 +578,17 @@ abstract class DefaultModel
                     static::raiseError(__CLASS__ .'() returned false!');
                     return false;
                 }
+
                 if (!static::hasField($field)) {
                     static::raiseError(__METHOD__ ."(), received data for unknown field '{$field}'!");
                     return false;
                 }
+
                 if (!$this->validateField($field, $value)) {
                     static::raiseError(__CLASS__ ."::validateField() returned false for field {$field}!");
                     return false;
                 }
+
                 // type casting, as fixed point numbers are returned as string!
                 if ($this->getFieldType($field) === FIELD_INT &&
                     is_string($value) &&
@@ -492,10 +596,12 @@ abstract class DefaultModel
                 ) {
                     $value = intval($value);
                 }
+
                 if (!$this->setFieldValue($field, $value)) {
                     static::raiseError(__CLASS__ ."::setFieldValue() returned false for field {$field}!");
                     return false;
                 }
+
                 $this->model_init_values[$field] = $value;
             }
         } elseif (static::hasModelItems()) {
@@ -504,17 +610,20 @@ abstract class DefaultModel
                     static::raiseError(__CLASS__ .'::getModelItemsModel() returned false!');
                     return false;
                 }
+
                 if (($child_model_name = $thallium->getFullModelName($items_model)) === false) {
                     $db->freeStatement($sth);
                     static::raiseError(get_class($thallium) .'::getFullModelName() returned false!');
                     return false;
                 }
+
                 foreach ($row as $key => $value) {
                     if (($field = $child_model_name::getFieldNameFromColumn($key)) === false) {
                         $db->freeStatement($sth);
                         static::raiseError(__CLASS__ .'() returned false!');
                         return false;
                     }
+
                     if (!$child_model_name::validateField($field, $value)) {
                         $db->freeStatement($sth);
                         static::raiseError(__CLASS__ ."::validateField() returned false for field {$field}!");
@@ -537,6 +646,9 @@ abstract class DefaultModel
             }
 
             $db->freeStatement($sth);
+        } else {
+            static::raiseError(__METHOD__ .'(), unsupported model constelation found!');
+            return false;
         }
 
         if (method_exists($this, 'postLoad') && is_callable(array($this, 'postLoad'))) {
@@ -554,11 +666,25 @@ abstract class DefaultModel
 
         return true;
 
-    } // load();
+    }
 
+    /**
+     * if a model is configured to have items, it will consist of further models that
+     * are representing these items. Too speed up the loading process, bulkLoad() may
+     * be used automatically if number of items to load is > than $model_bulk_load_limit
+     *
+     * @param array $extend_query_where
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final protected function bulkLoad($keys)
     {
         global $thallium, $db;
+
+        if (!static::hasModelItems()) {
+            static::raiseError(__METHOD__ .'(), model is not configured to have items!');
+            return false;
+        }
 
         if (!isset($keys) || empty($keys) || !is_array($keys)) {
             static::raiseError(__METHOD__ .'(), $keys parameter is invalid!');
@@ -566,7 +692,10 @@ abstract class DefaultModel
         }
 
         $key_check_func = function ($key) {
-            if (!is_numeric($key) || !is_int($key)) {
+            if (!isset($key) ||
+                empty($key) ||
+                (!is_numeric($key) && !is_int($key))
+            ) {
                 static::raiseError(__METHOD__ .'(), $keys parameter contains an invalid key!');
                 return false;
             }
@@ -600,7 +729,11 @@ abstract class DefaultModel
             $keys_str
         ));
 
-        if (!$result) {
+        if (!isset($result) ||
+            empty($result) ||
+            !is_object($result) ||
+            !is_a($result, 'PDOStatement')
+        ) {
             static::raiseError(get_class($db) .'::query() returned false!');
             return false;
         }
@@ -649,10 +782,11 @@ abstract class DefaultModel
     }
 
     /**
-     * update object variables via array
+     * update model fields by the data provided in $data
      *
-     * @param mixed $data
+     * @param array|object $data
      * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
      */
     final public function update($data)
     {
@@ -676,31 +810,39 @@ abstract class DefaultModel
                 continue;
             }
 
-            if ($this->hasVirtualFields() && $this->hasVirtualField($field)) {
-                if (($method_name = $this->getVirtualFieldSetMethod($field)) === false) {
-                    static::raiseError(__CLASS__ .'::getVirtualFieldSetMethod() returned false!');
-                    return false;
-                }
-
-                if (($retval = call_user_func(array($this, $method_name), $value)) === false) {
-                    static::raiseError(__CLASS__ ."::{$method_name}() returned false!");
-                    return false;
-                }
-
-                continue;
+            if ($this->hasVirtualFields() && !$this->hasVirtualField($field)) {
+                static::raiseError(__METHOD__ .'(), model has no field like that!');
+                return false;
             }
-            static::raiseError(__METHOD__ .'(), model has no field like that!');
-            return false;
+
+            if (($method_name = $this->getVirtualFieldSetMethod($field)) === false) {
+                static::raiseError(__CLASS__ .'::getVirtualFieldSetMethod() returned false!');
+                return false;
+            }
+
+            if (($retval = call_user_func(array($this, $method_name), $value)) === false) {
+                static::raiseError(__CLASS__ ."::{$method_name}() returned false!");
+                return false;
+            }
         }
 
         return true;
     }
 
     /**
-     * flood object variables via array
+     * update model fields by the data provided in $data.
+     * contrary to update(), this method updates the field
+     * values directly, without triggering the setXxx() method
+     * of a field.
      *
-     * @param mixed $data
+     * !!! WARNING: even invalid values that the setXxx() methods would
+     * !!! normally deny, can be set by this method!
+     * !!! this is, why flood() can not be overriden and available only
+     * !!! as protected!
+     *
+     * @param array|object $data
      * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
      */
     final protected function flood($data)
     {
@@ -717,46 +859,45 @@ abstract class DefaultModel
                 static::raiseError(__METHOD__ .'(), unknown field found!');
                 return false;
             }
+
             if (static::hasField($field)) {
                 // this will trigger the __set() method.
                 $this->$key = $value;
                 $this->model_init_values[$key] = $value;
                 continue;
             }
-            if ($this->hasVirtualFields() && $this->hasVirtualField($field)) {
-                if (($method_name = $this->getVirtualFieldSetMethod($field)) === false) {
-                    static::raiseError(__CLASS__ .'::getVirtualFieldSetMethod() returned false!');
-                    return false;
-                }
 
-                if (($retval = call_user_func(array($this, $method_name), $value))) {
-                    static::raiseError(__CLASS__ ."::{$method_name}() returned false!");
-                    return false;
-                }
-
-                $this->model_init_values[$key] = $value;
-                continue;
+            if ($this->hasVirtualFields() && !$this->hasVirtualField($field)) {
+                static::raiseError(__METHOD__ .'(), model has no field like that!');
+                return false;
             }
-            static::raiseError(__METHOD__ .'(), model has no field like that!');
-            return false;
+
+            if (($method_name = $this->getVirtualFieldSetMethod($field)) === false) {
+                static::raiseError(__CLASS__ .'::getVirtualFieldSetMethod() returned false!');
+                return false;
+            }
+
+            if (($retval = call_user_func(array($this, $method_name), $value))) {
+                static::raiseError(__CLASS__ ."::{$method_name}() returned false!");
+                return false;
+            }
+
+            $this->model_init_values[$key] = $value;
         }
 
         return true;
     }
 
+    /**
+     * deletes an model object from database.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function delete()
     {
         global $db;
-
-        if (!isset(static::$model_table_name)) {
-            static::raiseError(__METHOD__ .'(), table name is not set!');
-            return false;
-        }
-
-        if (!isset(static::$model_column_prefix)) {
-            static::raiseError(__METHOD__ .'(), column name is not set!');
-            return false;
-        }
 
         if (static::hasFields() && $this->isNew()) {
             return true;
@@ -801,7 +942,11 @@ abstract class DefaultModel
                 static::$model_column_prefix
             ));
 
-            if (!$sth) {
+            if (!isset($sth) ||
+                empty($sth) ||
+                !is_object($sth) ||
+                !is_a($sth, 'PDOStatement')
+            ) {
                 static::raiseError(__METHOD__ ."(), unable to prepare query");
                 return false;
             }
@@ -822,9 +967,15 @@ abstract class DefaultModel
         }
 
         return true;
+    }
 
-    } // delete()
-
+    /**
+     * if a model is configured to have items, this method will delete all of those items.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function deleteItems()
     {
         if (!static::hasModelItems()) {
@@ -846,6 +997,7 @@ abstract class DefaultModel
                 static::raiseError(__METHOD__ .'(), model '. get_class($item) .' does not provide a delete() method!');
                 return false;
             }
+
             if (!$item->delete()) {
                 static::raiseError(get_class($item) .'::delete() returned false!');
                 return false;
@@ -856,7 +1008,11 @@ abstract class DefaultModel
     }
 
     /**
-     * clone
+     * clones a model into a new one.
+     *
+     * @param object $srcobj
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
      */
     final public function createClone(&$srcobj)
     {
@@ -910,9 +1066,11 @@ abstract class DefaultModel
         $pguid = 'derivation_guid';
 
         $this->id = null;
+
         if (isset($this->model_values[FIELD_IDX])) {
             $this->model_values[FIELD_IDX] = null;
         }
+
         if (isset($this->model_values[FIELD_GUID])) {
             $this->model_values[FIELD_GUID] = $thallium->createGuid();
         }
@@ -963,7 +1121,11 @@ abstract class DefaultModel
                     static::$model_column_prefix
                 ));
 
-                if (!$sth) {
+                if (!isset($sth) ||
+                    empty(!$sth) ||
+                    !is_object($sth) ||
+                    !is_a($sth, 'PDOStatement')
+                ) {
                     static::raiseError(__METHOD__ ."(), unable to prepare query");
                     return false;
                 }
@@ -1024,25 +1186,29 @@ abstract class DefaultModel
         }
 
         return true;
-
-    } // createClone()
+    }
 
     /**
-     * init fields
+     * initializes all fields
+     *
+     * @param array $override
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
      */
-    final protected function initFields($override = null)
+    final protected function initFields($override = array())
     {
         if (!static::hasFields()) {
-            return true;
+            static::raiseError(__METHOD__ .'(), this model has no fields!');
+            return false;
+        }
+
+        if (isset($override) && !empty($override) && !is_array($override)) {
+            static::raiseError(__METHOD__ .'(), $override parameter is invalid!');
+            return false;
         }
 
         foreach (array_keys(static::$model_fields) as $field) {
-            // check for a matching key in clone's model_fields array
-            if (isset($override) &&
-                !empty($override) &&
-                is_array($override) &&
-                in_array($field, array_keys($override))
-            ) {
+            if (in_array($field, array_keys($override))) {
                 $this->model_values[$field] = $override[$field];
                 continue;
             }
@@ -1059,10 +1225,20 @@ abstract class DefaultModel
         }
 
         return true;
+    }
 
-    } // initFields()
-
-    /* override PHP's __set() function */
+    /**
+     * this method overrides PHP own __set() method. it is called for all
+     * undeclared properties - that means, that have not explicitly declared
+     * before run time.
+     * we capture these events here and try to locate a matching setXxxx()
+     * method.
+     *
+     * @param string $name
+     * @param mixed $value
+     * @return void
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public function __set($name, $value)
     {
         global $thallium;
@@ -1075,8 +1251,6 @@ abstract class DefaultModel
             $this->$name = $value;
             return;
         }
-
-        global $thallium;
 
         if ($this->hasVirtualFields() && $this->hasVirtualField($name)) {
             if (($name = static::getFieldNamefromColumn($name)) === false) {
@@ -1107,13 +1281,8 @@ abstract class DefaultModel
             return;
         }
 
-        // virtual fields have to validate themself via their get/set methods.
-        if ($this->hasVirtualFields() && $this->hasVirtualField($field)) {
-            return;
-        }
-
-        if (!$this->hasField($field) && $field != 'id') {
-            static::raiseError(__METHOD__ ."(), unknown key in ". __CLASS__ ."::__set(): {$field}", true);
+        if (!$this->hasField($field) && $field !== 'id') {
+            static::raiseError(__METHOD__ ."(), unknown key {$field}", true);
             return;
         }
 
@@ -1234,7 +1403,17 @@ abstract class DefaultModel
         return;
     }
 
-    /* override PHP's __get() function */
+    /**
+     * this method overrides PHP own __get() method. it is called for all
+     * undeclared properties - that means, that have not explicitly declared
+     * before run time.
+     * we capture these events here and try to locate a matching getXxxx()
+     * method.
+     *
+     * @param string $name
+     * @return mixed
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public function __get($name)
     {
         if (!static::hasFields() && !static::hasModelItems()) {
@@ -1278,7 +1457,7 @@ abstract class DefaultModel
         }
 
         if (($method_name = $this->getVirtualFieldGetMethod($field)) === false) {
-            static::raiseError(__CLASS__ .'::getVirtualFieldGetMethod() returned false!');
+            static::raiseError(__CLASS__ .'::getVirtualFieldGetMethod() returned false!', true);
             return false;
         }
 
@@ -1290,6 +1469,13 @@ abstract class DefaultModel
         return $value;
     }
 
+    /**
+     * saves model field values to database.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public function save()
     {
         global $thallium, $db;
@@ -1357,13 +1543,24 @@ abstract class DefaultModel
             return false;
         }
 
+        if (!isset($sth) ||
+            empty($sth) ||
+            !is_object($sth) ||
+            !is_a($sth, 'PDOStatement')
+        ) {
+            static::raiseError(get_class($db) .'::prepare() returned no PDOStatement!');
+            return false;
+        }
+
         if (!$db->execute($sth, $arr_values)) {
+            $db->freeStatement($sth);
             static::raiseError(__METHOD__ ."(), unable to execute query");
             return false;
         }
 
         if (!isset($this->id) || empty($this->id)) {
             if (($this->id = $db->getId()) === false) {
+                $db->freeStatement($sth);
                 static::raiseError(get_class($db) .'::getId() returned false!');
                 return false;
             }
@@ -1385,7 +1582,6 @@ abstract class DefaultModel
         }
 
         // now we need to update the model_init_values array.
-
         $this->model_init_values = array();
 
         foreach (array_keys(static::$model_fields) as $field) {
@@ -1397,8 +1593,7 @@ abstract class DefaultModel
         }
 
         return true;
-
-    } // save()
+    }
 
     /*final public function toggleStatus($to)
     {
@@ -1533,6 +1728,13 @@ abstract class DefaultModel
 
     } // toggleChildStatus() */
 
+    /**
+     * returns the previous object in database relative to the current one.
+     *
+     * @param none
+     * @return string
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public function prev()
     {
         global $thallium, $db;
@@ -1585,6 +1787,13 @@ abstract class DefaultModel
         return $result->$id ."-". $result->$guid_field;
     }
 
+    /**
+     * returns the next object in database relative to the current one.
+     *
+     * @param none
+     * @return string
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public function next()
     {
         global $thallium, $db;
@@ -1635,6 +1844,13 @@ abstract class DefaultModel
         return $result->$id ."-". $result->$guid_field;
     }
 
+    /**
+     * verifies if the same object (idx, guid) is already in database.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final protected function isDuplicate()
     {
         global $db;
@@ -1718,6 +1934,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * returns the database table column-name for a specific field.
+     *
+     * @param string $suffix
+     * @return string
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final protected static function column($suffix)
     {
         if (!isset(static::$model_column_prefix) ||
@@ -1727,13 +1950,20 @@ abstract class DefaultModel
             return $suffix;
         }
 
-        return static::$model_column_prefix .'_'. $suffix;
+        return sprintf('%s_%s', static::$model_column_prefix, $suffix);
     }
 
+    /**
+     * globally enable or disable RPC updates to this object.
+     *
+     * @param bool $state
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final protected function permitRpcUpdates($state)
     {
-        if (!is_bool($state)) {
-            static::raiseError(__METHOD__ .'(), parameter must be a boolean value', true);
+        if (!isset($state) || !is_bool($state)) {
+            static::raiseError(__METHOD__ .'(), $state parameter is invalid!');
             return false;
         }
 
@@ -1741,10 +1971,19 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * returns true if RPC updates are generally enabled for this object.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public function permitsRpcUpdates()
     {
         if (!isset($this->model_permit_rpc_updates) ||
-            !$this->model_permit_rpc_updates
+            empty($this->model_permit_rpc_updates) ||
+            !is_bool($this->model_permit_rpc_updates) ||
+            $this->model_permit_rpc_updates !== 'true'
         ) {
             return false;
         }
@@ -1752,6 +1991,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * allow the specified field to be updated by RPC updates.
+     *
+     * @param string $field
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final protected function addRpcEnabledField($field)
     {
         if (!is_array($this->model_rpc_allowed_fields)) {
@@ -1780,6 +2026,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * allow the specified action to be performed by an RPC call.
+     *
+     * @param string $action
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final protected function addRpcAction($action)
     {
         if (!is_array($this->model_rpc_allowed_actions)) {
@@ -1803,6 +2056,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * returns true if RPC updates are permitted to the specified field.
+     *
+     * @param string $field
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public function permitsRpcUpdateToField($field)
     {
         if (!is_array($this->model_rpc_allowed_fields)) {
@@ -1844,6 +2104,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * returns true if RPC action is allowed for this object.
+     *
+     * @param string $action
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public function permitsRpcActions($action)
     {
         if (!is_array($this->model_rpc_allowed_actions)) {
@@ -1870,6 +2137,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * returns true if the field FIELD_IDX has an value
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public function hasIdx()
     {
         if (!static::hasFields()) {
@@ -1891,6 +2165,14 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * legacy method. use getIdx() instead!
+     *
+     * @param none
+     * @return int|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     * @todo remove after 31.12.2016
+     */
     final public function getId()
     {
         error_log(__METHOD__ .'(), legacy getId() has been called, '
@@ -1898,6 +2180,13 @@ abstract class DefaultModel
         return $this->getIdx();
     }
 
+    /**
+     * return the value of FIELD_IDX
+     *
+     * @param none
+     * @return int|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public function getIdx()
     {
         if (!$this->hasIdx()) {
@@ -1913,6 +2202,13 @@ abstract class DefaultModel
         return $value;
     }
 
+    /**
+     * returns true if the field FIELD_GUID has an value
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public function hasGuid()
     {
         if (!static::hasFields()) {
@@ -1934,6 +2230,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * return the value of FIELD_GUID
+     *
+     * @param none
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public function getGuid()
     {
         if (!$this->hasGuid()) {
@@ -1954,6 +2257,13 @@ abstract class DefaultModel
         return $value;
     }
 
+    /**
+     * set FIELD_GUID to the value $guid
+     *
+     * @param string $guid
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public function setGuid($guid)
     {
         global $thallium;
@@ -1972,6 +2282,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * returns true if this model has fields configured.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public static function hasFields()
     {
         $called_class = get_called_class();
@@ -1989,6 +2306,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * return an array of all fields
+     *
+     * @param bool $no_virtual
+     * @return array
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public function getFields($no_virtual = false)
     {
         if (!static::hasFields()) {
@@ -2047,6 +2371,13 @@ abstract class DefaultModel
         return $fields;
     }
 
+    /**
+     * return all the field names.
+     *
+     * @param none
+     * @return array
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public function getFieldNames()
     {
         if (!static::hasFields()) {
@@ -2057,15 +2388,24 @@ abstract class DefaultModel
         return array_keys(static::$model_fields);
     }
 
-    final public static function hasField($field_name, $ignore_virtual = false)
+    /**
+     * returns true if the field $field_name is declared for this model.
+     * it can not be used for virtual fields!
+     *
+     * @param string $field_name
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    final public static function hasField($field_name)
     {
         if (!isset($field_name) ||
             empty($field_name) ||
             !is_string($field_name)
         ) {
-            static::raiseError(__METHOD__ .'(), do not know what to look for!');
+            static::raiseError(__METHOD__ .'(), $field_name parameter is invalid!');
             return false;
         }
+
 
         $called_class = get_called_class();
         if (!$called_class::hasFields()) {
@@ -2079,6 +2419,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * returns the column prefix.
+     *
+     * @param none
+     * @return string
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public function getFieldPrefix()
     {
         if (!isset(static::$model_column_prefix) ||
@@ -2092,6 +2439,14 @@ abstract class DefaultModel
         return static::$model_column_prefix;
     }
 
+    /**
+     * returns true if the model is new and has not been saved to
+     * database yet.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public function isNew()
     {
         if (isset($this->id) && !empty($this->id)) {
@@ -2101,6 +2456,15 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * raises an error by using the ExceptionController.
+     *
+     * @param string $string
+     * @param bool $stop_execution
+     * @param object|null $exception
+     * @return void
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     protected static function raiseError($string, $stop_execution = false, $exception = null)
     {
         global $thallium;
@@ -2111,9 +2475,16 @@ abstract class DefaultModel
             $exception
         );
 
-        return true;
+        return;
     }
 
+    /**
+     * returns true if there are virtual fields configured.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public function hasVirtualFields()
     {
         if (empty($this->model_virtual_fields)) {
@@ -2123,6 +2494,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * returns true if the specified virtual field has a value.
+     *
+     * @param string $field
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public function hasVirtualFieldValue($field)
     {
         if (!isset($field) && empty($field) && !is_string($field)) {
@@ -2152,6 +2530,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * returns the value of the specified virtual field.
+     *
+     * @param string $field
+     * @return mixed
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public function getVirtualFieldValue($field)
     {
         if (!isset($field) && empty($field) && !is_string($field)) {
@@ -2177,6 +2562,14 @@ abstract class DefaultModel
         return $value;
     }
 
+    /**
+     * sets the value for the specified virtual field.
+     *
+     * @param string $field
+     * @param mixed $value
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public function setVirtualFieldValue($field, $value)
     {
         if (!isset($field) && empty($field) && !is_string($field)) {
@@ -2202,6 +2595,13 @@ abstract class DefaultModel
         return $retval;
     }
 
+    /**
+     * returns the getXxx() method for the specified virtual field
+     *
+     * @param string $field
+     * @return string
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public function getVirtualFieldGetMethod($field)
     {
         if (!isset($field) || empty($field) || !is_string($field)) {
@@ -2226,6 +2626,13 @@ abstract class DefaultModel
         return $method_name;
     }
 
+    /**
+     * returns the setXxx() method for the specified virtual field
+     *
+     * @param string $field
+     * @return string
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public function getVirtualFieldSetMethod($field)
     {
         if (!isset($field) || empty($field) || !is_string($field)) {
@@ -2250,6 +2657,13 @@ abstract class DefaultModel
         return $method_name;
     }
 
+    /**
+     * return all virtual fields.
+     *
+     * @param none
+     * @return array
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public function getVirtualFields()
     {
         if (!$this->hasVirtualFields()) {
@@ -2260,6 +2674,13 @@ abstract class DefaultModel
         return $this->model_virtual_fields;
     }
 
+    /**
+     * returns true if the specified virtual field exists.
+     *
+     * @param string $vfield
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public function hasVirtualField($vfield)
     {
         if (!isset($vfield) || empty($vfield) || !is_string($vfield)) {
@@ -2274,6 +2695,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * registers a new virtual field to the model.
+     *
+     * @param string $vfield
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public function addVirtualField($vfield)
     {
         if (!isset($vfield) || empty($vfield) || !is_string($vfield)) {
@@ -2289,6 +2717,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * if a model has items, it returns all the items keys as array.
+     *
+     * @param none
+     * @return array|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function getItemsKeys()
     {
         if (!static::hasModelItems()) {
@@ -2304,6 +2739,15 @@ abstract class DefaultModel
         return array_keys($this->model_items);
     }
 
+    /**
+     * if a model has items, it returns all the items as array.
+     *
+     * @param int|null $offset
+     * @param int|null $limit
+     * @param array|null $filter
+     * @return array|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function getItems($offset = null, $limit = null, $filter = null)
     {
         if (!static::hasModelItems()) {
@@ -2394,6 +2838,14 @@ abstract class DefaultModel
         return $items;
     }
 
+    /**
+     * filters a list of items by the provided filter.
+     *
+     * @param array $items
+     * @param array $filter
+     * @return array|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     protected function filterItems($items, $filter)
     {
         if (!isset($items) || empty($items) || !is_array($items)) {
@@ -2457,6 +2909,14 @@ abstract class DefaultModel
         return $result;
     }
 
+    /**
+     * legacy method, has been replaaced by hasModelItems()
+     *
+     * @param string $field
+     * @return string
+     * @throws \Thallium\Controllers\ExceptionController
+     * @todo remove after 31.12.2016
+     */
     final public static function isHavingItems()
     {
         error_log(__METHOD__ .'(), legacy isHavingItems() has been called, '
@@ -2465,6 +2925,13 @@ abstract class DefaultModel
         return static::hasModelItems();
     }
 
+    /**
+     * returns true if the model is configured to have items.
+     *
+     * @param string $field
+     * @return string
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public static function hasModelItems()
     {
         $called_class = get_called_class();
@@ -2483,6 +2950,15 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * returns true if the model actually has items.
+     * contrary to hasModelItems() which only checks if the
+     * model is configured to have items at all.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function hasItems()
     {
         $called_class = get_called_class();
@@ -2501,6 +2977,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * adds an item
+     *
+     * @param object $item
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function addItem($item)
     {
         if (!static::hasModelItems()) {
@@ -2578,6 +3061,15 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * returns the requested item
+     *
+     * @param int $idx
+     * @param bool $reset
+     * @param bool $allow_cached
+     * @return mixed
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function getItem($idx, $reset = true, $allow_cached = true)
     {
         global $cache;
@@ -2671,6 +3163,13 @@ abstract class DefaultModel
         return $item;
     }
 
+    /**
+     * returns true if the provided item exists.
+     *
+     * @param int $idx
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function hasItem($idx)
     {
         if (!isset($idx) || empty($idx) || (!is_string($idx) && !is_numeric($idx))) {
@@ -2685,6 +3184,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * returns true if the provided item has data (= field values)
+     *
+     * @param string|int $key
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     protected function hasItemData($key)
     {
         if (!isset($key) ||
@@ -2710,6 +3216,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * returns the model that is used for items.
+     *
+     * @param string|int $key
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     protected function hasItemModel($key)
     {
         if (!isset($key) ||
@@ -2735,6 +3248,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * returns the model if an specific item
+     *
+     * @param string|int $key
+     * @return string
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     protected function getItemModel($key)
     {
         if (!isset($key) ||
@@ -2758,6 +3278,14 @@ abstract class DefaultModel
         return $this->model_items[$key][FIELD_MODEL];
     }
 
+    /**
+     * sets the model of a specific item
+     *
+     * @param string $field
+     * @param string $model
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     protected function setItemModel($key, $model)
     {
         if (!isset($key) ||
@@ -2781,6 +3309,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * returns the field values of a specific item.
+     *
+     * @param string|int $key
+     * @return mixed
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     protected function getItemData($key)
     {
         if (!isset($key) ||
@@ -2799,6 +3334,15 @@ abstract class DefaultModel
         return $this->model_items[$key][FIELD_DATA];
     }
 
+    /**
+     * sets data for a specific item.
+     *
+     * @param string $key
+     * @param array $data
+     * @param bool $init
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     protected function setItemData($key, $data, $init = true)
     {
         if (!isset($key) ||
@@ -2823,6 +3367,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * returns the number of items.
+     *
+     * @param none
+     * @return int|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function getItemsCount()
     {
         if (!$this->hasItems()) {
@@ -2836,6 +3387,16 @@ abstract class DefaultModel
         return count($this->model_items);
     }
 
+    /**
+     * returns true if this is a new model.
+     * contrary to isNew() this one returns true,
+     * if no loading-parameters have been provided
+     * to the constructor by $model_load_by.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function isNewModel()
     {
         if (isset($this->model_load_by) &&
@@ -2848,6 +3409,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * returns the type of a specific field
+     *
+     * @param string $field_name
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public static function getFieldType($field_name)
     {
         if (!isset($field_name) || empty($field_name) || !is_string($field_name)) {
@@ -2863,6 +3431,13 @@ abstract class DefaultModel
         return static::$model_fields[$field_name][FIELD_TYPE];
     }
 
+    /**
+     * returns the length of a specific field.
+     *
+     * @param string $field_name
+     * @return int|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public static function getFieldLength($field_name)
     {
         if (!isset($field_name) || empty($field_name) || !is_string($field_name)) {
@@ -2882,6 +3457,13 @@ abstract class DefaultModel
         return static::$model_fields[$field_name][FIELD_LENGTH];
     }
 
+    /**
+     * returns true if the field has a field-length declared.
+     *
+     * @param string $field_name
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public static function hasFieldLength($field_name)
     {
         if (!isset($field_name) || empty($field_name) || !is_string($field_name)) {
@@ -2901,11 +3483,25 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * returns the table name that is used to store this model into.
+     *
+     * @param none
+     * @return string
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function getTableName()
     {
         return sprintf("TABLEPREFIX%s", static::$model_table_name);
     }
 
+    /**
+     * returns the field name if a column-name is provided.
+     *
+     * @param string $column
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public static function getFieldNameFromColumn($column)
     {
         if (!isset($column) || empty($column) || !is_string($column)) {
@@ -2932,6 +3528,14 @@ abstract class DefaultModel
         return $field_name;
     }
 
+    /**
+     * validate if the provided $value is ok for the field $field.
+     *
+     * @param string $field
+     * @param mixed $value
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public static function validateField($field, $value)
     {
         global $thallium;
@@ -3016,6 +3620,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * validates the provided items-filter.
+     *
+     * @param array $field
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public static function validateItemsFilter($filter)
     {
         if (!isset($filter) || empty($filter) || !is_array($filter)) {
@@ -3037,6 +3648,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * if the model has items, flush the database table and clean out all items by this.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function flush()
     {
         if (!static::hasModelItems()) {
@@ -3056,6 +3674,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * flushes the database table.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function flushTable()
     {
         global $db;
@@ -3073,6 +3698,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * returns true if the field has a setXxxx() method.
+     *
+     * @param string $field
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     protected function hasFieldSetMethod($field)
     {
         if (!isset($field) || empty($field) || !is_string($field)) {
@@ -3109,6 +3741,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * returns the fields setXxx() method.
+     *
+     * @param string $field
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     protected function getFieldSetMethod($field)
     {
         if (!isset($field) || empty($field) || !is_string($field)) {
@@ -3124,6 +3763,13 @@ abstract class DefaultModel
         return static::$model_fields[$field][FIELD_SET];
     }
 
+    /**
+     * returns true if the specified field has a getXxx() method.
+     *
+     * @param string $field
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     protected function hasFieldGetMethod($field)
     {
         if (!isset($field) || empty($field) || !is_string($field)) {
@@ -3160,6 +3806,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * returns the getXxx() method for the specified field.
+     *
+     * @param string $field
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     protected function getFieldGetMethod($field)
     {
         if (!isset($field) || empty($field) || !is_string($field)) {
@@ -3175,6 +3828,13 @@ abstract class DefaultModel
         return static::$model_fields[$field][FIELD_GET];
     }
 
+    /**
+     * returns true, if the specified $field has a value.
+     *
+     * @param string $field
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public function hasFieldValue($field)
     {
         if (!isset($field) || empty($field) || !is_string($field)) {
@@ -3210,6 +3870,14 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * sets the value of the specified field.
+     *
+     * @param string $field
+     * @param mixed $value
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public function setFieldValue($field, $value)
     {
         if (!isset($field) || empty($field) || !is_string($field)) {
@@ -3273,6 +3941,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * returns the value of the specified field.
+     *
+     * @param string $field
+     * @return mixed
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public function getFieldValue($field)
     {
         if (!isset($field) || empty($field) || !is_string($field)) {
@@ -3288,6 +3963,13 @@ abstract class DefaultModel
         return $this->model_values[$field];
     }
 
+    /**
+     * returns true if the field has a default value configured.
+     *
+     * @param string $field
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public function hasDefaultValue($field)
     {
         if (!isset($field) || empty($field) || !is_string($field)) {
@@ -3312,6 +3994,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * returns the fields default value.
+     *
+     * @param string $field
+     * @return mixed
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public function getDefaultValue($field)
     {
         if (!isset($field) || empty($field) || !is_string($field)) {
@@ -3327,6 +4016,14 @@ abstract class DefaultModel
         return $this->model_model_fields[$field][FIELD_DEFAULT];
     }
 
+    /**
+     * returns true, if the same object as specified by $load_by is already
+     * present in database.
+     *
+     * @param array $load_by
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public static function exists($load_by = array())
     {
         global $db;
@@ -3404,6 +4101,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * returns true if the model is configured to have links.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public static function hasModelLinks()
     {
         if (!isset(static::$model_links) ||
@@ -3415,6 +4119,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * returns all the configured model links.
+     *
+     * @param none
+     * @return array|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public static function getModelLinks()
     {
         if (!static::hasModelLinks()) {
@@ -3425,6 +4136,13 @@ abstract class DefaultModel
         return static::$model_links;
     }
 
+    /**
+     * delete all the present links to other models.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     protected function deleteModelLinks()
     {
         global $thallium;
@@ -3469,6 +4187,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * reset all the fields to their init values.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function resetFields()
     {
         if (!static::hasFields()) {
@@ -3492,6 +4217,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * updates the items lookup cache with a new item.
+     *
+     * @param object $item
+     * @return string
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     protected function updateItemsLookupCache($item)
     {
         if (!isset($item) || empty($item) || !is_object($item)) {
@@ -3561,6 +4293,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * returns the name of this model
+     *
+     * @param string $short
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public static function getModelName($short = false)
     {
         if (!isset($short) || $short === false) {
@@ -3572,6 +4311,13 @@ abstract class DefaultModel
         return array_pop($parts);
     }
 
+    /**
+     * if model is called in a string-context, returns an unique identifier.
+     *
+     * @param none
+     * @return string
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function __toString()
     {
         if (($model_name = static::getModelName(true)) === false) {
@@ -3603,6 +4349,14 @@ abstract class DefaultModel
         return sprintf('%s_%s_%s_%s', $model_name, $name, $idx, $guid);
     }
 
+    /**
+     * return all the links this model has.
+     *
+     * @param bool $sorted
+     * @param bool $unique
+     * @return array|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function getModelLinkedList($sorted = false, $unique = false)
     {
         global $thallium;
@@ -3666,6 +4420,14 @@ abstract class DefaultModel
         return $links;
     }
 
+    /**
+     * returns the link target items.
+     *
+     * @param string $link
+     * @param string $value
+     * @return array|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     protected function getModelLinkTarget($link, $value)
     {
         global $thallium;
@@ -3731,6 +4493,13 @@ abstract class DefaultModel
         return $items;
     }
 
+    /**
+     * returns true if this model has a model defined for its items.
+     *
+     * @param none
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public static function hasModelItemsModel()
     {
         $called_class = get_called_class();
@@ -3750,6 +4519,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * returns the models items model (= type of item).
+     *
+     * @param none
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public static function getModelItemsModel()
     {
         if (!static::hasModelItemsModel()) {
@@ -3762,6 +4538,13 @@ abstract class DefaultModel
         return $called_class::$model_items_model;
     }
 
+    /**
+     * returns true if this model has a friendly name configured.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public static function hasModelFriendlyName()
     {
         $called_class = get_called_class();
@@ -3777,6 +4560,13 @@ abstract class DefaultModel
         return true;
     }
 
+    /**
+     * returns the friendly name of this model, if it has been configured.
+     *
+     * @param none
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public static function getModelFriendlyName()
     {
         if (!static::hasModelFriendlyName()) {
