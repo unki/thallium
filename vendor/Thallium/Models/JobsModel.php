@@ -19,13 +19,37 @@
 
 namespace Thallium\Models ;
 
+/**
+ * This model can consist one or more JobModels and represents
+ * the internal work queue.
+ *
+ * @package Thallium\Models\JobsModel
+ * @subpackage Controllers
+ * @license AGPL3
+ * @copyright 2015-2016 Andreas Unterkircher <unki@netshadow.net>
+ * @author Andreas Unterkircher <unki@netshadow.net>
+ */
 class JobsModel extends DefaultModel
 {
+    /** @var string $model_table_name */
     protected static $model_table_name = 'jobs';
+
+    /** @var string $model_column_prefix */
     protected static $model_column_prefix = 'job';
+
+    /** @var bool $model_has_items */
     protected static $model_has_items = true;
+
+    /** @var string $model_items_model */
     protected static $model_items_model = 'JobModel';
 
+    /**
+     * removes expired jobs from queue
+     *
+     * @param int $timeout
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function deleteExpiredJobs($timeout)
     {
         global $db;
@@ -44,19 +68,45 @@ class JobsModel extends DefaultModel
             WHERE
                 UNIX_TIMESTAMP(job_time) < ?";
 
-        if (!($sth = $db->prepare($sql))) {
-            static::raiseError(__METHOD__ .', failed to prepare query!');
+        try {
+            $sth = $db->prepare($sql);
+        } catch (\PDOException $e) {
+            static::raiseError(get_class($db) .'::prepare() failed!', false, $e);
+            return false;
+        } catch (\Exception $e) {
+            static::raiseError(get_class($db) .'::prepare() failed!', false, $e);
             return false;
         }
 
-        if (!($db->execute($sth, array($oldest)))) {
-            static::raiseError(__METHOD__ .', failed to execute query!');
+        if (!isset($sth) ||
+            empty($sth) ||
+            !is_object($sth) ||
+            !is_a($sth, 'PDOStatement')
+        ) {
+            static::raiseError(get_class($db) ."::prepare() returned invalid data!");
+            return false;
+        }
+
+        try {
+            $db->execute($sth, array($oldest));
+        } catch (\PDOException $e) {
+            static::raiseError(get_class($db) .'::execute() failed!', false, $e);
+            return false;
+        } catch (\Exception $e) {
+            static::raiseError(get_class($db) .'::execute() failed!', false, $e);
             return false;
         }
 
         return true;
     }
 
+    /**
+     * returns an array of pending jobs.
+     *
+     * @param none
+     * @return array|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function getPendingJobs()
     {
         global $db;
@@ -71,17 +121,37 @@ class JobsModel extends DefaultModel
             static::$model_table_name
         );
 
-        if (($sth = $db->prepare($sql)) === false) {
-            static::raiseError(get_class($db) .'::prepare() returned false!');
+        try {
+            $sth = $db->prepare($sql);
+        } catch (\PDOException $e) {
+            static::raiseError(get_class($db) .'::prepare() failed!', false, $e);
+            return false;
+        } catch (\Exception $e) {
+            static::raiseError(get_class($db) .'::prepare() failed!', false, $e);
             return false;
         }
 
-        if (!$db->execute($sth)) {
-            static::raiseError(get_class($db) .'::execute() returned false!');
+        if (!isset($sth) ||
+            empty($sth) ||
+            !is_object($sth) ||
+            !is_a($sth, 'PDOStatement')
+        ) {
+            static::raiseError(get_class($db) ."::prepare() returned invalid data!");
+            return false;
+        }
+
+        try {
+            $db->execute($sth);
+        } catch (\PDOException $e) {
+            static::raiseError(get_class($db) .'::execute() failed!', false, $e);
+            return false;
+        } catch (\Exception $e) {
+            static::raiseError(get_class($db) .'::execute() failed!', false, $e);
             return false;
         }
 
         $jobs = array();
+
         if ($sth->rowCount() < 1) {
             return $jobs;
         }
@@ -92,7 +162,7 @@ class JobsModel extends DefaultModel
                     'idx' => $row->job_idx
                 ));
             } catch (\Exception $e) {
-                static::raiseError(__METHOD__ .'(), failed to load JobModel!');
+                static::raiseError(__METHOD__ .'(), failed to load JobModel!', false, $e);
                 return false;
             }
             array_push($jobs, $job);
