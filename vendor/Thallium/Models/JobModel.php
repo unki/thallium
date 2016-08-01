@@ -19,10 +19,24 @@
 
 namespace Thallium\Models ;
 
+/**
+ * Represents a single job.
+ *
+ * @package Thallium\Models\JobModel
+ * @subpackage Models
+ * @license AGPL3
+ * @copyright 2015-2016 Andreas Unterkircher <unki@netshadow.net>
+ * @author Andreas Unterkircher <unki@netshadow.net>
+ */
 class JobModel extends DefaultModel
 {
+    /** @var string $model_table_name */
     protected static $model_table_name = 'jobs';
+
+    /** @var string $model_column_prefix */
     protected static $model_column_prefix = 'job';
+
+    /** @var array $model_fields */
     protected static $model_fields = array(
         'idx' => array(
             FIELD_TYPE => FIELD_INT,
@@ -53,15 +67,17 @@ class JobModel extends DefaultModel
         ),
     );
 
+    /**
+     * sets the value of the session_id field
+     *
+     * @param string $sessionid
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function setSessionId($sessionid)
     {
-        if (empty($sessionid)) {
-            static::raiseError(__METHOD__ .'(), an empty session id is not allowed!');
-            return false;
-        }
-
-        if (!is_string($sessionid)) {
-            static::raiseError(__METHOD__ .'(), parameter has to be a string!');
+        if (!isset($sessionid) || empty($sessionid) || !is_string($sessionid)) {
+            static::raiseError(__METHOD__ .'(), $sessionid parameter is invalid!');
             return false;
         }
 
@@ -73,6 +89,13 @@ class JobModel extends DefaultModel
         return true;
     }
 
+    /**
+     * returns the value of the session_id field
+     *
+     * @param none
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function getSessionId()
     {
         if (!$this->hasFieldValue('session_id')) {
@@ -88,6 +111,13 @@ class JobModel extends DefaultModel
         return $session_id;
     }
 
+    /**
+     * returns true if the session_id field has a value.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function hasSessionId()
     {
         if (!$this->hasFieldValue('session_id')) {
@@ -97,17 +127,27 @@ class JobModel extends DefaultModel
         return true;
     }
 
+    /**
+     * sets the value of the in_processing field
+     *
+     * @param bool $value
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function setProcessingFlag($value = true)
     {
-        if (!isset($value) || empty($value) || !$value) {
-            if (!$this->setFieldValue('in_processing', 'N')) {
-                static::raiseError(__CLASS__ .'::setFieldValue() returned false!');
-                return false;
-            }
-            return true;
+        if (!isset($value) || !is_bool($value)) {
+            static::raiseError(__METHOD__ .'(), $value parameter is invalid!');
+            return false;
         }
 
-        if (!$this->setFieldValue('in_processing', 'Y')) {
+        if ($value === 'true') {
+            $value = 'Y';
+        } else {
+            $value = 'N';
+        }
+
+        if (!$this->setFieldValue('in_processing', $value)) {
             static::raiseError(__CLASS__ .'::setFieldValue() returned false!');
             return false;
         }
@@ -115,6 +155,13 @@ class JobModel extends DefaultModel
         return true;
     }
 
+    /**
+     * returns the value of the in_processing field
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function getProcessingFlag()
     {
         if (!$this->hasFieldValue('in_processing')) {
@@ -129,6 +176,13 @@ class JobModel extends DefaultModel
         return $flag;
     }
 
+    /**
+     * returns true if the in_processing flag is true.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function isProcessing()
     {
         if (($flag = $this->getProcessingFlag()) === false) {
@@ -136,7 +190,7 @@ class JobModel extends DefaultModel
             return false;
         }
 
-        if ($flag != 'Y') {
+        if (!$this->isEnabled($flag)) {
             return false;
         }
 
@@ -145,22 +199,35 @@ class JobModel extends DefaultModel
 
     protected function preSave()
     {
-        if (!$this->hasFieldValue('in_processing')) {
-            if (!$this->setFieldValue('in_processing', 'N')) {
-                static::raiseError(__CLASS__ .'::setFieldValue() returned false!');
-                return false;
-            }
+        if ($this->hasFieldValue('in_processing')) {
+            return true;
+        }
+
+        if (!$this->setFieldValue('in_processing', 'N')) {
+            static::raiseError(__CLASS__ .'::setFieldValue() returned false!');
+            return false;
         }
 
         return true;
     }
 
+    /**
+     * sets the value of the request_guid field
+     *
+     * @param string $guid
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function setRequestGuid($guid)
     {
         global $thallium;
 
-        if (empty($guid) || !$thallium->isValidGuidSyntax($guid)) {
-            static::raiseError(__METHOD__ .'(), first parameter needs to be a valid GUID!');
+        if (!isset($guid) ||
+            empty($guid) ||
+            !is_string($guid) ||
+            !$thallium->isValidGuidSyntax($guid)
+        ) {
+            static::raiseError(__METHOD__ .'(), $guid parameter is invalid!');
             return false;
         }
 
@@ -172,6 +239,13 @@ class JobModel extends DefaultModel
         return true;
     }
 
+    /**
+     * returns the value of the request_guid field
+     *
+     * @param none
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function getRequestGuid()
     {
         if (!$this->hasFieldValue('request_guid')) {
@@ -187,6 +261,13 @@ class JobModel extends DefaultModel
         return $request_guid;
     }
 
+    /**
+     * returns the value of the command field
+     *
+     * @param none
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function getCommand()
     {
         if (!$this->hasFieldValue('command')) {
@@ -202,6 +283,13 @@ class JobModel extends DefaultModel
         return $command;
     }
 
+    /**
+     * sets the value of the command field
+     *
+     * @param string $command
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function setCommand($command)
     {
         if (!isset($command) || empty($command) || !is_string($command)) {
@@ -217,6 +305,13 @@ class JobModel extends DefaultModel
         return true;
     }
 
+    /**
+     * returns the value of the parameters field
+     *
+     * @param none
+     * @return array|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function getParameters()
     {
         if (!$this->hasParameters()) {
@@ -242,10 +337,25 @@ class JobModel extends DefaultModel
         return $params;
     }
 
+    /**
+     * sets the value of the parameters field
+     *
+     * @param array $parameters
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function setParameters($parameters)
     {
-        if (!isset($parameters) || empty($parameters)) {
-            static::raiseError(__METHOD__ .'(), $parameters parameter needs to be set!');
+        if (!isset($parameters) ||
+            empty($parameters) ||
+            (!is_string($parameters) || !is_array($parameters) || !is_object($parameters))
+        ) {
+            static::raiseError(__METHOD__ .'(), $parameters parameter is invalid!');
+            return false;
+        }
+
+        if (is_object($parameters) && !is_a($parameters, 'stdClass')) {
+            static::raiseError(__METHOD__ .'(), only stdClass objects are supported!');
             return false;
         }
 
@@ -257,6 +367,13 @@ class JobModel extends DefaultModel
         return true;
     }
 
+    /**
+     * returns true if the parameters field has a value.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function hasParameters()
     {
         if (!$this->hasFieldValue('parameters')) {
