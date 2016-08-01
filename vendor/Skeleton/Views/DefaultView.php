@@ -19,7 +19,7 @@
 
 namespace Skeleton\Views;
 
-abstract class DefaultView extends \Thallium\Controllers\DefaultView
+abstract class DefaultView extends \Thallium\Views\DefaultView
 {
 }
 
