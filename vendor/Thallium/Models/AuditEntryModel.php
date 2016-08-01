@@ -19,10 +19,24 @@
 
 namespace Thallium\Models ;
 
+/**
+ * Represents a single audit log entry.
+ *
+ * @package Thallium\Models\AuditEntryModel
+ * @subpackage Models
+ * @license AGPL3
+ * @copyright 2015-2016 Andreas Unterkircher <unki@netshadow.net>
+ * @author Andreas Unterkircher <unki@netshadow.net>
+ */
 class AuditEntryModel extends DefaultModel
 {
+    /** @var string $model_table_name */
     protected static $model_table_name = 'audit';
+
+    /** @var string $model_column_prefix */
     protected static $model_column_prefix = 'audit';
+
+    /** @var array $model_fields */
     protected static $model_fields = array(
         'idx' => array(
             FIELD_TYPE => FIELD_INT,
@@ -47,6 +61,16 @@ class AuditEntryModel extends DefaultModel
         ),
     );
 
+    /** @var int MAX_MSG_LENGTH */
+    const MAX_MSG_LENGTH = 8192;
+
+    /**
+     * automatically set the time-field to the current time on saving.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     protected function preSave()
     {
         if (($time = microtime(true)) === false) {
@@ -62,6 +86,13 @@ class AuditEntryModel extends DefaultModel
         return true;
     }
 
+    /**
+     * returns true, if the message field has a value set.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function hasMessage()
     {
         if (!$this->hasFieldValue('message')) {
@@ -71,6 +102,13 @@ class AuditEntryModel extends DefaultModel
         return true;
     }
 
+    /**
+     * returns the value of the message field.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function getMessage()
     {
         if (!$this->hasMessage()) {
@@ -83,9 +121,21 @@ class AuditEntryModel extends DefaultModel
             return false;
         }
 
+        if (strlen($message) > static::MAX_MSG_LENGTH) {
+            static::raiseError(__METHOD__ .'(), returned message is too long!');
+            return false;
+        }
+
         return $message;
     }
 
+    /**
+     * stores a value into the message field.
+     *
+     * @param string $message
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function setMessage($message)
     {
         if (!isset($message) || empty($message) || !is_string($message)) {
@@ -93,7 +143,7 @@ class AuditEntryModel extends DefaultModel
             return false;
         }
 
-        if (strlen($message) > 8192) {
+        if (strlen($message) > static::MAX_MSG_LENGTH) {
             static::raiseError(__METHOD__ .'(), $message is too long!');
             return false;
         }
@@ -106,6 +156,13 @@ class AuditEntryModel extends DefaultModel
         return true;
     }
 
+    /**
+     * returns true, if the type field has a value set.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function hasEntryType()
     {
         if (!$this->hasFieldValue('type')) {
@@ -115,6 +172,13 @@ class AuditEntryModel extends DefaultModel
         return true;
     }
 
+    /**
+     * returns the value of the type field.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function getEntryType()
     {
         if (!$this->hasEntryType()) {
@@ -130,6 +194,13 @@ class AuditEntryModel extends DefaultModel
         return $type;
     }
 
+    /**
+     * stores a value into the type field.
+     *
+     * @param string $entry_type
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function setEntryType($entry_type)
     {
         if (!isset($entry_type) || empty($entry_type) || !is_string($entry_type)) {
@@ -150,6 +221,13 @@ class AuditEntryModel extends DefaultModel
         return true;
     }
 
+    /**
+     * returns true, if the scene field has a value set.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function hasScene()
     {
         if (!$this->hasFieldValue('scene')) {
@@ -159,6 +237,13 @@ class AuditEntryModel extends DefaultModel
         return true;
     }
 
+    /**
+     * returns the value of the scene field.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function getScene()
     {
         if (!$this->hasScene()) {
@@ -174,6 +259,13 @@ class AuditEntryModel extends DefaultModel
         return $message;
     }
 
+    /**
+     * stores a value into the scene field.
+     *
+     * @param string $scene
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function setScene($scene)
     {
         if (!isset($scene) || empty($scene) || !is_string($scene)) {
@@ -193,6 +285,13 @@ class AuditEntryModel extends DefaultModel
         return true;
     }
 
+    /**
+     * returns true, if the object_guid field has a value set.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function hasEntryGuid()
     {
         if (!$this->hasFieldValue('object_guid')) {
@@ -202,6 +301,13 @@ class AuditEntryModel extends DefaultModel
         return true;
     }
 
+    /**
+     * returns the value of the object_guid field.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function getEntryGuid()
     {
         if (!$this->hasEntryGuid()) {
@@ -217,6 +323,13 @@ class AuditEntryModel extends DefaultModel
         return $guid;
     }
 
+    /**
+     * stores a value into the object_guid field.
+     *
+     * @param string $message
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function setEntryGuid($guid)
     {
         if (!isset($guid) || empty($guid) || !is_string($guid)) {
