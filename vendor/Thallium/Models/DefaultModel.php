@@ -104,23 +104,20 @@ abstract class DefaultModel
     /**
      * class constructor
      *
-     * @param array $load_by
-     * @param array $sort_order
+     * @param array|null $load_by
+     * @param array|null $sort_order
      * @return void
      * @throws \Thallium\Controllers\ExceptionController
      */
     public function __construct($load_by = array(), $sort_order = array())
     {
-        if (!isset($load_by) ||
-            (isset($load_by) && !is_array($load_by))
-        ) {
-            static::raiseError(__METHOD__ .'(), parameter $load_by has to be an array!', true);
+        if (!isset($load_by) || (!is_array($load_by) && !is_null($load_by))) {
+            static::raiseError(__METHOD__ .'(), $load_by parameter is invalid!', true);
             return;
         }
 
-        if (!isset($sort_order) ||
-            (isset($sort_order) && !is_array($sort_order) && !is_null($sort_order))) {
-            static::raiseError(__METHOD__ .'(), parameter $sort_order has to be an array!', true);
+        if (!isset($sort_order) || (!is_array($sort_order) && !is_null($sort_order))) {
+            static::raiseError(__METHOD__ .'(), $sort_order parameter is invalid!', true);
             return;
         }
 
@@ -402,6 +399,14 @@ abstract class DefaultModel
      */
     protected function load($extend_query_where = null)
     {
+        if (isset($extend_query_where) &&
+            !empty($extend_query_where) &&
+            !is_string($extend_query_where)
+        ) {
+            static::raiseError(__METHOD__ .'(), $extend_query_where parameter is invalid!');
+            return false;
+        }
+
         global $thallium, $db;
 
         if (!static::hasFields() && !static::hasModelItems()) {
@@ -428,14 +433,6 @@ abstract class DefaultModel
                 }
                 array_push($order_by, "{$column} {$mode}");
             }
-        }
-
-        if (isset($extend_query_where) &&
-            !empty($extend_query_where) &&
-            !is_string($extend_query_where)
-        ) {
-            static::raiseError(__METHOD__ .'(), $extend_query_where parameter is invalid!');
-            return false;
         }
 
         if (method_exists($this, 'preLoad') && is_callable(array($this, 'preLoad'))) {
