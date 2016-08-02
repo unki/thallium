@@ -19,13 +19,27 @@
 
 namespace Thallium\Views;
 
+/**
+ * This View represents the page skeleton - the skeletal structure
+ * of the who web application.
+ *
+ * @package Thallium\Views\SkeletonView
+ * @subpackage Views
+ * @license AGPL3
+ * @copyright 2015-2016 Andreas Unterkircher <unki@netshadow.net>
+ * @author Andreas Unterkircher <unki@netshadow.net>
+ */
 class SkeletonView extends DefaultView
 {
+    /** @var string $view_class_name */
     protected static $view_class_name = 'skeleton';
 
     /**
-     * overwrite parent show() method as we do not have a lot
-     * to do here.
+     * overwrite parents show() method as we do not have a lot * to do here.
+     *
+     * @param none
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
      */
     public function show()
     {
