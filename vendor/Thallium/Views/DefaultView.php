@@ -19,29 +19,72 @@
 
 namespace Thallium\Views;
 
+/**
+ * DefaultModel is an abstract class that is used by all
+ * the other Thallium Views.
+ *
+ * It declares some common methods, properties and constants.
+ *
+ * @package Thallium\Views\DefaultView
+ * @subpackage Views
+ * @license AGPL3
+ * @copyright 2015-2016 Andreas Unterkircher <unki@netshadow.net>
+ * @author Andreas Unterkircher <unki@netshadow.net>
+ */
 abstract class DefaultView
 {
+    /** @var string $view_default_mode */
     protected static $view_default_mode = "list";
+
+    /** @var string $view_class_name */
     protected static $view_class_name;
+
+    /** @var array $view_default_modes */
     protected static $view_default_modes = array(
         '^list$',
         '^list-([0-9]+).html$',
         '^show$',
         '^edit$',
     );
+
+    /** @var array $view_modes */
     protected $view_modes = array();
+
+    /** @var array $view_items */
     protected $view_items = array();
+
+    /** @var array $view_data */
     protected $view_data = array();
+
+    /** @var object $view_current_item */
     protected $view_current_item;
 
+    /**
+     * class constructor
+     *
+     * @param none
+     * @return void
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function __construct()
     {
         if (!static::validateView()) {
             static::raiseError(__CLASS__ .'::validateView() returned false!', true);
             return;
         }
+
+        return;
     }
 
+    /**
+     * this overrides PHP own __set() method that is invoked for
+     * on writing into an undeclared class property.
+     *
+     * @param string $name
+     * @param mixed $value
+     * @return void
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     final public function __set($name, $value)
     {
         global $thallium;
@@ -55,6 +98,13 @@ abstract class DefaultView
         return;
     }
 
+    /**
+     * validates the Views parameters
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     protected static function validateView()
     {
         if (!isset(static::$view_default_mode) ||
@@ -76,6 +126,14 @@ abstract class DefaultView
         return true;
     }
 
+    /**
+     * this is the main entry point into the view.
+     * here the view decides what to do.
+     *
+     * @param none
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function show()
     {
         global $thallium, $query, $router, $tmpl;
@@ -160,12 +218,21 @@ abstract class DefaultView
         return false;
     }
 
+    /**
+     * a helper method to display a listing.
+     *
+     * @param int|null $pageno
+     * @param int|null $items_limit
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function showList($pageno = null, $items_limit = null)
     {
         global $tmpl;
 
         if (!isset($pageno) || empty($pageno) || !is_numeric($pageno)) {
-            if (($current_page = $this->getSessionVar("current_page")) === false) {
+            if (!$this->hasSessionVar("current_page") ||
+                ($current_page = $this->getSessionVar("current_page")) === false) {
                 $current_page = 1;
             }
         } else {
@@ -173,7 +240,8 @@ abstract class DefaultView
         }
 
         if (!isset($items_limit) || is_null($items_limit) || !is_numeric($items_limit)) {
-            if (($current_items_limit = $this->getSessionVar("current_items_limit")) === false) {
+            if (!$this->hasSessionVar("current_items_limit") ||
+                ($current_items_limit = $this->getSessionVar("current_items_limit")) === false) {
                 $current_items_limit = -1;
             }
         } else {
@@ -212,7 +280,7 @@ abstract class DefaultView
                 'delta' => 2,
             ));
         } catch (\Exception $e) {
-            $this->raiseError(__METHOD__ .'(), failed to load PagingController!');
+            $this->raiseError(__METHOD__ .'(), failed to load PagingController!', false, $e);
             return false;
         }
 
@@ -267,36 +335,105 @@ abstract class DefaultView
         return $tmpl->fetch($template_name);
     }
 
+    /**
+     * a helper method to display a editable view for a model.
+     *
+     * @param int $id
+     * @param string $guid
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function showEdit($id, $guid)
     {
-        global $tmpl;
+        global $thallium, $tmpl;
+
+        if (!isset($id) ||
+            empty($id) ||
+            !is_numeric($id) ||
+            !$thallium->isValidId($id)
+        ) {
+            static::raiseError(__METHOD__ .'(), $id parameter is invalid!');
+            return false;
+        }
+
+        if (!isset($guid) ||
+            empty($guid) ||
+            !is_string($guid) ||
+            !$thallium->isValidGuidSyntax($guid)
+        ) {
+            static::raiseError(__METHOD__ .'(), $guid parameter is invalid!');
+            return false;
+        }
 
         $tmpl->assign('item', $id);
 
         $template_name = static::$view_class_name ."_edit.tpl";
 
         if (!$tmpl->templateExists($template_name)) {
-            static::raiseError(__METHOD__ ."(), template '{$template_name}' does not exist!");
+            static::raiseError(sprintf(
+                '%s(), template "%s" does not exist!',
+                __METHOD__,
+                $template_name
+            ));
             return false;
         }
 
         return $tmpl->fetch($template_name);
     }
 
+    /**
+     * a helper method to display a model.
+     *
+     * @param int $id
+     * @param string $guid
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function showItem($id, $guid)
     {
-        global $tmpl;
+        global $thallium, $tmpl;
+
+        if (!isset($id) ||
+            empty($id) ||
+            !is_numeric($id) ||
+            $thallium->isValidId($id)
+        ) {
+            static::raiseError(__METHOD__ .'(), $id parameter is invalid!');
+            return false;
+        }
+
+        if (!isset($guid) ||
+            empty($guid) ||
+            !is_string($guid) ||
+            $thallium->isValidGuidSyntax($guid)
+        ) {
+            static::raiseError(__METHOD__ .'(), $guid parameter is invalid!');
+            return false;
+        }
 
         $template_name = static::$view_class_name ."_show.tpl";
 
         if (!$tmpl->templateExists($template_name)) {
-            static::raiseError(__METHOD__ ."(), template '{$template_name}' does not exist!");
+            static::raiseError(sprintf(
+                '%s(), template "%s" does not exist!',
+                __METHOD__,
+                $template_name
+            ));
             return false;
         }
 
         return $tmpl->fetch($template_name);
     }
 
+    /**
+     * triggers an exception.
+     *
+     * @param string $string
+     * @param bool $stop_execution
+     * @param callable $execption
+     * @return void
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     protected static function raiseError($string, $stop_execution = false, $exception = null)
     {
         global $thallium;
@@ -307,9 +444,16 @@ abstract class DefaultView
             $exception
         );
 
-        return true;
+        return;
     }
 
+    /**
+     * adds a mode that this view is going to support.
+     *
+     * @param string $mode
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function addMode($mode)
     {
         if (!isset($mode) || empty($mode) || !is_string($mode)) {
@@ -333,6 +477,13 @@ abstract class DefaultView
         return true;
     }
 
+    /**
+     * returns true if $mode is a valid mode for the current View.
+     *
+     * @param string $mode
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function isValidMode($mode)
     {
         if (!isset($mode) || empty($mode) || !is_string($mode)) {
@@ -354,6 +505,13 @@ abstract class DefaultView
         return false;
     }
 
+    /**
+     * returns all the available modes for the current View.
+     *
+     * @param none
+     * @return array
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function getModes()
     {
         if (!isset($this->view_modes) || empty($this->view_modes) || !is_array($this->view_modes)) {
@@ -363,11 +521,47 @@ abstract class DefaultView
         return array_merge(static::$view_default_modes, $this->view_modes);
     }
 
+    /**
+     * returns true if the session-variable $name is set.
+     *
+     * @param string $name
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    protected function hasSessionVar($name)
+    {
+        global $session;
+
+        if (!isset($name) || empty($name) || !is_string($name)) {
+            static::raiseError(__METHOD__ .'(), $name parameter is invalid!');
+            return false;
+        }
+
+        if (!$session->hasVariable($name, static::$view_class_name)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * returns the value of the session-variable $name.
+     *
+     * @param string $name
+     * @return mixed|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     protected function getSessionVar($name)
     {
         global $session;
 
-        if (!$session->hasVariable($name, static::$view_class_name)) {
+        if (!isset($name) || empty($name) || !is_string($name)) {
+            static::raiseError(__METHOD__ .'(), $name parameter is invalid!');
+            return false;
+        }
+
+        if (!$this->hasSessionVar($name)) {
+            static::raiseError(__CLASS__ .'::hasSessionVar() returned false!');
             return false;
         }
 
@@ -379,9 +573,29 @@ abstract class DefaultView
         return $value;
     }
 
+    /**
+     * sets the value $value on the session-variable $name.
+     *
+     * @param string $name
+     * @param mixed $value
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     protected function setSessionVar($name, $value)
     {
         global $session;
+
+        if (!isset($name) || empty($name) || !is_string($name)) {
+            static::raiseError(__METHOD__ .'(), $name parameter is invalid!');
+            return false;
+        }
+
+        if (!isset($value) ||
+            (!is_string($value) && !is_numeric($value) && !is_array($value) && !is_object($value))
+        ) {
+            static::raiseError(__METHOD__ .'(), $value parameter is invalid!');
+            return false;
+        }
 
         if (!$session->setVariable(
             $name,
@@ -395,6 +609,13 @@ abstract class DefaultView
         return true;
     }
 
+    /**
+     * sets the view data this View operates on.
+     *
+     * @param object $data
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     protected function setViewData(&$data)
     {
         if (!isset($data) || empty($data) || !is_object($data)) {
@@ -416,6 +637,13 @@ abstract class DefaultView
         return true;
     }
 
+    /**
+     * returns true if the View has data set.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     protected function hasViewData()
     {
         if (!isset($this->view_data) || empty($this->view_data) || !is_object($this->view_data)) {
@@ -425,6 +653,13 @@ abstract class DefaultView
         return true;
     }
 
+    /**
+     * returns the View data.
+     *
+     * @param none
+     * @return array|object
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     protected function getViewData()
     {
         if (!$this->hasViewData()) {
@@ -435,10 +670,22 @@ abstract class DefaultView
         return $this->view_data;
     }
 
+    /**
+     * a smarty block plugin that floods a list of items.
+     *
+     * @param array $params
+     * @param string $content
+     * @param object $smarty
+     * @param bool $repeat
+     * @return string
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function dataList($params, $content, &$smarty, &$repeat)
     {
         if (array_key_exists('name', $params) &&
-            isset($params['name'])
+            isset($params['name']) &&
+            !empty($params['name']) &&
+            is_string($params['name'])
         ) {
             $list_name = $params['name'];
         } else {
@@ -466,7 +713,8 @@ abstract class DefaultView
             return false;
         }
 
-        if (!isset($items_keys[$index]) ||
+        if (!array_key_exists($index, $items_keys) ||
+            !isset($items_keys[$index]) ||
             !is_numeric($items_keys[$index])
         ) {
             static::raiseError(__METHOD__ .'(), internal function went wrong!');
@@ -479,6 +727,12 @@ abstract class DefaultView
         if (!isset($item_idx) || !is_numeric($item_idx)) {
             $repeat = false;
             return $content;
+        }
+
+        if (!array_key_exists($item_idx, $this->view_items)) {
+            static::raiseError(__METHOD__ .'(), internal fucntion went wrong!');
+            $repeat = false;
+            return false;
         }
 
         $item = $this->view_items[$item_idx];
@@ -510,6 +764,14 @@ abstract class DefaultView
         return $content;
     }
 
+    /**
+     * returns the current index pointer of a list identified by $list_name.
+     *
+     * @param string $list_name
+     * @param object $smarty
+     * @return int|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     protected function getListIndex($list_name, &$smarty)
     {
         if (!isset($list_name) || empty($list_name) || !is_string($list_name)) {
@@ -537,6 +799,15 @@ abstract class DefaultView
         return $index;
     }
 
+    /**
+     * sets the current index pointer of a list identified by $list_name.
+     *
+     * @param string $list_name
+     * @param int $index
+     * @param object $smarty
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     protected function setListIndex($list_name, $index, &$smarty)
     {
         if (!isset($list_name) || empty($list_name) || !is_string($list_name)) {
@@ -566,15 +837,32 @@ abstract class DefaultView
         return true;
     }
 
+    /**
+     * returns true if the View knows about the current item that is
+     * currently handled.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     protected function hasCurrentItem()
     {
-        if (!isset($this->view_current_item) || empty($this->view_current_item)) {
+        if (!isset($this->view_current_item) ||
+            empty($this->view_current_item)
+        ) {
             return false;
         }
 
         return true;
     }
 
+    /**
+     * returns the current item if the View knows about.
+     *
+     * @param none
+     * @return object|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     protected function getCurrentItem()
     {
         if (!$this->hasCurrentItem()) {
@@ -585,9 +873,16 @@ abstract class DefaultView
         return $this->view_current_item;
     }
 
+    /**
+     * sets the current item.
+     *
+     * @param object $item
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     protected function setCurrentItem(&$item)
     {
-        if (!isset($item) || empty($item)) {
+        if (!isset($item) || empty($item) || !is_object($item)) {
             static::raiseError(__METHOD__ .'(), $item parameter is invalid!');
             return false;
         }
