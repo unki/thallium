@@ -19,11 +19,32 @@
 
 namespace Thallium\Views;
 
+/**
+ * This is an example view that is displayed right after successful
+ * installation of Thallium.
+ *
+ * @package Thallium\Views\MainView
+ * @subpackage Views
+ * @license AGPL3
+ * @copyright 2015-2016 Andreas Unterkircher <unki@netshadow.net>
+ * @author Andreas Unterkircher <unki@netshadow.net>
+ */
 class MainView extends DefaultView
 {
+    /** @var string $view_class_name */
     protected static $view_class_name = 'main';
+
+    /** @var string $view_default_mode */
     protected static $view_default_mode = 'show';
 
+    /**
+     * override the parents show() method as we do not have a lot
+     * to do in this view.
+     *
+     * @param none
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     public function show()
     {
         global $db, $tmpl;
