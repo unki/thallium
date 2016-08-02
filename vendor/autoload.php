@@ -31,7 +31,7 @@
  *
  * @param string $class
  * @return void
- * @throws \Extension
+ * @throws \Exception
  */
 function autoload($class)
 {
