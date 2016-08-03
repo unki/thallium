@@ -37,7 +37,7 @@ class RpcController extends DefaultController
      *
      * @param none
      * @return void
-     * @throws \Thallium\Controller\ExceptionController
+     * @throws \Thallium\Controllers\ExceptionController
      */
     public function __construct()
     {
@@ -46,7 +46,7 @@ class RpcController extends DefaultController
         if (!isset($router) ||
             empty($router) ||
             !is_object($router) ||
-            !is_a($router, 'Thallium\Controller\HttpRouterController')
+            !is_a($router, 'Thallium\Controllers\HttpRouterController')
         ) {
             static::raiseError(__METHOD__ .'(), HttpRouterController not loaded!', true);
             return;
@@ -70,7 +70,7 @@ class RpcController extends DefaultController
      *
      * @param none
      * @return bool
-     * @throws \Thallium\Controller\ExceptionController
+     * @throws \Thallium\Controllers\ExceptionController
      */
     public function perform()
     {
@@ -146,7 +146,7 @@ class RpcController extends DefaultController
      *
      * @param none
      * @return bool
-     * @throws \Thallium\Controller\ExceptionController
+     * @throws \Thallium\Controllers\ExceptionController
      */
     protected function rpcIdle()
     {
@@ -160,7 +160,7 @@ class RpcController extends DefaultController
      *
      * @param none
      * @return bool
-     * @throws \Thallium\Controller\ExceptionController
+     * @throws \Thallium\Controllers\ExceptionController
      */
     protected function rpcDelete()
     {
@@ -257,7 +257,7 @@ class RpcController extends DefaultController
      *
      * @param none
      * @return bool
-     * @throws \Thallium\Controller\ExceptionController
+     * @throws \Thallium\Controllers\ExceptionController
      */
     protected function rpcGetContent()
     {
@@ -304,7 +304,7 @@ class RpcController extends DefaultController
      *
      * @param none
      * @return bool
-     * @throws \Thallium\Controller\ExceptionController
+     * @throws \Thallium\Controllers\ExceptionController
      */
     protected function rpcFindPrevNextObject()
     {
@@ -414,7 +414,7 @@ class RpcController extends DefaultController
      *
      * @param none
      * @return bool
-     * @throws \Thallium\Controller\ExceptionController
+     * @throws \Thallium\Controllers\ExceptionController
      */
     protected function rpcUpdate()
     {
@@ -505,7 +505,7 @@ class RpcController extends DefaultController
      *
      * @param none
      * @return bool
-     * @throws \Thallium\Controller\ExceptionController
+     * @throws \Thallium\Controllers\ExceptionController
      */
     protected function rpcSubmitToMessageBus()
     {
@@ -534,7 +534,7 @@ class RpcController extends DefaultController
      *
      * @param none
      * @return bool
-     * @throws \Thallium\Controller\ExceptionController
+     * @throws \Thallium\Controllers\ExceptionController
      */
     protected function rpcRetrieveFromMessageBus()
     {
@@ -560,7 +560,7 @@ class RpcController extends DefaultController
      *
      * @param none
      * @return object
-     * @throws \Thallium\Controller\ExceptionController
+     * @throws \Thallium\Controllers\ExceptionController
      */
     protected function rpcProcessMessages()
     {
