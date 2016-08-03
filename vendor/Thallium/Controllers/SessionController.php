@@ -61,6 +61,16 @@ class SessionController extends DefaultController
             static::raiseError(__METHOD__ .'(), session_start() returned false!', true);
             return;
         }
+
+        // check if we have been fooled by a client sending a cookie with an empty or invalid sessionid.
+        $sid = session_id();
+
+        if (empty($sid) || !preg_match('/^[a-zA-Z0-9,\-]{22,40}$/', $sid)) {
+            session_regenerate_id();
+            session_start();
+        }
+
+        return;
     }
 
     /**
