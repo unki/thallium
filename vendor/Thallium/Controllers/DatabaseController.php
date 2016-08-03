@@ -95,21 +95,12 @@ class DatabaseController extends DefaultController
             return;
         }
 
-        if (!isset(
-            $dbconfig['type'],
-            $dbconfig['host'],
-            $dbconfig['db_name'],
-            $dbconfig['db_user'],
-            $dbconfig['db_pass']
-        )) {
-            $this->raiseErrror(
-                "Incomplete database configuration - please check configuration!",
-                true
-            );
+        $this->db_cfg = $dbconfig;
+
+        if (!$this->verifyDatabaseConfiguration()) {
+            static::raiseError(__CLASS__ .'::verifyDatabaseConfiguration() returned false!', true);
             return;
         }
-
-        $this->db_cfg = $dbconfig;
 
         if (!$this->connect()) {
             static::raiseError(__CLASS__ .'::connect() returned false!', true);
@@ -122,6 +113,59 @@ class DatabaseController extends DefaultController
         }
 
         return;
+    }
+
+    /**
+     * verify the loaded database configuration settings.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    protected function verifyDatabaseConfiguration()
+    {
+        if (!isset($this->db_cfg) || empty($this->db_cfg) || !is_array($this->db_cfg)) {
+            static::raiseError(__METHOD__ .'(), database configuration has not been loaded!');
+            return false;
+        }
+
+        if (!isset($this->db_cfg['type']) ||
+            empty($this->db_cfg['type']) ||
+            !is_string($this->db_cfg['type'])
+        ) {
+            static::raiseError(__METHOD__ .'(), "type" parameter in [database] section is invalid!');
+            return false;
+        }
+        if (!isset($this->db_cfg['host']) ||
+            empty($this->db_cfg['host']) ||
+            !is_string($this->db_cfg['host'])
+        ) {
+            static::raiseError(__METHOD__ .'(), "host" parameter in [database] section is invalid!');
+            return false;
+        }
+        if (!isset($this->db_cfg['db_name']) ||
+            empty($this->db_cfg['db_name']) ||
+            !is_string($this->db_cfg['db_name'])
+        ) {
+            static::raiseError(__METHOD__ .'(), "db_name" parameter in [database] section is invalid!');
+            return false;
+        }
+        if (!isset($this->db_cfg['db_user']) ||
+            empty($this->db_cfg['db_user']) ||
+            !is_string($this->db_cfg['db_user'])
+        ) {
+            static::raiseError(__METHOD__ .'(), "db_user" parameter in [database] section is invalid!');
+            return false;
+        }
+        if (!isset($this->db_cfg['db_pass']) ||
+            empty($this->db_cfg['db_pass']) ||
+            !is_string($this->db_cfg['db_pass'])
+        ) {
+            static::raiseError(__METHOD__ .'(), "db_pass" parameter in [database] section is invalid!');
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -194,7 +238,7 @@ class DatabaseController extends DefaultController
             static::raiseError(__METHOD__ .'(), $status parameter is invalid!');
             return false;
         }
-        
+
         $this->is_connected = $status;
         return true;
     }
@@ -529,7 +573,7 @@ class DatabaseController extends DefaultController
             static::raiseError(__CLASS__ .'::getTablePrefix() returend false!');
             return false;
         }
-    
+
         $query = str_replace("TABLEPREFIX", $this->getTablePrefix(), $query);
         return true;
     }
