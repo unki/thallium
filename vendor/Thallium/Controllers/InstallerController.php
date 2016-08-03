@@ -124,50 +124,50 @@ class InstallerController extends DefaultController
         }
 
         if (!empty($this->schema_version_before)) {
-            $this->write(sprintf(
-                'Application database schema version before upgrade: %s<br />\n',
+            printf(
+                'Application database schema version before upgrade: %s<br />',
                 $this->schema_version_before
-            ));
+            );
         }
 
-        $this->write(sprintf(
-            'Application software supported schema version: %s<br />\n',
+        printf(
+            'Application software supported schema version: %s<br />',
             $db->getApplicationSoftwareSchemaVersion()
-        ));
+        );
 
-        $this->write(sprintf(
-            'Application database schema version after upgrade: %s<br />\n',
+        printf(
+            'Application database schema version after upgrade: %s<br />',
             $db->getApplicationDatabaseSchemaVersion()
-        ));
+        );
 
-        $this->write('<br /><br />');
+        print '<br /><br />';
 
         if (!empty($this->framework_schema_version_before)) {
-            $this->write(sprintf(
-                'Framework database schema version before upgrade: %s<br />\n',
+            printf(
+                'Framework database schema version before upgrade: %s<br />',
                 $this->framework_schema_version_before
-            ));
+            );
         }
 
-        $this->write(sprintf(
-            'Framework software supported schema version: %s<br />\n',
+        printf(
+            'Framework software supported schema version: %s<br />',
             $db->getFrameworkSoftwareSchemaVersion()
-        ));
+        );
 
-        $this->write(sprintf(
-            'Framework database schema version after upgrade: %s<br />\n',
+        printf(
+            'Framework database schema version after upgrade: %s<br />',
             $db->getFrameworkDatabaseSchemaVersion()
-        ));
+        );
 
         if (($base_path = $config->getWebPath()) === true) {
             static::raiseError(get_class($config) .'"::getWebPath() returned false!');
             return false;
         }
 
-        $this->write(sprintf(
-            '"<a href="%s">Return to application</a><br />\n',
+        printf(
+            '<br /><a href="%s">Return to application</a><br />',
             $base_path
-        ));
+        );
 
         return true;
     }
