@@ -65,6 +65,9 @@ class MainController extends DefaultController
      */
     public function __construct($mode = null)
     {
+        // we like errors!
+        error_reporting(E_ALL);
+
         $GLOBALS['thallium'] =& $this;
 
         if (!$this->loadController("Config", "config")) {
