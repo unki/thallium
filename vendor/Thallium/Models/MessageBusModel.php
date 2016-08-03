@@ -48,7 +48,7 @@ class MessageBusModel extends DefaultModel
      *
      * @param string $session_id
      * @return array|bool
-     * @throws \Thallium\Controller\ExceptionController
+     * @throws \Thallium\Controllers\ExceptionController
      */
     public function getMessagesForSession($session_id)
     {
@@ -132,7 +132,7 @@ class MessageBusModel extends DefaultModel
      *
      * @param none
      * @return array|bool
-     * @throws \Thallium\Controller\ExceptionController
+     * @throws \Thallium\Controllers\ExceptionController
      */
     public function getServerRequests()
     {
@@ -205,7 +205,7 @@ class MessageBusModel extends DefaultModel
      *
      * @param int $timeout
      * @return bool
-     * @throws \Thallium\Controller\ExceptionController
+     * @throws \Thallium\Controllers\ExceptionController
      */
     public function deleteExpiredMessages($timeout)
     {
