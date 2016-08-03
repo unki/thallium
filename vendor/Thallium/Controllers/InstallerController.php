@@ -57,7 +57,7 @@ class InstallerController extends DefaultController
         if (!isset($db) ||
             empty($db) ||
             !is_object($db) ||
-            !is_a($db, 'Thallium\Controller\DatabaseController')
+            !is_a($db, 'Thallium\Controllers\DatabaseController')
         ) {
             static::raiseError(__METHOD__ .'(), it looks like DatabaseController is not available!', true);
             return;
@@ -66,7 +66,7 @@ class InstallerController extends DefaultController
         if (!isset($config) ||
             empty($config) ||
             !is_object($config) ||
-            !is_a($config, 'Thallium\Controller\ConfigController')
+            !is_a($config, 'Thallium\Controllers\ConfigController')
         ) {
             static::raiseError(__METHOD__ .'(), it looks like ConfigController is not available!', true);
             return;
