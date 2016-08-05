@@ -988,7 +988,7 @@ abstract class DefaultView
      * @return int|bool
      * @throws \Thallium\Controllers\ExceptionController
      */
-    protected static function getViewItemsCount()
+    protected function getViewItemsCount()
     {
         if (isset($this->view_items) &&
             !empty($this->view_items) &&
@@ -1017,7 +1017,7 @@ abstract class DefaultView
      * @return int|bool
      * @throws \Thallium\Controllers\ExceptionController
      */
-    protected static function getViewItemsKeys()
+    protected function getViewItemsKeys()
     {
         if (isset($this->view_items) &&
             !empty($this->view_items) &&
