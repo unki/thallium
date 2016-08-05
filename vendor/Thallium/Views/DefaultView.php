@@ -1041,7 +1041,7 @@ abstract class DefaultView
             return false;
         }
 
-        if ($view_data->hasItems()) {
+        if (!$view_data->hasItems()) {
             return array();
         }
 
