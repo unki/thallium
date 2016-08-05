@@ -1075,7 +1075,7 @@ abstract class DefaultView
             is_array($this->view_items)
         ) {
             if (!array_key_exists($item_idx, $this->view_items) ||
-                !isset($this->view_items[$items_idx]) ||
+                !isset($this->view_items[$item_idx]) ||
                 empty($this->view_items[$item_idx]) ||
                 is_object($this->view_items[$item_idx])
             ) {
