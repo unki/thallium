@@ -661,7 +661,10 @@ abstract class DefaultView
      */
     protected function hasViewData()
     {
-        if (!isset($this->view_data) || empty($this->view_data) || !is_object($this->view_data)) {
+        if (!isset($this->view_data) ||
+            empty($this->view_data) ||
+            !is_object($this->view_data)
+        ) {
             return false;
         }
 
@@ -760,7 +763,30 @@ abstract class DefaultView
             return false;
         }
 
-        $item = $this->view_items[$item_idx];
+        /**
+         * showList() has been called and for paging the internal $view_items has been set
+         */
+        if (isset($this->view_items) &&
+            !empty($this->view_items) &&
+            is_array($this->view_items) &&
+            array_key_exists($item_idx, $this->view_items)
+        ) {
+            $item = $this->view_items[$item_idx];
+        /**
+         * otherwise we have to pull the view data directly from the $view_data object
+         */
+        } else {
+            if (!$this->hasViewData() || ($view_data = $this->getViewData()) === false) {
+                static::raiseError(__METHOD__ .'(), failed to retrieve view-data!');
+                $repeat = false;
+                return false;
+            }
+            if (!$view_data->hasItem($item_idx) || ($item = $view_data->getItem($item_idx)) === false) {
+                static::raiseError(__METHOD__ .'(), failed to retrieve view-item!');
+                $repeat = false;
+                return false;
+            }
+        }
 
         if (!isset($item) || empty($item) || !is_object($item)) {
             $repeat = false;
