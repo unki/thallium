@@ -692,6 +692,16 @@ abstract class DefaultView
             $list_name = 'item_list';
         }
 
+        if (array_key_exists('assign', $params) &&
+            isset($params['assign']) &&
+            !empty($params['assign']) &&
+            is_string($params['assign'])
+        ) {
+            $assign_to = $params['assign'];
+        } else {
+            $assign_to = 'item';
+        }
+
         if (($index = $this->getListIndex($list_name, $smarty)) === false) {
             static::raiseError(__CLASS__ .'::getListIndex() returned false!');
             $repeat = false;
@@ -748,7 +758,7 @@ abstract class DefaultView
             return false;
         }
 
-        $smarty->assign("item", $item);
+        $smarty->assign($assign_to, $item);
 
         if ($item->hasIdx() && $item->hasGuid()) {
             $smarty->assign("item_safe_link", "{$item->getIdx()}-{$item->getGuid()}");
