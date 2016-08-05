@@ -1062,8 +1062,8 @@ abstract class DefaultView
      */
     protected function getViewItemsItem($item_idx)
     {
-        if (!isset($item_idx) || empty($item_idx) || !is_numeric($item_idx)) {
-            static::raiseError(__CLASS__ .'::getViewItemsItem() returned false!');
+        if (!isset($item_idx) || !is_numeric($item_idx)) {
+            static::raiseError(__METHOD__ .'(), $item_idx parameter is invalid!');
             return false;
         }
 
