@@ -2773,7 +2773,7 @@ abstract class DefaultModel
         ) {
             static::raiseError(__METHOD__ .'(), $offset parameter is invalid!');
             return false;
-        } elseif (isset($offset) && is_null($offset)) {
+        } elseif (!isset($offset) || is_null($offset)) {
             $offset = 0;
         }
 
