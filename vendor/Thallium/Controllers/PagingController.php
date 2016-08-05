@@ -117,7 +117,7 @@ class PagingController extends DefaultController
             return false;
         }
 
-        if (!isset($limit) || (!is_null($limit) && !is_numeric($limit))) {
+        if (!is_null($limit) && !is_numeric($limit)) {
             static::raiseError(__METHOD__ .'(), $limit parameter is invalid!');
             return false;
         }
