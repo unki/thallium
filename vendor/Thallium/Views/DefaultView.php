@@ -689,6 +689,37 @@ abstract class DefaultView
     }
 
     /**
+     * returns the number of items from the $view_data object;
+     *
+     * @param none
+     * @return int|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    protected function getViewDataCount()
+    {
+        if (!$this->hasViewData()) {
+            static::raiseError(__CLASS__ .'::hasViewData() returned false!');
+            return false;
+        }
+
+        if (($view_data = $this->getViewData()) === false) {
+            static::raiseError(__CLASS__ .'::getViewData() returned false!');
+            return false;
+        }
+
+        if (!$view_data->hasItems()) {
+            return 0;
+        }
+
+        if (($total = $view_data->getItemsCount()) === false) {
+            static::raiseError(get_class($view_data) .'::getItemsCount() returned false!');
+            return false;
+        }
+
+        return $total;
+    }
+
+    /**
      * a smarty block plugin that floods a list of items.
      *
      * @param array $params
@@ -731,13 +762,20 @@ abstract class DefaultView
             return $content;
         }
 
-        if ($index >= count($this->view_items)) {
+        if (($total_items = $this->getViewItemsCount()) === false) {
+            static::raiseError(__CLASS__ .'::getViewDataCount() returned false!');
+            $repeat = false;
+            return false;
+        }
+
+        if ($index >= $total_items) {
             $repeat = false;
             return $content;
         }
 
-        if (($items_keys = array_keys($this->view_items)) === false) {
-            static::raiseError(__METHOD__ .'(), internal function went wrong!');
+        if (($items_keys = $this->getViewItemsKeys()) === false) {
+            static::raiseError(__CLASS__ .'::getViewItemsKeys() returned false!');
+            $repeat = false;
             return false;
         }
 
@@ -757,35 +795,10 @@ abstract class DefaultView
             return $content;
         }
 
-        if (!array_key_exists($item_idx, $this->view_items)) {
-            static::raiseError(__METHOD__ .'(), internal fucntion went wrong!');
+        if (($item = $this->getViewItemsItem($item_idx)) === false) {
+            static::raiseError(__CLASS__ .'::getViewItemsItem() returned false!');
             $repeat = false;
             return false;
-        }
-
-        /**
-         * showList() has been called and for paging the internal $view_items has been set
-         */
-        if (isset($this->view_items) &&
-            !empty($this->view_items) &&
-            is_array($this->view_items) &&
-            array_key_exists($item_idx, $this->view_items)
-        ) {
-            $item = $this->view_items[$item_idx];
-        /**
-         * otherwise we have to pull the view data directly from the $view_data object
-         */
-        } else {
-            if (!$this->hasViewData() || ($view_data = $this->getViewData()) === false) {
-                static::raiseError(__METHOD__ .'(), failed to retrieve view-data!');
-                $repeat = false;
-                return false;
-            }
-            if (!$view_data->hasItem($item_idx) || ($item = $view_data->getItem($item_idx)) === false) {
-                static::raiseError(__METHOD__ .'(), failed to retrieve view-item!');
-                $repeat = false;
-                return false;
-            }
         }
 
         if (!isset($item) || empty($item) || !is_object($item)) {
@@ -942,14 +955,153 @@ abstract class DefaultView
         return true;
     }
 
+    /**
+     * returns the filename of the listing-template.
+     *
+     * @param none
+     * @return string
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     protected static function getListTemplateName()
     {
         return static::$view_class_name ."_list.tpl";
     }
 
+    /**
+     * returns the filename of the editing-template.
+     *
+     * @param none
+     * @return string
+     * @throws \Thallium\Controllers\ExceptionController
+     */
     protected static function getEditTemplateName()
     {
         return static::$view_class_name ."_edit.tpl";
+    }
+
+    /**
+     * returns the number of items for this view.
+     * if showList() has been called before, this may return only a limited
+     * number because of the PagingController has limited the data range.
+     *
+     * @param none
+     * @return int|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    protected static function getViewItemsCount()
+    {
+        if (isset($this->view_items) &&
+            !empty($this->view_items) &&
+            is_array($this->view_items)
+        ) {
+            return count($this->view_items);
+        }
+
+        if (!$this->hasViewData()) {
+            static::raiseError(__CLASS__ .'::hasViewData() returned false!');
+            return false;
+        }
+
+        if (($total = $this->getViewDataCount()) === false) {
+            static::raiseError(__CLASS__ .'::getViewDataCount() returned false!');
+            return false;
+        }
+
+        return $total;
+    }
+
+    /**
+     * returns the keys of the items available in the model.
+     *
+     * @param none
+     * @return int|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    protected static function getViewItemsKeys()
+    {
+        if (isset($this->view_items) &&
+            !empty($this->view_items) &&
+            is_array($this->view_items)
+        ) {
+            if (($items_keys = array_keys($this->view_items)) === false) {
+                static::raiseError(__METHOD__ .'(), internal function went wrong!');
+                return false;
+            }
+
+            return $items_keys;
+        }
+
+        if (!$this->hasViewData()) {
+            static::raiseError(__CLASS__ .'::hasViewData() returned false!');
+            return false;
+        }
+
+        if (($view_data = $this->getViewData()) === false) {
+            static::raiseError(__CLASS__ .'::getViewData() returned false!');
+            return false;
+        }
+
+        if ($view_data->hasItems()) {
+            return array();
+        }
+
+        if (($items_keys = $view_data->getItemsKeys()) === false) {
+            static::raiseError(get_class($view_data) .'::getItemsKeys() returned false!');
+            return false;
+        }
+
+        return $items_keys;
+    }
+
+    /**
+     * returns the item specified by $item_idx from the $view_data object
+     *
+     * @param int $item_idx
+     * @return object|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    protected function getViewItemsItem($item_idx)
+    {
+        if (!isset($item_idx) || empty($item_idx) || !is_numeric($item_idx)) {
+            static::raiseError(__CLASS__ .'::getViewItemsItem() returned false!');
+            return false;
+        }
+
+        /**
+         * showList() has been called and for paging the internal $view_items has been set
+         */
+        if (isset($this->view_items) &&
+            !empty($this->view_items) &&
+            is_array($this->view_items)
+        ) {
+            if (!array_key_exists($item_idx, $this->view_items) ||
+                !isset($this->view_items[$items_idx]) ||
+                empty($this->view_items[$item_idx]) ||
+                is_object($this->view_items[$item_idx])
+            ) {
+                static::raiseError(__METHOD__ .'(), requested item not available in $view_items');
+                return false;
+            }
+
+            return $this->view_items[$item_idx];
+        }
+
+        /**
+         * otherwise we have to pull the item directly from the $view_data object
+         */
+        if (!$this->hasViewData() || ($view_data = $this->getViewData()) === false) {
+            static::raiseError(__METHOD__ .'(), failed to retrieve view-data!');
+            $repeat = false;
+            return false;
+        }
+
+        if (!$view_data->hasItem($item_idx) || ($item = $view_data->getItem($item_idx)) === false) {
+            static::raiseError(__METHOD__ .'(), failed to retrieve view-item!');
+            $repeat = false;
+            return false;
+        }
+
+        return $item;
     }
 }
 
