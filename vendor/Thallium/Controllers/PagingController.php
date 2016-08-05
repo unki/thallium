@@ -106,7 +106,7 @@ class PagingController extends DefaultController
      * contain max. $limit items.
      *
      * @param int $offset
-     * @param int $limit
+     * @param int|null $limit
      * @return arary
      * @throws \Thallium\Controllers\ExceptionController if an error occurs.
      */
@@ -117,7 +117,7 @@ class PagingController extends DefaultController
             return false;
         }
 
-        if (!isset($limit) || !is_numeric($limit)) {
+        if (!isset($limit) || (!is_null($limit) && !is_numeric($limit))) {
             static::raiseError(__METHOD__ .'(), $limit parameter is invalid!');
             return false;
         }
