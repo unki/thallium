@@ -1980,7 +1980,7 @@ abstract class DefaultModel
         if (!isset($this->model_permit_rpc_updates) ||
             empty($this->model_permit_rpc_updates) ||
             !is_bool($this->model_permit_rpc_updates) ||
-            $this->model_permit_rpc_updates !== 'true'
+            $this->model_permit_rpc_updates !== true
         ) {
             return false;
         }
