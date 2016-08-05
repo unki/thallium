@@ -1077,7 +1077,7 @@ abstract class DefaultView
             if (!array_key_exists($item_idx, $this->view_items) ||
                 !isset($this->view_items[$item_idx]) ||
                 empty($this->view_items[$item_idx]) ||
-                is_object($this->view_items[$item_idx])
+                !is_object($this->view_items[$item_idx])
             ) {
                 static::raiseError(__METHOD__ .'(), requested item not available in $view_items');
                 return false;
