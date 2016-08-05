@@ -488,7 +488,7 @@ abstract class DefaultModel
 
         if (($sql = $db->buildQuery(
             "SELECT",
-            self::getTableName(),
+            static::getTableName(),
             $sql_query_columns,
             $sql_query_data,
             $bind_params,
@@ -3487,7 +3487,7 @@ abstract class DefaultModel
      * @return string
      * @throws \Thallium\Controllers\ExceptionController
      */
-    public function getTableName()
+    public static function getTableName()
     {
         return sprintf("TABLEPREFIX%s", static::$model_table_name);
     }
@@ -4053,7 +4053,7 @@ abstract class DefaultModel
 
         if (($sql = $db->buildQuery(
             "SELECT",
-            self::getTableName(),
+            static::getTableName(),
             $query_columns,
             $query_where,
             $bind_params
