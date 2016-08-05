@@ -68,9 +68,27 @@ abstract class DefaultView
      */
     public function __construct()
     {
+        global $tmpl;
+
         if (!static::validateView()) {
             static::raiseError(__CLASS__ .'::validateView() returned false!', true);
             return;
+        }
+
+        if (method_exists($this, static::$view_class_name ."List") &&
+            is_callable(array(&$this, static::$view_class_name ."List"))
+        ) {
+            $tmpl->registerPlugin(
+                'block',
+                static::$view_class_name ."_list",
+                array(&$this, static::$view_class_name ."List")
+            );
+        } else {
+            $tmpl->registerPlugin(
+                'block',
+                static::$view_class_name ."_list",
+                array(&$this, 'dataList')
+            );
         }
 
         return;
@@ -173,9 +191,19 @@ abstract class DefaultView
             $mode = static::$view_default_mode;
         }
 
-        if ($mode == "list" && $tmpl->templateExists(static::$view_class_name ."_list.tpl")) {
+        if (($list_tmpl = static::getListTemplateName()) === false) {
+            static::raiseError(__CLASS__ .'::getListTemplateName() returned false!');
+            return false;
+        }
+
+        if (($edit_tmpl = static::getEditTemplateName()) === false) {
+            static::raiseError(__CLASS__ .'::getListTemplateName() returned false!');
+            return false;
+        }
+
+        if ($mode == "list" && $tmpl->templateExists($list_tmpl)) {
             return $this->showList($mode, $items_per_page);
-        } elseif ($mode == "edit" && $tmpl->templateExists(static::$view_class_name ."_edit.tpl")) {
+        } elseif ($mode == "edit" && $tmpl->templateExists($edit_tmpl)) {
             if (($item = $router->parseQueryParams()) === false) {
                 static::raiseError("HttpRouterController::parseQueryParams() returned false!");
                 return false;
@@ -248,23 +276,10 @@ abstract class DefaultView
             $current_items_limit = $items_limit;
         }
 
-        if (method_exists($this, static::$view_class_name ."List") &&
-            is_callable(array(&$this, static::$view_class_name ."List"))
-        ) {
-            $tmpl->registerPlugin(
-                'block',
-                static::$view_class_name ."_list",
-                array(&$this, static::$view_class_name ."List")
-            );
-        } else {
-            $tmpl->registerPlugin(
-                'block',
-                static::$view_class_name ."_list",
-                array(&$this, 'dataList')
-            );
+        if (($template_name = static::getListTemplate()) === false) {
+            static::raiseError(__CLASS__ .'::getListTemplate() returned false!');
+            return false;
         }
-
-        $template_name = static::$view_class_name ."_list.tpl";
 
         if (!$tmpl->templateExists($template_name)) {
             static::raiseError(__METHOD__ ."(), template '{$template_name}' does not exist!");
@@ -899,6 +914,16 @@ abstract class DefaultView
 
         $this->view_current_item =& $item;
         return true;
+    }
+
+    protected static function getListTemplateName()
+    {
+        return static::$view_class_name ."_list.tpl";
+    }
+
+    protected static function getEditTemplateName()
+    {
+        return static::$view_class_name ."_edit.tpl";
     }
 }
 
