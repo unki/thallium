@@ -102,7 +102,8 @@ class PagingController extends DefaultController
     }
 
     /**
-     * startup methods by which Thallium is actually starting to perform.
+     * this method returns the paged data starting from $offset and will
+     * contain max. $limit items.
      *
      * @param int $offset
      * @param int $limit
@@ -116,7 +117,7 @@ class PagingController extends DefaultController
             return false;
         }
 
-        if (!isset($limit) || empty($limit) || !is_numeric($limit)) {
+        if (!isset($limit) || !is_numeric($limit)) {
             static::raiseError(__METHOD__ .'(), $limit parameter is invalid!');
             return false;
         }
@@ -693,23 +694,59 @@ class PagingController extends DefaultController
             return false;
         }
 
-        if (($limits = $this->getItemsLimits()) === false) {
-            static::raiseError(__CLASS__ .'::getCurrentItemsLimits() returned false!');
-            return false;
-        }
-
         if ($limit < 0) {
-            $this->currentItemsLimit = $limits[0];
+            if (($limit = $this->getFirstItemsLimit()) === false) {
+                static::raiseError(__CLASS__ .'::getFirstItemsLimit() returned false!');
+                return false;
+            }
+            $this->currentItemsLimit = $limit;
             return true;
         }
 
-        if (!in_array($limit, $limits)) {
+        if (!$this->isValidItemsLimit($limit)) {
             static::raiseError(__METHOD__ .'(), $limit parameter is not within allowed-limits list!');
             return false;
         }
 
         $this->currentItemsLimit = $limit;
         return true;
+    }
+
+    final public function isValidItemsLimit($limit)
+    {
+        if (!isset($limit) || !is_numeric($limit)) {
+            static::raiseError(__METHOD__ .'(), $limit parameter is invalid!');
+            return false;
+        }
+
+        if (($limits = $this->getItemsLimits()) === false) {
+            static::raiseError(__CLASS__ .'::getCurrentItemsLimits() returned false!');
+            return false;
+        }
+
+        if (!in_array($limit, $limits)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    final public function getFirstItemsLimit()
+    {
+        if (($limits = $this->getItemsLimits()) === false) {
+            static::raiseError(__CLASS__ .'::getCurrentItemsLimits() returned false!');
+            return false;
+        }
+
+        if (!isset($limits) || empty($limits) || !is_array($limits)) {
+            return 0;
+        }
+
+        if (($first = array_shift($limits)) === null) {
+            return 0;
+        }
+
+        return $first;
     }
 
     /**
@@ -732,7 +769,7 @@ class PagingController extends DefaultController
             return false;
         }
 
-        if ($limit != $cur_limit) {
+        if ($limit !== $cur_limit) {
             return false;
         }
 
