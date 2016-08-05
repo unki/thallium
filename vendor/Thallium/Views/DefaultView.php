@@ -276,8 +276,8 @@ abstract class DefaultView
             $current_items_limit = $items_limit;
         }
 
-        if (($template_name = static::getListTemplate()) === false) {
-            static::raiseError(__CLASS__ .'::getListTemplate() returned false!');
+        if (($template_name = static::getListTemplateName()) === false) {
+            static::raiseError(__CLASS__ .'::getListTemplateName() returned false!');
             return false;
         }
 
