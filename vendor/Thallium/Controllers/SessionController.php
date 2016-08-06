@@ -140,11 +140,7 @@ class SessionController extends DefaultController
             return false;
         }
 
-        if (!isset($prefix) || empty($prefix)) {
-            $var_key = $key;
-        } else {
-            $var_key = $prefix .'_'. $key;
-        }
+        $var_key = (!isset($prefix) || empty($prefix)) ? $key : $prefix .'_'. $key;
 
         if (!isset($_SESSION[$var_key])) {
             return false;
@@ -178,11 +174,7 @@ class SessionController extends DefaultController
             return false;
         }
 
-        if (!isset($prefix) || empty($prefix)) {
-            $var_key = $key;
-        } else {
-            $var_key = $prefix .'_'. $key;
-        }
+        $var_key = (!isset($prefix) || empty($prefix)) ? $key : $prefix .'_'. $key;
 
         return $_SESSION[$var_key];
     }
@@ -213,11 +205,7 @@ class SessionController extends DefaultController
             return false;
         }
 
-        if (!isset($prefix) || empty($prefix)) {
-            $var_key = $key;
-        } else {
-            $var_key = $prefix .'_'. $key;
-        }
+        $var_key = (!isset($prefix) || empty($prefix)) ? $key : $prefix .'_'. $key;
 
         $_SESSION[$var_key] = $value;
         return true;
