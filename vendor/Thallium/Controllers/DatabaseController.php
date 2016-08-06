@@ -245,7 +245,7 @@ class DatabaseController extends DefaultController
      * @return bool
      * @throws \Thallium\Controllers\ExceptionController if an error occurs.
      */
-    final protected function getConnectionStatus()
+    final protected function isConnected()
     {
         if (!isset($this->is_connected) || !is_bool($this->is_connected)) {
             return false;
@@ -279,7 +279,7 @@ class DatabaseController extends DefaultController
             return false;
         }
 
-        if (!$this->getConnectionStatus()) {
+        if (!$this->isConnected()) {
             if (!$this->connect()) {
                 static::raiseError(__CLASS__ .'::connect() returned false!');
                 return false;
@@ -349,8 +349,8 @@ class DatabaseController extends DefaultController
             return false;
         }
 
-        if (!$this->getConnectionStatus()) {
-            static::raiseError(__CLASS__ .'::getConnectionStatus() returned false!');
+        if (!$this->isConnected()) {
+            static::raiseError(__CLASS__ .'::isConnected() returned false!');
             return false;
         }
 
@@ -383,8 +383,8 @@ class DatabaseController extends DefaultController
      */
     public function execute($sth, $data = array())
     {
-        if (!$this->getConnectionStatus()) {
-            static::raiseError(__CLASS__ .'::getConnectionStatus() returned false!');
+        if (!$this->isConnected()) {
+            static::raiseError(__CLASS__ .'::isConnected() returned false!');
             return false;
         }
 
@@ -481,8 +481,8 @@ class DatabaseController extends DefaultController
             return false;
         }
 
-        if (!$this->getConnectionStatus()) {
-            static::raiseError(__CLASS__ .'::getConnectionStatus() returned false!');
+        if (!$this->isConnected()) {
+            static::raiseError(__CLASS__ .'::isConnected() returned false!');
             return false;
         }
 
@@ -582,8 +582,8 @@ class DatabaseController extends DefaultController
      */
     final public function getId()
     {
-        if (!$this->getConnectionStatus()) {
-            static::raiseError(__CLASS__ .'::getConnectionStatus() returned false!');
+        if (!$this->isConnected()) {
+            static::raiseError(__CLASS__ .'::isConnected() returned false!');
             return false;
         }
 
@@ -615,8 +615,8 @@ class DatabaseController extends DefaultController
             return false;
         }
 
-        if (!$this->getConnectionStatus()) {
-            static::raiseError(__CLASS__ .'::getConnectionStatus() returned false!');
+        if (!$this->isConnected()) {
+            static::raiseError(__CLASS__ .'::isConnected() returned false!');
             return false;
         }
 
@@ -675,8 +675,8 @@ class DatabaseController extends DefaultController
      */
     final public function getApplicationDatabaseSchemaVersion()
     {
-        if (!$this->getConnectionStatus()) {
-            static::raiseError(__CLASS__ .'::getConnectionStatus() returned false!');
+        if (!$this->isConnected()) {
+            static::raiseError(__CLASS__ .'::isConnected() returned false!');
             return false;
         }
 
@@ -712,8 +712,8 @@ class DatabaseController extends DefaultController
      */
     final public function getFrameworkDatabaseSchemaVersion()
     {
-        if (!$this->getConnectionStatus()) {
-            static::raiseError(__CLASS__ .'::getConnectionStatus() returned false!');
+        if (!$this->isConnected()) {
+            static::raiseError(__CLASS__ .'::isConnected() returned false!');
             return false;
         }
 
@@ -940,8 +940,8 @@ class DatabaseController extends DefaultController
      */
     public function checkColumnExists($table_name, $column)
     {
-        if (!$this->getConnectionStatus()) {
-            static::raiseError(__CLASS__ .'::getConnectionStatus() returned false!');
+        if (!$this->isConnected()) {
+            static::raiseError(__CLASS__ .'::isConnected() returned false!');
             return false;
         }
 
@@ -1106,8 +1106,8 @@ class DatabaseController extends DefaultController
      */
     public function getColumns($table_name)
     {
-        if (!$this->getConnectionStatus()) {
-            static::raiseError(__CLASS__ .'::getConnectionStatus() returned false!');
+        if (!$this->isConnected()) {
+            static::raiseError(__CLASS__ .'::isConnected() returned false!');
             return false;
         }
 
@@ -1133,8 +1133,8 @@ class DatabaseController extends DefaultController
      */
     final public function newTransaction()
     {
-        if (!$this->getConnectionStatus()) {
-            static::raiseError(__CLASS__ .'::getConnectionStatus() returned false!');
+        if (!$this->isConnected()) {
+            static::raiseError(__CLASS__ .'::isConnected() returned false!');
             return false;
         }
 
