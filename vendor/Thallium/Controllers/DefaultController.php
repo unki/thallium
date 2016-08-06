@@ -242,13 +242,12 @@ abstract class DefaultController
      * this method returns the current log verbosity.
      *
      * @param none
-     * @return bool
+     * @return int
      * @throws \Thallium\Controllers\ExceptionController
      */
     public function getVerbosity()
     {
-        return self::LOG_LEVEL;
-
+        return static::LOG_LEVEL;
     }
 
     /**
