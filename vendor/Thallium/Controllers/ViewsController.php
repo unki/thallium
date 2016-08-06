@@ -170,7 +170,7 @@ class ViewsController extends DefaultController
      */
     public function load($view, $skeleton = true)
     {
-        global $thallium, $tmpl;
+        global $tmpl;
 
         if (!isset($view) || empty($view) || !is_string($view)) {
             static::raiseError(__METHOD__ .'(), $view parameter is invalid!');
