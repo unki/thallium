@@ -282,10 +282,10 @@ class PagingController extends DefaultController
             return 1;
         }
 
+        $totalPages = 1;
+
         if ($items_per_page > 0) {
             $totalPages = ceil($totalItems/$items_per_page);
-        } else {
-            $totalPages = 1;
         }
 
         if (!isset($totalPages) ||
@@ -371,12 +371,11 @@ class PagingController extends DefaultController
             return false;
         }
 
-        if ($pageno > $total) {
-            $this->currentPage = 1;
-        } else {
-            $this->currentPage = $pageno;
+        if ($pageno < 1 || $pageno > $total) {
+            $pageno = 1;
         }
 
+        $this->currentPage = $pageno;
         return true;
     }
 
@@ -630,15 +629,15 @@ class PagingController extends DefaultController
             return $page;
         }
 
+        $start = $page-$delta;
+        $end = $page+$delta;
+
         if ($page <= $delta) {
             $start = 1;
             $end = ($page+$delta) >= count($pages) ? count($pages) : ($page+$delta) ;
-        } elseif ($page+$delta >= count($pages)) {
+        } elseif (($page+$delta) >= count($pages)) {
             $start = $page-$delta;
             $end = count($pages);
-        } else {
-            $start = $page-$delta;
-            $end = $page+$delta;
         }
 
         /*
