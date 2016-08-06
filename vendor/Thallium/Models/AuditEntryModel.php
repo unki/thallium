@@ -106,7 +106,7 @@ class AuditEntryModel extends DefaultModel
      * returns the value of the message field.
      *
      * @param none
-     * @return bool
+     * @return string|bool
      * @throws \Thallium\Controllers\ExceptionController
      */
     public function getMessage()
@@ -176,7 +176,7 @@ class AuditEntryModel extends DefaultModel
      * returns the value of the type field.
      *
      * @param none
-     * @return bool
+     * @return string|bool
      * @throws \Thallium\Controllers\ExceptionController
      */
     public function getEntryType()
@@ -241,7 +241,7 @@ class AuditEntryModel extends DefaultModel
      * returns the value of the scene field.
      *
      * @param none
-     * @return bool
+     * @return string|bool
      * @throws \Thallium\Controllers\ExceptionController
      */
     public function getScene()
@@ -305,7 +305,7 @@ class AuditEntryModel extends DefaultModel
      * returns the value of the object_guid field.
      *
      * @param none
-     * @return bool
+     * @return string|bool
      * @throws \Thallium\Controllers\ExceptionController
      */
     public function getEntryGuid()
