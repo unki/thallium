@@ -348,8 +348,6 @@ class MessageBusController extends DefaultController
      */
     public function sendMessageToClient($command, $body, $value, $sessionid = null)
     {
-        global $jobs;
-
         if ($this->isSuppressOutboundMessaging()) {
             return true;
         }
