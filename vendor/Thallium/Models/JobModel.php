@@ -141,10 +141,10 @@ class JobModel extends DefaultModel
             return false;
         }
 
+        $value = 'N';
+
         if ($value === 'true') {
             $value = 'Y';
-        } else {
-            $value = 'N';
         }
 
         if (!$this->setFieldValue('in_processing', $value)) {
