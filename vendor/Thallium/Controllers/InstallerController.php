@@ -331,8 +331,6 @@ class InstallerController extends DefaultController
      */
     final protected function upgradeDatabaseSchema()
     {
-        global $db;
-
         if (!$this->upgradeApplicationDatabaseSchema()) {
             static::raiseError(__CLASS__ .'::upgradeApplicationDatabaseSchema() returned false!');
             return false;
