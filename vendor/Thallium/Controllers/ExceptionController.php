@@ -117,7 +117,7 @@ class ExceptionController extends \Exception
         );
 
         if (($json = json_encode($json_data)) === false) {
-            exit("json_encode() failed!");
+            trigger_error("json_encode() failed!", E_USER_ERROR);
         }
 
         return $json;
