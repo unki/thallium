@@ -213,7 +213,7 @@ class MainController extends DefaultController
             header("Content-Length: {$size}");
             header('Connection: close');
 
-            if (($reval = ob_end_flush()) === false) {
+            if (!ob_end_flush()) {
                 error_log(__METHOD__ .'(), ob_end_flush() returned false!');
             }
             ob_flush();
@@ -389,12 +389,12 @@ class MainController extends DefaultController
             return false;
         }
 
+        $nick = null;
+        $model = $model_name;
+
         if (!preg_match('/model$/i', $model_name)) {
             $nick = $model_name;
             $model = null;
-        } else {
-            $nick = null;
-            $model = $model_name;
         }
 
         if (!$this->isRegisteredModel($nick, $model)) {
@@ -520,9 +520,6 @@ class MainController extends DefaultController
             return false;
         }
 
-        $nick = null;
-        $name = null;
-
         if (in_array(strtolower($model_name), array_keys($known_models))) {
             $model = $known_models[$model_name];
         } elseif (in_array($model_name, $known_models)) {
@@ -542,7 +539,7 @@ class MainController extends DefaultController
         try {
             $obj = new $model($load_by);
         } catch (\Exception $e) {
-            static::raiseError(sprintf("%s(), failed to load model %s", __METHOD__, $object_name), false, $e);
+            static::raiseError(sprintf("%s(), failed to load model %s", __METHOD__, $model), false, $e);
             return false;
         }
 
@@ -813,13 +810,11 @@ class MainController extends DefaultController
             return false;
         }
 
-        if ($message->hasBody()) {
-            if (($parameters = $message->getBody()) === false) {
-                static::raiseError(get_class($message) .'::getBody() returned false!');
-                return false;
-            }
-        } else {
-            $parameters = null;
+        $parameters = null;
+
+        if ($message->hasBody() && ($parameters = $message->getBody()) === false) {
+            static::raiseError(get_class($message) .'::getBody() returned false!');
+            return false;
         }
 
         if (($sessionid = $message->getSessionId()) === false) {
@@ -1004,9 +999,9 @@ class MainController extends DefaultController
         if ($result) {
             if ($known_models[$nick] == $model) {
                 return true;
-            } else {
-                return false;
             }
+
+            return false;
         }
 
         if (!in_array($model, $known_models)) {
@@ -1073,7 +1068,7 @@ class MainController extends DefaultController
         $dir_top_reg = preg_quote($dir_top, '/');
 
         // check if $dir is within $dir_top
-        if (!preg_match('/^'. preg_quote($dir_top, '/') .'/', $dir)) {
+        if (!preg_match('/^'. $dir_top_reg .'/', $dir)) {
             return false;
         }
 
@@ -1113,7 +1108,7 @@ class MainController extends DefaultController
 
         if (is_string($handler)) {
             $handler = array($this, $handler);
-        } else {
+        } elseif (is_array($handler)) {
             if (count($handler) != 2 ||
                 !isset($handler[0]) || empty($handler[0]) || !is_object($handler[0]) ||
                 !isset($handler[1]) || empty($handler[1]) || !is_string($handler[1])
@@ -1320,7 +1315,7 @@ class MainController extends DefaultController
             return true;
         }
 
-        if (($reval = ob_end_clean()) === false) {
+        if (!ob_end_clean()) {
             error_log(__METHOD__ .'(), ob_end_clean() returned false!');
         }
 
