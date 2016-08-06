@@ -184,10 +184,10 @@ abstract class DefaultController
      */
     public function write($logtext, $loglevel = LOG_INFO, $override_output = null, $no_newline = null)
     {
-        if (isset($this->config->logging)) {
+        $logtype = 'display';
+
+        if (isset($this->config->logging) && !empty($this->config->logging)) {
             $logtype = $this->config->logging;
-        } else {
-            $logtype = 'display';
         }
 
         if (isset($override_output) || !empty($override_output)) {
