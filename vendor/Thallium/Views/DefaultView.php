@@ -75,22 +75,25 @@ abstract class DefaultView
             return;
         }
 
+        $data_list_method = array(&$this, 'dataList');
+
         if (method_exists($this, static::$view_class_name ."List") &&
             is_callable(array(&$this, static::$view_class_name ."List"))
         ) {
-            $tmpl->registerPlugin(
-                'block',
-                static::$view_class_name ."_list",
-                array(&$this, static::$view_class_name ."List")
-            );
-        } else {
-            $tmpl->registerPlugin(
-                'block',
-                static::$view_class_name ."_list",
-                array(&$this, 'dataList')
-            );
+            $data_list_method = array(&$this, static::$view_class_name ."List");
         }
 
+        $tmpl->registerPlugin(
+            'block',
+            static::$view_class_name ."_list",
+            $data_list_method
+        );
+
+        if (($default_items_limit = \Thallium\Controllers\PagingController::getFirstItemsLimit()) === false) {
+            $default_items_limit = 10;
+        }
+
+        $this->view_current_item = $default_items_limit;
         return;
     }
 
@@ -167,6 +170,8 @@ abstract class DefaultView
                 $items_per_page = $query->params['items-per-page'];
             }
             if (isset($params[0]) && !empty($params[0]) && $this->isValidMode($params[0])) {
+                $mode = $params[0];
+
                 if ($query->params[0] == 'list.html') {
                     $mode = 'list';
                 } elseif (preg_match('/^list-([0-9]+).html$/', $query->params[0], $parts) &&
@@ -181,8 +186,6 @@ abstract class DefaultView
                         $this->raiseError(__CLASS__ .'::setSessionVar() returned false!');
                         return false;
                     }
-                } else {
-                    $mode = $params[0];
                 }
             }
         }
@@ -258,21 +261,29 @@ abstract class DefaultView
     {
         global $tmpl;
 
-        if (!isset($pageno) || empty($pageno) || !is_numeric($pageno)) {
-            if (!$this->hasSessionVar("current_page") ||
-                ($current_page = $this->getSessionVar("current_page")) === false) {
-                $current_page = 1;
-            }
-        } else {
+        if ((!isset($pageno) ||
+            empty($pageno) ||
+            !is_numeric($pageno)) ||
+            $this->hasSessionVar("current_page") ||
+            ($current_page = $this->getSessionVar("current_page")) === false
+        ) {
+            $current_page = 1;
+        }
+
+        if (!isset($current_page)) {
             $current_page = $pageno;
         }
 
-        if (!isset($items_limit) || is_null($items_limit) || !is_numeric($items_limit)) {
-            if (!$this->hasSessionVar("current_items_limit") ||
-                ($current_items_limit = $this->getSessionVar("current_items_limit")) === false) {
-                $current_items_limit = -1;
-            }
-        } else {
+        if ((!isset($items_limit) ||
+            is_null($items_limit) ||
+            !is_numeric($items_limit)) &&
+            !$this->hasSessionVar("current_items_limit") ||
+            ($current_items_limit = $this->getSessionVar("current_items_limit")) === false
+        ) {
+            $current_items_limit = 0;
+        }
+
+        if (!isset($current_items_limit)) {
             $current_items_limit = $items_limit;
         }
 
@@ -731,14 +742,15 @@ abstract class DefaultView
      */
     public function dataList($params, $content, &$smarty, &$repeat)
     {
+        $list_name = 'item_list';
+        $assign_to = 'item';
+
         if (array_key_exists('name', $params) &&
             isset($params['name']) &&
             !empty($params['name']) &&
             is_string($params['name'])
         ) {
             $list_name = $params['name'];
-        } else {
-            $list_name = 'item_list';
         }
 
         if (array_key_exists('assign', $params) &&
@@ -747,8 +759,6 @@ abstract class DefaultView
             is_string($params['assign'])
         ) {
             $assign_to = $params['assign'];
-        } else {
-            $assign_to = 'item';
         }
 
         if (($index = $this->getListIndex($list_name, $smarty)) === false) {
