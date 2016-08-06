@@ -256,7 +256,7 @@ abstract class DefaultModel
             is_array(static::$model_fields_index)
         ) {
             foreach (static::$model_fields_index as $field) {
-                if (!$static::hasField($field)) {
+                if (!static::hasField($field)) {
                     static::raiseError(__CLASS__ .'::hasField() returned false!');
                     return false;
                 }
@@ -561,6 +561,11 @@ abstract class DefaultModel
             return true;
         }
 
+        if (!static::hasFields() && !static::hasModelItems()) {
+            static::raiseError(__METHOD__ .'(), unsupported model constelation found!');
+            return false;
+        }
+
         if (static::hasFields()) {
             if (($row = $sth->fetch(\PDO::FETCH_ASSOC)) === false) {
                 $db->freeStatement($sth);
@@ -643,9 +648,6 @@ abstract class DefaultModel
             }
 
             $db->freeStatement($sth);
-        } else {
-            static::raiseError(__METHOD__ .'(), unsupported model constelation found!');
-            return false;
         }
 
         if (method_exists($this, 'postLoad') && is_callable(array($this, 'postLoad'))) {
@@ -817,7 +819,7 @@ abstract class DefaultModel
                 return false;
             }
 
-            if (($retval = call_user_func(array($this, $method_name), $value)) === false) {
+            if (call_user_func(array($this, $method_name), $value) === false) {
                 static::raiseError(__CLASS__ ."::{$method_name}() returned false!");
                 return false;
             }
@@ -874,7 +876,7 @@ abstract class DefaultModel
                 return false;
             }
 
-            if (($retval = call_user_func(array($this, $method_name), $value))) {
+            if (call_user_func(array($this, $method_name), $value) === false) {
                 static::raiseError(__CLASS__ ."::{$method_name}() returned false!");
                 return false;
             }
@@ -923,7 +925,7 @@ abstract class DefaultModel
                 static::raiseError(__CLASS__ .'::deleteItems() returned false!');
                 return false;
             }
-        } else {
+        } elseif (!static::hasModelItems()) {
             if (!isset($this->id)) {
                 static::raiseError(__METHOD__ .'(), can not delete without knowing what to delete!');
                 return false;
@@ -1260,7 +1262,7 @@ abstract class DefaultModel
                 return;
             }
 
-            if (($retval = call_user_func(array($this, $method_name), $value)) === false) {
+            if (call_user_func(array($this, $method_name), $value) === false) {
                 static::raiseError(__CLASS__ ."::{$method_name}() returned false!", true);
                 return;
             }
@@ -1298,8 +1300,8 @@ abstract class DefaultModel
             return;
         }
 
-        // NULL values can not be checked closer.
-        if (is_null($value)) {
+        // NULL values and empty strings can not be checked closer.
+        if (is_null($value) || (is_string($value) && strlen($value) === 0)) {
             $this->model_values[$field] = $value;
             return;
         }
@@ -1392,7 +1394,7 @@ abstract class DefaultModel
             return;
         }
 
-        if (($retval = call_user_func(array($this, $set_method), $value)) === false) {
+        if (call_user_func(array($this, $set_method), $value) === false) {
             static::raiseError(__CLASS__ ."::{$set_method}() returned false!", true);
             return;
         }
@@ -1496,13 +1498,7 @@ abstract class DefaultModel
             $this->model_values[FIELD_GUID] = $thallium->createGuid();
         }
 
-        /* new object */
-        if (!isset($this->id) || empty($this->id)) {
-            $sql = 'INSERT INTO ';
-        /* existing object */
-        } else {
-            $sql = 'UPDATE ';
-        }
+        $sql = $this->isNew() ? 'INSERT INTO ' : 'UPDATE';
 
         $sql.= sprintf("TABLEPREFIX%s SET ", static::$model_table_name);
 
@@ -1519,18 +1515,16 @@ abstract class DefaultModel
                 continue;
             }
 
-            if ($column == $time_field) {
-                $arr_columns[] = sprintf("%s = FROM_UNIXTIME(?)", $column);
-            } else {
-                $arr_columns[] = sprintf("%s = ?", $column);
-            }
+            $arr_columns[] = ($column == $time_field) ?
+                sprintf("%s = FROM_UNIXTIME(?)", $column) : sprintf("%s = ?", $column);
             $arr_values[] = $this->model_values[$field];
         }
+
         $sql.= implode(', ', $arr_columns);
 
-        if (!isset($this->id) || empty($this->id)) {
+        if ($this->isNew()) {
             $this->model_values[FIELD_IDX] = null;
-        } else {
+        } elseif (!$this->isNew()) {
             $sql.= sprintf(" WHERE %s LIKE ?", static::column(FIELD_IDX));
             $arr_values[] = $this->id;
         }
@@ -2320,13 +2314,13 @@ abstract class DefaultModel
         $fields = array();
 
         foreach (static::$model_fields as $field => $sec) {
+            $value = null;
+
             if ($this->hasFieldValue($field)) {
                 if (($value = $this->getFieldValue($field)) === false) {
                     static::raiseError(__CLASS__ .'::getFieldValue() returned false!');
                     return false;
                 }
-            } else {
-                $value = null;
             }
 
             $field_ary = array(
@@ -2347,13 +2341,13 @@ abstract class DefaultModel
         }
 
         foreach ($virtual_fields as $field) {
+            $value = null;
+
             if ($this->hasVirtualFieldValue($field)) {
                 if (($value = $this->getVirtualFieldValue($field)) === false) {
                     static::raiseError(__CLASS__ .'::getVirtualFieldValue() returned false!');
                     return false;
                 }
-            } else {
-                $value = null;
             }
 
             $field_ary = array(
@@ -2993,6 +2987,11 @@ abstract class DefaultModel
             return false;
         }
 
+        if (!is_array($item) && !is_object($item)) {
+            static::raiseError(__METHOD__ .'(), $item type is not supported!');
+            return false;
+        }
+
         if (is_array($item)) {
             if (!array_key_exists(FIELD_MODEL, $item)) {
                 static::raiseError(__METHOD__ .'(), $item misses FIELD_MODEL key!');
@@ -3035,9 +3034,6 @@ abstract class DefaultModel
                 return false;
             }
             $model = $item::$model_column_prefix;
-        } else {
-            static::raiseError(__METHOD__ .'(), $item type is not supported!');
-            return false;
         }
 
         if (array_key_exists($idx, $this->model_items)) {
@@ -3131,7 +3127,7 @@ abstract class DefaultModel
                 static::raiseError(get_class($item) .'::flood() returned false!');
                 return false;
             }
-        } else {
+        } elseif (!$this->hasItemData($idx)) {
             try {
                 $item = new $item_model(array(
                     FIELD_IDX => $idx
@@ -3562,39 +3558,45 @@ abstract class DefaultModel
                 if (!is_string($value)) {
                     return false;
                 }
+                return true;
                 break;
             case FIELD_INT:
                 if (!is_numeric($value) || !is_int((int) $value)) {
                     return false;
                 }
+                return true;
                 break;
             case FIELD_BOOL:
                 if (!is_bool($value)) {
                     return false;
                 }
+                return true;
                 break;
             case FIELD_YESNO:
                 if (!in_array($value, array('yes', 'no', 'Y', 'N'))) {
                     return false;
                 }
+                return true;
                 break;
             case FIELD_TIMESTAMP:
                 if (is_float((float) $value)) {
                     if ((float) $value >= PHP_INT_MAX || (float) $value <= ~PHP_INT_MAX) {
                         return false;
                     }
+                    return true;
                 } elseif (is_int((int) $value)) {
                     if ((int) $value >= PHP_INT_MAX || (int) $value <= ~PHP_INT_MAX) {
                         return false;
                     }
+                    return true;
                 } elseif (is_string($value)) {
                     if (strtotime($value) === false) {
                         return false;
                     }
-                } else {
-                    static::raiseError(__METHOD__ .'(), unsupported timestamp type found!');
-                    return false;
+                    return true;
                 }
+                static::raiseError(__METHOD__ .'(), unsupported timestamp type found!');
+                return false;
                 break;
             case FIELD_DATE:
                 if ($value !== "0000-00-00" &&
@@ -3602,11 +3604,13 @@ abstract class DefaultModel
                 ) {
                     return false;
                 }
+                return true;
                 break;
             case FIELD_GUID:
                 if (!$thallium->isValidGuidSyntax($value)) {
                     return false;
                 }
+                return true;
                 break;
             default:
                 static::raiseError(__METHOD__ ."(), unsupported type {$type} received!");
@@ -3614,7 +3618,7 @@ abstract class DefaultModel
                 break;
         }
 
-        return true;
+        return false;
     }
 
     /**
@@ -3849,19 +3853,21 @@ abstract class DefaultModel
             return false;
         }
 
+        if (!static::hasField($field) && !isset($this)) {
+            static::raiseError(__METHOD__ .'(), do not know how to locate that field!');
+            return false;
+        }
+
         if (static::hasField($field)) {
             if (!isset($this->model_values[$field]) ||
                 empty($this->model_values[$field])
             ) {
                 return false;
             }
-        } elseif (isset($this) && !$this->hasVirtualField($field)) {
+        } elseif (isset($this) && $this->hasVirtualField($field)) {
             if (!$this->hasVirtualFieldValue($field)) {
                 return false;
             }
-        } else {
-            static::raiseError(__METHOD__ .'(), do not know how to locate that field!');
-            return false;
         }
 
         return true;
@@ -3900,9 +3906,6 @@ abstract class DefaultModel
                     static::raiseError(__CLASS__ .'::setVirtualFieldValue() returned false!');
                     return false;
                 }
-            } else {
-                static::raiseError(__METHOD__ .'(), do not know how to set that field!');
-                return false;
             }
             return true;
         }
@@ -3930,9 +3933,6 @@ abstract class DefaultModel
                 static::raiseError(__CLASS__ .'::setVirtualFieldValue() returned false!');
                 return false;
             }
-        } else {
-            static::raiseError(__METHOD__ .'(), do not know how to set that field!');
-            return false;
         }
 
         return true;
@@ -4243,7 +4243,7 @@ abstract class DefaultModel
             is_array(static::$model_fields_index)
         ) {
             foreach (static::$model_fields_index as $field) {
-                if (!$static::hasField($field)) {
+                if (!static::hasField($field)) {
                     static::raiseError(__CLASS__ .'::hasField() returned false!');
                     return false;
                 }
@@ -4356,8 +4356,6 @@ abstract class DefaultModel
      */
     public function getModelLinkedList($sorted = false, $unique = false)
     {
-        global $thallium;
-
         if (($model_links = static::getModelLinks()) === false) {
             static::raiseError(__CLASS__ .'::getModelLinks() returned false!');
             return false;
@@ -4365,11 +4363,6 @@ abstract class DefaultModel
 
         if (!is_array($model_links) || empty($model_links)) {
             return true;
-        }
-
-        if (($model_idx = $this->getIdx()) === false) {
-            static::raiseError(__CLASS__ .'::getIdx() returned false!');
-            return false;
         }
 
         $links = array();
