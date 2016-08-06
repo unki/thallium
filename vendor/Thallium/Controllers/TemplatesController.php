@@ -266,6 +266,7 @@ class TemplatesController extends DefaultController
      * @param object $smarty
      * @return string|null
      * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     * @SuppressWarnings
      */
     public function getMenuState($params, &$smarty)
     {
@@ -291,6 +292,7 @@ class TemplatesController extends DefaultController
      * @param object $smarty
      * @return string|false
      * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     * @SuppressWarnings
      */
     public function getHumanReadableFilesize($params, &$smarty)
     {
