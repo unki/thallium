@@ -568,7 +568,7 @@ class DatabaseController extends DefaultController
             return false;
         }
 
-        $query = str_replace("TABLEPREFIX", $this->getTablePrefix(), $query);
+        $query = str_replace("TABLEPREFIX", $prefix, $query);
         return true;
     }
 
