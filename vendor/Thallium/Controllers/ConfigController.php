@@ -142,7 +142,7 @@ class ConfigController extends DefaultController
             static::raiseError(sprintf(
                 '%s(), configuration file "%s" does not exist!',
                 __METHOD__,
-                $config_fqdn
+                $config_fqpn
             ));
             return false;
         }
