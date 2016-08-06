@@ -177,11 +177,6 @@ class DatabaseController extends DefaultController
      */
     final protected function connect()
     {
-        $options = array(
-            'debug' => 2,
-            'portability' => 'DB_PORTABILITY_ALL'
-        );
-
         switch ($this->db_cfg['type']) {
             default:
             case 'mariadb':
