@@ -917,7 +917,7 @@ class DatabaseController extends DefaultController
         }
 
         if (($quoted = $this->db->quote($text)) === false) {
-            static::raiseError(get_class($db) .'::quote() returned false!');
+            static::raiseError(get_class($this->db) .'::quote() returned false!');
             return false;
         }
 
