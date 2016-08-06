@@ -273,11 +273,10 @@ class TemplatesController extends DefaultController
 
         if (!array_key_exists('page', $params)) {
             static::raiseError(__METHOD__ .'(), missing "page" parameter!');
-            $repeat = false;
             return false;
         }
 
-        if ($params['page'] != $query->view) {
+        if ($params['page'] !== $query->view) {
             return null;
         }
 
@@ -295,20 +294,17 @@ class TemplatesController extends DefaultController
      */
     public function getHumanReadableFilesize($params, &$smarty)
     {
-        global $query;
-
         if (!array_key_exists('size', $params)) {
             static::raiseError(__METHOD__ .'(), missing "size" parameter!');
-            $repeat = false;
             return false;
         }
 
         if ($params['size'] < 1048576) {
             $result = sprintf("%sKB", round($params['size']/1024, 2));
-        } else {
-            $result = sprintf("%sMB", round($params['size']/1048576, 2));
+            return $result;
         }
 
+        $result = sprintf("%sMB", round($params['size']/1048576, 2));
         return $result;
     }
 
@@ -551,17 +547,8 @@ class TemplatesController extends DefaultController
      */
     public static function smartyRaiseError($params)
     {
-        if (array_key_exists('message', $params)) {
-            $message = $params['message'];
-        } else {
-            $message = 'unknown error';
-        }
-
-        if (array_key_exists('stop', $params)) {
-            $stop = $params['stop'];
-        } else {
-            $stop = false;
-        }
+        $message = array_key_exists('message', $params) ? $params['message'] : 'unknown error';
+        $stop = array_key_exists('stop', $params) ? $params['stop'] : false;
 
         if (!isset($message) || empty($message) || !is_string($message)) {
             static::raiseError(__METHOD__ .'(), $message parameter is invalid!');
