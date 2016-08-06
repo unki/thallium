@@ -74,6 +74,46 @@ class HttpRouterController extends DefaultController
         'idle',*/
     );
 
+    protected static $allowed_get_parameters = array(
+        'items-per-page' => array(
+            'filter' => FILTER_VALIDATE_INT,
+            'flags' => FILTER_SANITIZE_NUMBER_INT,
+        ),
+    );
+    protected static $allowed_post_parameters = array(
+        'type' => array(
+            'filter' => FILTER_UNSAFE_RAW,
+            'flags' => FILTER_SANITIZE_STRING,
+        ),
+        'action' => array(
+            'filter' => FILTER_UNSAFE_RAW,
+            'flags' => FILTER_SANITIZE_STRING,
+        ),
+        'id' => array(
+            'filter' => FILTER_VALIDATE_INT,
+            'flags' => FILTER_SANITIZE_NUMBER_INT,
+        ),
+        'guid' => array(
+            'filter' => FILTER_UNSAFE_RAW,
+            'flags' => FILTER_SANITIZE_STRING,
+        ),
+        'model' => array(
+            'filter' => FILTER_UNSAFE_RAW,
+            'flags' => FILTER_SANITIZE_STRING,
+        ),
+    );
+
+    protected static $allowed_server_parameters = array(
+        'REQUEST_URI' => array(
+            'filter' => FILTER_UNSAFE_RAW,
+            'flags' => FILTER_SANITIZE_STRING,
+        ),
+        'REQUEST_METHOD' => array(
+            'filter' => FILTER_UNSAFE_RAW,
+            'flags' => FILTER_SANITIZE_STRING,
+        ),
+    );
+
     /**
      * class constructor
      *
@@ -83,37 +123,45 @@ class HttpRouterController extends DefaultController
      */
     public function __construct()
     {
-        global $thallium, $config;
+        global $config;
 
         $this->query = new \stdClass();
 
-        // check HTTP request method
-        if (!isset($_SERVER['REQUEST_URI']) ||
-            empty($_SERVER['REQUEST_URI']) ||
-            !is_string($_SERVER['REQUEST_URI'])
+        $filtered_server = filter_input_array(INPUT_SERVER, static::$allowed_server_parameters);
+
+        if ($filtered_server === false || (!is_null($filtered_server) && !is_array($filtered_server))) {
+            static::raiseError(__METHOD__ .'(), failure on retrieving SERVER variables!', true);
+            return false;
+        }
+
+        if (!array_key_exists('REQUEST_URI', $filtered_server) ||
+            !isset($filtered_server['REQUEST_URI']) ||
+            empty($filtered_server['REQUEST_URI']) ||
+            !is_string($filtered_server['REQUEST_URI'])
         ) {
             static::raiseError(__METHOD__ .'(), $_SERVER["REQUEST_URI"] is not set!', true);
             return;
         }
 
-        if (!isset($_SERVER['REQUEST_METHOD']) ||
-            empty($_SERVER['REQUEST_METHOD']) ||
-            !is_string($_SERVER['REQUEST_METHOD'])
+        if (!array_key_exists('REQUEST_METHOD', $filtered_server) ||
+            !isset($filtered_server['REQUEST_METHOD']) ||
+            empty($filtered_server['REQUEST_METHOD']) ||
+            !is_string($filtered_server['REQUEST_METHOD'])
         ) {
             static::raiseError(__METHOD__ .'(), $_SERVER["REQUEST_METHOD"] is not set!', true);
             return;
         }
 
-        if (!static::isValidRequestMethod($_SERVER['REQUEST_METHOD'])) {
+        if (!static::isValidRequestMethod($filtered_server['REQUEST_METHOD'])) {
             static::raiseError(__METHOD__ .'(), unsupported request method found!', true);
             return;
         }
 
-        $this->query->method = $_SERVER['REQUEST_METHOD'];
-        $this->query->uri = $_SERVER['REQUEST_URI'];
+        $this->query->method = $filtered_server['REQUEST_METHOD'];
+        $this->query->uri = $filtered_server['REQUEST_URI'];
 
         // check HTTP request URI
-        $uri = $_SERVER['REQUEST_URI'];
+        $uri = $filtered_server['REQUEST_URI'];
 
         // just to check if someone may fools us.
         if (substr_count($uri, '/') > 10) {
@@ -127,7 +175,7 @@ class HttpRouterController extends DefaultController
         }
 
         // strip off our known base path (e.g. /thallium)
-        if ($webpath != '/') {
+        if ($webpath !== '/') {
             $uri = str_replace($webpath, "", $uri);
         }
 
@@ -161,15 +209,20 @@ class HttpRouterController extends DefaultController
         /* for requests to the root page (config item base_web_path), select MainView */
         if (!isset($this->query_parts[0]) &&
             empty($uri) && (
-                $_SERVER['REQUEST_URI'] == "/" ||
-                rtrim($_SERVER['REQUEST_URI'], '/') == $config->getWebPath()
+                $filtered_server['REQUEST_URI'] == "/" ||
+                rtrim($filtered_server['REQUEST_URI'], '/') === $webpath
             )
         ) {
             $this->query->view = "main";
         /* select View according parsed request URI */
         } elseif (isset($this->query_parts[0]) && !empty($this->query_parts[0])) {
             $this->query->view = $this->query_parts[0];
-        } else {
+        }
+
+        if (!isset($this->query->view) ||
+            empty($this->query->view) ||
+            !is_string($this->query->view)
+        ) {
             static::raiseError(__METHOD__ .'(), check if base_web_path is correctly defined!', true);
             return;
         }
@@ -187,34 +240,57 @@ class HttpRouterController extends DefaultController
 
         $this->query->params = array();
 
-        /* register further _GET parameters */
-        if (isset($_GET) && is_array($_GET) && !empty($_GET)) {
-            foreach ($_GET as $key => $value) {
+        $filtered_get = filter_input_array(INPUT_GET, static::$allowed_get_parameters);
+
+        if ($filtered_get === false || (!is_null($filtered_get) && !is_array($filtered_get))) {
+            static::raiseError(__METHOD__ .'(), failure on retrieving GET variables!', true);
+            return false;
+        }
+
+        $filtered_post = filter_input_array(INPUT_POST, static::$allowed_post_parameters);
+
+        if ($filtered_post === false || (!is_null($filtered_post) && !is_array($filtered_post))) {
+            static::raiseError(__METHOD__ .'(), failure on retrieving POST variables!', true);
+            return false;
+        }
+
+        if (!is_null($filtered_get)) {
+            foreach ($filtered_get as $key => $value) {
                 if (is_array($value)) {
                     array_walk($value, function (&$item_value) {
                         return htmlentities($item_value, ENT_QUOTES);
                     });
                     continue;
                 }
-                $this->query->params[$key] = htmlentities($value, ENT_QUOTES);
+
+                if (!$this->addQueryParam($key, htmlentities($value, ENT_QUOTES))) {
+                    static::raiseError(__CLASS__ .'::addQueryParam() returned false!', true);
+                    return false;
+                }
             }
         }
 
-        /* register further _POST parameters */
-        if (isset($_POST) && is_array($_POST) && !empty($_POST)) {
-            foreach ($_POST as $key => $value) {
+        if (!is_null($filtered_post)) {
+            foreach ($filtered_post as $key => $value) {
                 if (is_array($value)) {
                     array_walk($value, function (&$item_value) {
                         return htmlentities($item_value, ENT_QUOTES);
                     });
                     continue;
                 }
-                $this->query->params[$key] = htmlentities($value, ENT_QUOTES);
+
+                if (!$this->addQueryParam($key, htmlentities($value, ENT_QUOTES))) {
+                    static::raiseError(__CLASS__ .'::addQueryParam() returned false!', true);
+                    return false;
+                }
             }
         }
 
         for ($i = 1; $i < count($this->query_parts); $i++) {
-            array_push($this->query->params, $this->query_parts[$i]);
+            if (!$this->addQueryParam($i, $this->query_parts[$i])) {
+                static::raiseError(__CLASS__ .'::addQueryParam() returned false!', true);
+                return false;
+            }
         }
 
         if (!isset($query_parts_params)) {
@@ -222,7 +298,11 @@ class HttpRouterController extends DefaultController
         }
 
         foreach ($query_parts_params as $param) {
-            array_push($this->query->params, $param);
+            if (!$this->addQueryParam($i, $param)) {
+                static::raiseError(__CLASS__ .'::addQueryParam() returned false!', true);
+                return false;
+            }
+            $i++;
         }
 
         return;
@@ -248,20 +328,28 @@ class HttpRouterController extends DefaultController
                 $this->isValidUpdateObject($this->query->view)
             )
         ) {
-            if (!isset($_POST['type']) || !isset($_POST['action'])) {
-                static::raiseError("Incomplete RPC request!");
+            if (!$this->hasQueryParam('type') || !$this->hasQueryParam('action')) {
+                static::raiseError(__METHOD__ .'(), incomplete RPC request!');
                 return false;
             }
-            if (!is_string($_POST['type']) || !is_string($_POST['action'])) {
-                static::raiseError("Invalid RPC request!");
+
+            if (($type = $this->getQueryParam('type')) === false) {
+                static::raiseError(__CLASS__ .'::getQueryParam() returned false!');
                 return false;
             }
-            if ($_POST['type'] != "rpc" && $this->isValidRpcAction($_POST['action'])) {
-                static::raiseError("Invalid RPC action!");
+
+            if (($action = $this->getQueryParam('action')) === false) {
+                static::raiseError(__CLASS__ .'::getQueryParam() returned false!');
                 return false;
             }
-            $this->query->call_type = "rpc";
-            $this->query->action = $_POST['action'];
+
+            if ($type !== "rpc" || !$this->isValidRpcAction($action)) {
+                static::raiseError(__METHOD__ .'(), invalid RPC action!');
+                return false;
+            }
+
+            $this->query->call_type = $type;
+            $this->query->action = $action;
             return $this->query;
         }
 
@@ -403,21 +491,24 @@ class HttpRouterController extends DefaultController
      */
     public function parseQueryParams()
     {
-        if (!isset($this->query->params) ||
-            empty($this->query->params) ||
-            !is_array($this->query->params) ||
-            !isset($this->query->params[1])
-        ) {
-            return array(
-                'id' => null,
-                'guid' => null
-            );
+        if (!$this->hasQueryParams()) {
+            static::raiseError(__CLASS__ .'::hasQueryParams() returned false!');
+            return false;
         }
 
-        $safe_link = $this->query->params[1];
+        if (!$this->hasQueryParam(2)) {
+            static::raiseError(__CLASS__ .'::hasQueryParam() returned false!');
+            return false;
+        }
+
+        if (($param = $this->getQueryParam(2)) === false) {
+            static::raiseError(__CLASS__ .'::getQueryParam() returned false!');
+            return false;
+        }
+
         $matches = array();
 
-        if (!preg_match("/^([0-9]+)\-([a-z0-9]+)$/", $safe_link, $matches)) {
+        if (!preg_match("/^([0-9]+)\-([a-z0-9]+)$/", $param, $matches)) {
             return array(
                 'id' => null,
                 'guid' => null
@@ -513,6 +604,109 @@ class HttpRouterController extends DefaultController
             return false;
         }
 
+        return true;
+    }
+
+    /**
+     * return true if query params are available.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    public function hasQueryParams()
+    {
+        if (!isset($this->query->params) ||
+            empty($this->query->params) ||
+            !is_array($this->query->params)
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * return all query params.
+     *
+     * @param none
+     * @return array|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    public function getQueryParams()
+    {
+        if (!$this->hasQueryParams()) {
+            static::raiseError(__CLASS__ .'::hasQueryParams() returned false!');
+            return false;
+        }
+
+        return $this->query->params;
+    }
+
+    /**
+     * return true if the query param $name is known.
+     *
+     * @param sting|int $name
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    public function hasQueryParam($name)
+    {
+        if (!isset($name) || empty($name) || (!is_string($name) && !is_int($name))) {
+            static::raiseError(__METHOD__ .'(), $name parameter is invalid!');
+            return false;
+        }
+
+        if (!array_key_exists($name, $this->query->params)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * return the query param $name.
+     *
+     * @param sting|int $name
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    public function getQueryParam($name)
+    {
+        if (!isset($name) || empty($name) || (!is_string($name) && !is_int($name))) {
+            static::raiseError(__METHOD__ .'(), $name parameter is invalid!');
+            return false;
+        }
+
+        if (!$this->hasQueryParam($name)) {
+            static::raiseError(__CLASS__ .'::hasQueryParam() returned false!');
+            return false;
+        }
+
+        return $this->query->params[$name];
+    }
+
+    /**
+     * store the provided query param $name and its value $value.
+     *
+     * @param sting|int $name
+     * @param mixed $value
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    protected function addQueryParam($name, $value)
+    {
+        if (!isset($name) || empty($name) || (!is_string($name) && !is_int($name))) {
+            static::raiseError(__METHOD__ .'(), $name parameter is invalid!');
+            return false;
+        }
+
+        if (!isset($value) || empty($value) || !is_string($value)) {
+            static::raiseError(__METHOD__ .'(), $value parameter is invalid!');
+            return false;
+        }
+
+        $this->query->params[$name] = $value;
         return true;
     }
 }
