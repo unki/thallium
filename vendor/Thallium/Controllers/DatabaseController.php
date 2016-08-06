@@ -398,19 +398,18 @@ class DatabaseController extends DefaultController
             return false;
         }
 
+        if (isset($data) && !empty($data) && is_array($data)) {
+            foreach ($data as $key => $value) {
+                $sth->bindParam(":{$key}", $value);
+            }
+        }
+
         /* if empty array is provided, we have to unset the $data.
            otherwise an empty array may clear all previously done
            (bindParam(), bindValue(), ...) bindings.
         */
         if (!isset($data) || empty($data) || !is_array($data)) {
             $data = null;
-        } else {
-            foreach ($data as $key => $value) {
-                $sth->bindParam(
-                    ":{$key}",
-                    $value
-                );
-            }
         }
 
         try {
@@ -1022,12 +1021,15 @@ class DatabaseController extends DefaultController
             return false;
         }
 
-        if (is_string($query_columns)) {
+        if (!is_string($query_columns) && !is_array($query_columns)) {
+            static::raiseError(__METHOD__ .'(), $query_columns parameter has an unsupported type!');
+            return false;
+        } elseif (is_string($query_columns)) {
             $query_columns_str = $query_columns;
         } elseif (is_array($query_columns)) {
-            if (count($query_columns) < 1) {
-                $query_columns_str = "*";
-            } else {
+            $query_columns_str = "*";
+
+            if (count($query_columns) >= 1) {
                 $columns = array();
                 foreach ($query_columns as $key => $value) {
                     $columns[] = $value;
@@ -1037,9 +1039,6 @@ class DatabaseController extends DefaultController
                     return false;
                 }
             }
-        } else {
-            static::raiseError(__METHOD__ .'(), $query_columns parameter has an unsupported type!');
-            return false;
         }
 
         if (is_string($query_data)) {
@@ -1051,16 +1050,16 @@ class DatabaseController extends DefaultController
                     $table_name,
                     !empty($extend_where_query) ? "WHERE {$extend_where_query}" : null
                 );
-            } else {
-                return sprintf(
-                    "%s %s FROM %s WHERE %s %s",
-                    $type,
-                    $query_columns_str,
-                    $table_names,
-                    $query_data,
-                    $extend_where_query
-                );
             }
+
+            return sprintf(
+                "%s %s FROM %s WHERE %s %s",
+                $type,
+                $query_columns_str,
+                $table_name,
+                $query_data,
+                $extend_where_query
+            );
         } elseif (is_array($query_data) && count($query_data) < 1) {
             return sprintf(
                 "%s %s FROM %s %s",
@@ -1072,7 +1071,7 @@ class DatabaseController extends DefaultController
             return $sql;
         }
 
-        $query_where_str = '';
+        $query_wheres_str = '';
         $wheres = array();
 
         foreach ($query_data as $key => $value) {
@@ -1188,7 +1187,7 @@ class DatabaseController extends DefaultController
      * returns the database name.
      *
      * @param none
-     * @return bool
+     * @return string
      * @throws \Thallium\Controllers\ExceptionController if an error occurs.
      */
     public function getDatabaseName()
