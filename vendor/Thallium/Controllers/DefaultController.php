@@ -144,8 +144,16 @@ abstract class DefaultController
      */
     public static function raiseError($text, $stop_execution = false, $catched_exception = null)
     {
-        if (defined('DB_NOERROR')) {
-            return;
+        if (!isset($text) || empty($text) || !is_string($text)) {
+            $text = "Unspecified error.";
+        }
+
+        if (!isset($stop_execution) || !is_bool($stop_execution)) {
+            $stop_execution = false;
+        }
+
+        if (isset($catched_exception) || (!is_null($catched_exception) && !is_object($catched_exception))) {
+            $catched_exception = null;
         }
 
         try {
@@ -155,7 +163,7 @@ abstract class DefaultController
         }
 
         if (isset($stop_execution) && $stop_execution === true) {
-            exit(1);
+            trigger_error("Execution stopped.", E_USER_ERROR);
         }
 
         return true;
