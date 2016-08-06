@@ -222,7 +222,7 @@ class PagingController extends DefaultController
      * returns the requested internal paging parameter.
      *
      * @param none
-     * @return bool
+     * @return string|bool
      * @throws \Thallium\Controllers\ExceptionController if an error occurs.
      */
     final protected function getParameter($key)
