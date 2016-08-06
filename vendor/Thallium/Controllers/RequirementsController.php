@@ -96,8 +96,6 @@ class RequirementsController extends DefaultController
      */
     protected function checkPhp()
     {
-        global $config;
-
         $missing = false;
 
         if (!function_exists("microtime")) {
@@ -165,7 +163,13 @@ class RequirementsController extends DefaultController
         }
 
         // check for PDO database support support
-        if ((array_search($db_pdo_name, PDO::getAvailableDrivers())) === false) {
+        if (($drivers = \PDO::getAvailableDrivers()) === false) {
+            $this->write('Failed to fetch supported drivers from PDO!', LOG_ERR);
+            $missing = true;
+        }
+
+        if (isset($drivers) && !empty($drivers) && is_array($drivers) &&
+            (array_search($db_pdo_name, $drivers)) === false) {
             $this->write("PDO {$db_pdo_name} support not available", LOG_ERR);
             $missing = true;
         }
@@ -186,8 +190,6 @@ class RequirementsController extends DefaultController
      */
     protected function checkExternalLibraries()
     {
-        global $config;
-
         $missing = false;
 
         ini_set('track_errors', 1);
