@@ -98,16 +98,17 @@ class ExceptionController extends \Exception
     public function getJson()
     {
         $text = array();
+        $trace = array();
 
         if (($previous = $this->getPrevious()) !== null &&
             is_a($previous, 'Exception')
         ) {
-            $text = $previous->getMessage();
-            $trace = $previous->getTraceAsString();
-        } else {
-            $text = $this->getMessage();
-            $trace = parent::getTraceAsString();
+            $text[] = $previous->getMessage();
+            $trace[] = $previous->getTraceAsString();
         }
+
+        $text[] = $this->getMessage();
+        $trace[] = parent::getTraceAsString();
 
         $json_data = array(
             'error' => 1,
