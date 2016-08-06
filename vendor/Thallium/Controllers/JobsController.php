@@ -493,7 +493,7 @@ class JobsController extends DefaultController
 
         if (is_string($handler)) {
             $handler = array($this, $handler);
-        } else {
+        } elseif (is_array($handler)) {
             if (count($handler) != 2 ||
                 !isset($handler[0]) || empty($handler[0]) || !is_object($handler[0]) ||
                 !isset($handler[1]) || empty($handler[1]) || !is_string($handler[1])
@@ -661,11 +661,7 @@ class JobsController extends DefaultController
         }
 
         if ($id === 'all' && $guid === 'all') {
-            if (method_exists($obj, 'flush')) {
-                $rm_method = 'flush';
-            } else {
-                $rm_method = 'delete';
-            }
+            $rm_method =  method_exists($obj, 'flush') ? 'flush' : 'delete';
 
             if (!$obj->$rm_method()) {
                 static::raiseError(get_class($obj) ."::${rm_method}() returned false!");
@@ -754,17 +750,8 @@ class JobsController extends DefaultController
 
         $model = $save_request->model;
 
-        if ($save_request->id !== 'new') {
-            $id = $save_request->id;
-        } else {
-            $id = null;
-        }
-
-        if ($save_request->guid !== 'new') {
-            $guid = $save_request->guid;
-        } else {
-            $guid = null;
-        }
+        $id = ($save_request->id !== 'new') ? $save_request->id : null;
+        $guid = ($save_request->guid !== 'new') ? $save_request->guid : null;
 
         unset($save_request->model);
         unset($save_request->id);
