@@ -465,7 +465,7 @@ class MessageModel extends DefaultModel
      * returns the value of the in_processing field.
      *
      * @param none
-     * @return bool
+     * @return string|bool
      * @throws \Thallium\Controllers\ExceptionController
      */
     public function getProcessingFlag()
