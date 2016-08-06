@@ -164,28 +164,39 @@ class RpcController extends DefaultController
      */
     protected function rpcDelete()
     {
-        global $thallium;
+        global $thallium, $router;
 
         $input_fields = array('id', 'guid', 'model');
 
         foreach ($input_fields as $field) {
-            if (!isset($_POST[$field])) {
-                static::raiseError(__METHOD__ ."(), '{$field}' isn't set in POST request!");
-                return false;
-            }
-            if (empty($_POST[$field])) {
-                static::raiseError(__METHOD__ ."(), '{$field}' is empty!");
-                return false;
-            }
-            if (!is_string($_POST[$field]) && !is_numeric($_POST[$field])) {
-                static::raiseError(__METHOD__ ."(), '{$field}' is not from a valid type!");
+            if (!$router->hasQueryParam($field)) {
+                static::raiseError(get_class($router) .'::hasQueryParam() returned false!');
                 return false;
             }
         }
 
-        $id = $_POST['id'];
-        $guid = $_POST['guid'];
-        $model = $_POST['model'];
+        if (($id = $router->getQueryParam('id')) === false) {
+            static::raiseError(get_class($router) .'::getQueryParam() returned false!');
+            return false;
+        }
+
+        if (($guid = $router->getQueryParam('guid')) === false) {
+            static::raiseError(get_class($router) .'::getQueryParam() returned false!');
+            return false;
+        }
+
+        if (($model = $router->getQueryParam('model')) === false) {
+            static::raiseError(get_class($router) .'::getQueryParam() returned false!');
+            return false;
+        }
+
+        if (empty($id) || (!is_numeric($id) && !is_string($id)) ||
+            empty($guid) || !is_string($guid) ||
+            empty($model) || !is_string($model)
+        ) {
+            static::raiseError(__METHOD__ .'(), request contains invalid parameters!');
+            return false;
+        }
 
         if (!$thallium->isValidId($id) && $id !== 'flush') {
             static::raiseError(__METHOD__ .'(), $id is invalid!');
@@ -261,27 +272,26 @@ class RpcController extends DefaultController
      */
     protected function rpcGetContent()
     {
-        global $views;
+        global $views, $router;
 
         $valid_content = array(
             'preview',
         );
 
-        if (!array_key_exists('content', $_POST) ||
-            !isset($_POST['content']) ||
-            empty($_POST['content']) ||
-            !is_string($_POST['content'])
+        if (!$router->hasQueryParam('content') ||
+            ($requested_content = $router->getQueryParam('content')) === false ||
+            !empty($requested_content) || !is_string($requested_content)
         ) {
             static::raiseError(__METHOD__ .'(), no content requested!');
             return false;
         }
 
-        if (!in_array($_POST['content'], $valid_content)) {
+        if (!in_array($requested_content, $valid_content)) {
             static::raiseError(__METHOD__ .'(), no valid content requested!');
             return false;
         }
 
-        switch ($_POST['content']) {
+        switch ($requested_content) {
             case 'preview':
                 if (($content = $views->load('PreviewView', false)) === false) {
                     static::raiseError(get_class($views) .'::load() returned false!');
@@ -308,7 +318,7 @@ class RpcController extends DefaultController
      */
     protected function rpcFindPrevNextObject()
     {
-        global $thallium, $views;
+        global $thallium, $router;
 
         $valid_models = array(
             'queueitem',
@@ -319,54 +329,47 @@ class RpcController extends DefaultController
             'prev',
         );
 
-        if (!array_key_exists('model', $_POST) ||
-            !isset($_POST['model']) ||
-            empty($_POST['model']) ||
-            !is_string($_POST['model'])
+        if (!$router->hasQueryParam('model') ||
+            ($model = $router->getQueryParam('model')) === false ||
+            empty($model) || !is_string($model)
         ) {
             static::raiseError(__METHOD__ .'(), no model requested!');
             return false;
         }
 
-        if (!in_array($_POST['model'], $valid_models)) {
+        if (!in_array($model, $valid_models)) {
             static::raiseError(__METHOD__ .'(), unknown model requested!');
             return false;
         }
 
-        if (!array_key_exists('id', $_POST) ||
-            !isset($_POST['id']) ||
-            empty($_POST['id']) ||
-            !is_string($_POST['id'])
+        if (!$router->hasQueryParam('id') ||
+            ($id = $router->getQueryParam('id')) === false ||
+            empty($id) || !is_string($id)
         ) {
-            static::raiseError(__METHOD__ .'(), no id provided!');
+            static::raiseError(__METHOD__ .'(), no id requested!');
             return false;
         }
-
-        $id = $_POST['id'];
 
         if (!$thallium->isValidId($id)) {
             static::raiseError(__METHOD__ .'(), invalid id provided!');
             return false;
         }
 
-        if (!array_key_exists($_POST['direction']) ||
-            !isset($_POST['direction']) ||
-            empty($_POST['direction']) ||
-            !is_string($_POST['direction'])
+        if (!$router->hasQueryParam('direction') ||
+            ($direction = $router->getQueryParam('direction')) === false ||
+            empty($direction) || !is_string($direction)
         ) {
-            static::raiseError(__METHOD__ .'(), no direction provided!');
+            static::raiseError(__METHOD__ .'(), no direction requested!');
             return false;
         }
 
-        if (!in_array($_POST['direction'], $valid_directions)) {
+        if (!in_array($direction, $valid_directions)) {
             static::raiseError(__METHOD__ .'(), invalid direction requested!');
             return false;
         }
 
-        $direction = $_POST['direction'];
-
         if (($id = $thallium->parseId($id)) === false) {
-            static::raiseError('Unable to parse \$id');
+            static::raiseError(get_class($thallium) .'::parseId() returned false!');
             return false;
         }
 
@@ -418,7 +421,7 @@ class RpcController extends DefaultController
      */
     protected function rpcUpdate()
     {
-        global $thallium;
+        global $thallium, $router;
 
         $input_fields = array(
             'key',
@@ -428,26 +431,44 @@ class RpcController extends DefaultController
         );
 
         foreach ($input_fields as $field) {
-            if (!isset($_POST[$field])) {
-                static::raiseError(__METHOD__ ."(), '{$field}' isn't set in POST request!");
-                return false;
-            }
-            if (empty($_POST[$field]) && $field != 'value') {
-                static::raiseError(__METHOD__ ."(), '{$field}' is empty!");
-                return false;
-            }
-            if (!is_string($_POST[$field]) && !is_numeric($_POST[$field])) {
-                static::raiseError(__METHOD__ ."(), '{$field}' is not from a valid type!");
+            if (!$router->hasQueryParam($field)) {
+                static::raiseError(get_class($router) .'::hasQueryParam() returned false!');
                 return false;
             }
         }
 
-        $key = strtolower($_POST['key']);
-        $id = $_POST['id'];
-        $value = $_POST['value'];
-        $model = $_POST['model'];
+        if (($key = $router->getQueryParam('key')) === false) {
+            static::raiseError(get_class($router) .'::getQueryParam() returned false!');
+            return false;
+        }
 
-        if (!(preg_match("/^([a-z]+)_([a-z_]+)$/", $key, $parts))) {
+        if (($id = $router->getQueryParam('id')) === false) {
+            static::raiseError(get_class($router) .'::getQueryParam() returned false!');
+            return false;
+        }
+
+        if (($value = $router->getQueryParam('value')) === false) {
+            static::raiseError(get_class($router) .'::getQueryParam() returned false!');
+            return false;
+        }
+
+        if (($model = $router->getQueryParam('model')) === false) {
+            static::raiseError(get_class($router) .'::getQueryParam() returned false!');
+            return false;
+        }
+
+        if (empty($id) || (!is_numeric($id) && !is_string($id)) ||
+            empty($key) || !is_string($key) ||
+            empty($value) || !is_string($value) ||
+            empty($model) || !is_string($model)
+        ) {
+            static::raiseError(__METHOD__ .'(), request contains invalid parameters!');
+            return false;
+        }
+
+        $key = strtolower($key);
+
+        if (!preg_match("/^([a-z]+)_([a-z_]+)$/", $key)) {
             static::raiseError(__METHOD__ ."() , key looks invalid!");
             return false;
         }
@@ -509,18 +530,17 @@ class RpcController extends DefaultController
      */
     protected function rpcSubmitToMessageBus()
     {
-        global $mbus;
+        global $mbus, $router;
 
-        if (!array_key_exists('messages', $_POST) ||
-            !isset($_POST['messages']) ||
-            empty($_POST['messages']) ||
-            !is_string($_POST['messages'])
+        if (!$router->hasQueryParam('messages') ||
+            ($messages = $router->getQueryParam('messages')) === false ||
+            empty($messages) || !is_string($messages)
         ) {
-            static::raiseError(__METHOD__ .'(), no message submited!');
+            static::raiseError(__METHOD__ .'(), no message provided!');
             return false;
         }
 
-        if (!$mbus->submit($_POST['messages'])) {
+        if (!$mbus->submit($messages)) {
             static::raiseError(get_class($mbus) .'::submit() returned false!');
             return false;
         }
