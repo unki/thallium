@@ -28,6 +28,8 @@
  * @author Andreas Unterkircher <unki@netshadow.net>
  */
 
+declare(strict_types=1);
+
 require_once 'vendor/Thallium/static.php';
 require_once 'vendor/autoload.php';
 
