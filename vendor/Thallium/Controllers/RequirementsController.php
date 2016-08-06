@@ -100,8 +100,13 @@ class RequirementsController extends DefaultController
 
         $missing = false;
 
-        if (!(function_exists("microtime"))) {
+        if (!function_exists("microtime")) {
             static::raiseError(__METHOD__ .'(), microtime() function does not exist!');
+            $missing = true;
+        }
+
+        if (!function_exists("filter_input_array")) {
+            static::raiseError(__METHOD__ .'(), filter_input_array() function does not exist!');
             $missing = true;
         }
 
