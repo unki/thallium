@@ -668,14 +668,37 @@ class PagingController extends DefaultController
     }
 
     /**
+     * returns true if items-limits have been configured.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    final public static function hasItemsLimits()
+    {
+        if (!isset(static::$itemsPerPageLimits) ||
+            empty(static::$itemsPerPageLimits) ||
+            !is_array(static::$itemsPerPageLimits)
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+    /**
      * returns an array of possible items-per-page limits.
      *
      * @param none
      * @return array
      * @throws \Thallium\Controllers\ExceptionController if an error occurs.
      */
-    final public function getItemsLimits()
+    final public static function getItemsLimits()
     {
+        if (!static::hasItemsLimits()) {
+            static::raiseError(__CLASS__ .'::hasItemsLimits() returned false!');
+            return false;
+        }
+
         return static::$itemsPerPageLimits;
     }
 
@@ -694,7 +717,7 @@ class PagingController extends DefaultController
         }
 
         if ($limit < 0) {
-            if (($limit = $this->getFirstItemsLimit()) === false) {
+            if (($limit = static::getFirstItemsLimit()) === false) {
                 static::raiseError(__CLASS__ .'::getFirstItemsLimit() returned false!');
                 return false;
             }
@@ -718,8 +741,8 @@ class PagingController extends DefaultController
             return false;
         }
 
-        if (($limits = $this->getItemsLimits()) === false) {
-            static::raiseError(__CLASS__ .'::getCurrentItemsLimits() returned false!');
+        if (($limits = static::getItemsLimits()) === false) {
+            static::raiseError(__CLASS__ .'::getItemsLimit() returned false!');
             return false;
         }
 
@@ -730,10 +753,10 @@ class PagingController extends DefaultController
         return true;
     }
 
-    final public function getFirstItemsLimit()
+    final public static function getFirstItemsLimit()
     {
-        if (($limits = $this->getItemsLimits()) === false) {
-            static::raiseError(__CLASS__ .'::getCurrentItemsLimits() returned false!');
+        if (($limits = static::getItemsLimits()) === false) {
+            static::raiseError(__CLASS__ .'::getItemsLimit() returned false!');
             return false;
         }
 
