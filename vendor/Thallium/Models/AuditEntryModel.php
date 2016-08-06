@@ -256,7 +256,7 @@ class AuditEntryModel extends DefaultModel
             return false;
         }
 
-        return $message;
+        return $scene;
     }
 
     /**
