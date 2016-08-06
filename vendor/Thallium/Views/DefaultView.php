@@ -59,6 +59,9 @@ abstract class DefaultView
     /** @var object $view_current_item */
     protected $view_current_item;
 
+    /** @var int $default_items_limit */
+    protected $default_items_limit;
+
     /**
      * class constructor
      *
@@ -93,7 +96,7 @@ abstract class DefaultView
             $default_items_limit = 10;
         }
 
-        $this->view_current_item = $default_items_limit;
+        $this->default_items_limit = $default_items_limit;
         return;
     }
 
@@ -159,22 +162,33 @@ abstract class DefaultView
     {
         global $thallium, $query, $router, $tmpl;
 
-        $items_per_page = null;
+        $items_per_page = $this->default_items_limit;
+        $current_page = 1;
 
-        if (isset($query->params)) {
-            $params = $query->params;
-        }
-
-        if (isset($params) && !empty($params) && is_array($params)) {
-            if (isset($query->params['items-per-page'])) {
-                $items_per_page = $query->params['items-per-page'];
+        if ($router->hasQueryParams()) {
+            if ($router->hasQueryParam('items-per-page')) {
+                if (($items_per_page = $query->getQueryParam('items-per-page')) === false) {
+                    static::raiseError(get_class($query) .'::getQueryParam() returned false!');
+                    return false;
+                }
             }
-            if (isset($params[0]) && !empty($params[0]) && $this->isValidMode($params[0])) {
-                $mode = $params[0];
+            if ($router->hasQueryParam(1)) {
+                if (($mode = $router->getQueryParam(1)) === false) {
+                    static::raiseError(get_class($query) .'::getQueryParam() returned false!');
+                    return false;
+                }
+                if (isset($mode) &&
+                    !empty($mode) &&
+                    is_string($mode) &&
+                    !$this->isValidMode($mode)
+                ) {
+                    static::raiseError(__CLASS__ .'::isValidMode() returned false!');
+                    return false;
+                }
 
-                if ($query->params[0] == 'list.html') {
+                if ($mode === 'list.html') {
                     $mode = 'list';
-                } elseif (preg_match('/^list-([0-9]+).html$/', $query->params[0], $parts) &&
+                } elseif (preg_match('/^list-([0-9]+).html$/', $mode, $parts) &&
                     isset($parts) &&
                     !empty($parts) &&
                     is_array($parts) &&
@@ -182,6 +196,7 @@ abstract class DefaultView
                     is_numeric($parts[1])
                 ) {
                     $mode = 'list';
+                    $current_page = $parts[1];
                     if (!$this->setSessionVar("current_page", $parts[1])) {
                         $this->raiseError(__CLASS__ .'::setSessionVar() returned false!');
                         return false;
@@ -205,7 +220,7 @@ abstract class DefaultView
         }
 
         if ($mode == "list" && $tmpl->templateExists($list_tmpl)) {
-            return $this->showList($mode, $items_per_page);
+            return $this->showList($current_page, $items_per_page);
         } elseif ($mode == "edit" && $tmpl->templateExists($edit_tmpl)) {
             if (($item = $router->parseQueryParams()) === false) {
                 static::raiseError("HttpRouterController::parseQueryParams() returned false!");
@@ -264,8 +279,9 @@ abstract class DefaultView
         if ((!isset($pageno) ||
             empty($pageno) ||
             !is_numeric($pageno)) ||
-            $this->hasSessionVar("current_page") ||
-            ($current_page = $this->getSessionVar("current_page")) === false
+            !$this->hasSessionVar("current_page") ||
+            ($this->hasSessionVar("current_page") &&
+            ($current_page = $this->getSessionVar("current_page")) === false)
         ) {
             $current_page = 1;
         }
@@ -278,7 +294,8 @@ abstract class DefaultView
             is_null($items_limit) ||
             !is_numeric($items_limit)) &&
             !$this->hasSessionVar("current_items_limit") ||
-            ($current_items_limit = $this->getSessionVar("current_items_limit")) === false
+            ($this->hasSessionVar("current_items_limit") &&
+            ($current_items_limit = $this->getSessionVar("current_items_limit")) === false)
         ) {
             $current_items_limit = 0;
         }
