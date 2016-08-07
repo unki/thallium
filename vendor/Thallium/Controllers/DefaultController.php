@@ -152,7 +152,7 @@ abstract class DefaultController
             $stop_execution = false;
         }
 
-        if (isset($catched_exception) || (!is_null($catched_exception) && !is_object($catched_exception))) {
+        if (isset($catched_exception) && (!is_null($catched_exception) && !is_object($catched_exception))) {
             $catched_exception = null;
         }
 
