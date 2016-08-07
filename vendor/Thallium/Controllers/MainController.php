@@ -594,12 +594,12 @@ class MainController extends DefaultController
         if ($application_db_schema_version < $application_sw_schema_version ||
             $framework_db_schema_version < $framework_sw_schema_version
         ) {
-            static::raiseError(
+            static::raiseError(sprintf(
                 "A database schema upgrade is pending.&nbsp;"
-                ."You have to run <a href=\"{$base_path}/install\">Installer</a> "
+                ."You have to run <a href=\"%s/install\">Installer</a> "
                 ."again to upgrade.",
-                true
-            );
+                $base_path
+            ), true);
             return true;
         }
 
@@ -642,7 +642,7 @@ class MainController extends DefaultController
         try {
             $$global_name = new $controller;
         } catch (\Exception $e) {
-            static::raiseError(_MMETHOD__ .'(), failed to load controller!', false, $e);
+            static::raiseError(__METHOD__ .'(), failed to load controller!', false, $e);
             return false;
         }
 
