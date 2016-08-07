@@ -635,7 +635,7 @@ class MainController extends DefaultController
         $controller = '\\'. $prefix .'\\Controllers\\'.$controller.'Controller';
 
         if (!class_exists($controller, true)) {
-            static::raiseError("{$controller} class is not available!", true);
+            static::raiseError("{$controller} class is not available!");
             return false;
         }
 
