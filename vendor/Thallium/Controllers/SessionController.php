@@ -43,7 +43,7 @@ class SessionController extends DefaultController
     public function __construct()
     {
         if (!empty(session_id())) {
-            return true;
+            return;
         }
 
         if (($http_only = ini_get('session.cookie_httponly')) === false ||
