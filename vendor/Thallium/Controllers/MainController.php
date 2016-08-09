@@ -197,8 +197,15 @@ class MainController extends DefaultController
      */
     public function startup()
     {
+        /* if we are in test-mode, we can not take control about
+         *  output buffer and also not start background tasks.
+         */
+        if (static::inTestMode()) {
+            return true;
+        }
+
         if (!ob_start()) {
-            static::raiseError(__METHOD__ .'(), internal error, ob_start() returned false!', true);
+            static::raiseError(__METHOD__ .'(), internal error, ob_start() returned false!');
             return false;
         }
 
@@ -247,6 +254,11 @@ class MainController extends DefaultController
     public function runBackgroundJobs()
     {
         global $jobs;
+
+        /* if we are in test-mode, we should not start background tasks. */
+        if (static::inTestMode()) {
+            return true;
+        }
 
         ignore_user_abort(true);
         set_time_limit(30);
