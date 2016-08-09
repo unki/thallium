@@ -70,6 +70,12 @@ class MainController extends DefaultController
 
         $GLOBALS['thallium'] =& $this;
 
+        try {
+            set_exception_handler(array(__CLASS__, 'exceptionHandler'));
+        } catch (\Exception $e) {
+            trigger_error("Failed to register execption handler.", E_USER_ERROR);
+        }
+
         if (!$this->loadController("Config", "config")) {
             static::raiseError(__CLASS__ .'::loadController() returned false!', true);
             return;
@@ -1396,6 +1402,21 @@ class MainController extends DefaultController
         }
 
         return true;
+    }
+
+    public static function exceptionHandler($e)
+    {
+        print $e;
+
+        if (!method_exists($e, 'isStopExecution') ||
+            !is_callable(array($e, 'isStopExecution')) ||
+            !$e->isStopExecution()
+        ) {
+            return;
+        }
+
+        trigger_error("Execution stopped.", E_USER_ERROR);
+        return;
     }
 }
 
