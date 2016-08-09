@@ -1236,6 +1236,15 @@ class MainController extends DefaultController
     {
         global $router;
 
+        if (!isset($router) ||
+            empty($router) ||
+            !is_object($router) ||
+            !is_a($router, 'Thallium\Controllers\HttpRouterController')
+        ) {
+            static::raiseError(__METHOD__ .'(), HttpRouterController not loaded!');
+            return false;
+        }
+
         if ($router->isRpcCall()) {
             if (!$this->callHandler('rpc')) {
                 static::raiseError(__CLASS__ .'::callHandler() returned false!');
