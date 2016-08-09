@@ -34,6 +34,9 @@ class ExceptionController extends \Exception
     /** @var string $previous keeps track of the last error message. */
     protected $previous;
 
+    /** @var bool $stop_execution */
+    protected $stop_execution = false;
+
     /**
      * class constructor
      *
@@ -42,11 +45,13 @@ class ExceptionController extends \Exception
      * @return void
      * @throws \Exception
      */
-    public function __construct($message, $captured_exception = null)
+    public function __construct($message, $captured_exception = null, $stop_execution = false)
     {
         if ($captured_exception !== null) {
             $this->previous = $captured_exception;
         }
+
+        $this->stop_execution = $stop_execution;
 
         parent::__construct($message, null, $captured_exception);
     }
@@ -144,6 +149,19 @@ class ExceptionController extends \Exception
         }
 
         return $this->getText();
+    }
+
+    /**
+     * returns true if execution-stop-flag has been set on
+     * throwing the exception.
+     *
+     * @param none
+     * @return bool
+     * @throws none
+     */
+    public function isStopExecution()
+    {
+        return $this->stop_execution;
     }
 }
 
