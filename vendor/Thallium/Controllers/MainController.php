@@ -1358,6 +1358,27 @@ class MainController extends DefaultController
         $full_model_name = "\\{$prefix}\\Models\\{$model}";
         return $full_model_name;
     }
+
+    /**
+     * returns true if a testsuite is running.
+     * Hey, my car does the same for me - it doesn't matter...
+     *
+     * @param none
+     * @return bool
+     * @throws none
+     */
+    public static function inTestMode()
+    {
+        if (!defined('PHPUNIT_THALLIUM_TESTSUITE_ACTIVE')) {
+            return false;
+        }
+
+        if ((int) constant('PHPUNIT_THALLIUM_TESTSUITE_ACTIVE') !== 1) {
+            return false;
+        }
+
+        return true;
+    }
 }
 
 // vim: set filetype=php expandtab softtabstop=4 tabstop=4 shiftwidth=4:
