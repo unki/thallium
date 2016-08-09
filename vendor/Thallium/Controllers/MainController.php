@@ -368,12 +368,18 @@ class MainController extends DefaultController
             return false;
         }
 
-        if (gettype($id) === 'integer' && !is_int($id)) {
+        $type = gettype($id);
+
+        if ($type === 'unknown type') {
             return false;
         }
 
-        if (gettype($id) !== 'string') {
+        if ($type !== 'integer' && $type !== 'string') {
             return false;
+        }
+
+        if ($type === 'integer' && is_int($id)) {
+            return true;
         }
 
         if (!intval($id)) {
