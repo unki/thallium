@@ -139,7 +139,7 @@ abstract class DefaultController
      * @param string $text
      * @param bool $stop_execution
      * @param callable|null $catched_exception
-     * @return bool
+     * @return void
      * @throws \Thallium\Controllers\ExceptionController
      */
     public static function raiseError($text, $stop_execution = false, $catched_exception = null)
@@ -156,17 +156,8 @@ abstract class DefaultController
             $catched_exception = null;
         }
 
-        try {
-            throw new ExceptionController($text, $catched_exception);
-        } catch (ExceptionController $e) {
-            print $e;
-        }
-
-        if (isset($stop_execution) && $stop_execution === true) {
-            trigger_error("Execution stopped.", E_USER_ERROR);
-        }
-
-        return true;
+        throw new ExceptionController($text, $catched_exception, $stop_execution);
+        return;
     }
 
     /**
