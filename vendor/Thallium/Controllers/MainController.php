@@ -70,14 +70,11 @@ class MainController extends DefaultController
 
         $GLOBALS['thallium'] =& $this;
 
-        if (!$this->inTestMode()) {
-            try {
-                set_exception_handler(array(__CLASS__, 'exceptionHandler'));
-            } catch (\Exception $e) {
-                trigger_error("Failed to register execption handler. ". $e->getMessage(), E_USER_ERROR);
-                return;
-            }
+        if (!$this->setExceptionHandler()) {
+            static::raiseError(__CLASS__ .'::setExceptionHandler() returned false!', true);
+            return;
         }
+
 
         if (!$this->loadController("Config", "config")) {
             static::raiseError(__CLASS__ .'::loadController() returned false!', true);
@@ -1401,6 +1398,22 @@ class MainController extends DefaultController
         }
 
         if ((int) constant('PHPUNIT_THALLIUM_TESTSUITE_ACTIVE') !== 1) {
+            return false;
+        }
+
+        return true;
+    }
+
+    protected function setExceptionHandler()
+    {
+        if ($this->inTestMode()) {
+            return true;
+        }
+
+        try {
+            set_exception_handler(array(__CLASS__, 'exceptionHandler'));
+        } catch (\Exception $e) {
+            trigger_error("Failed to register execption handler. ". $e->getMessage(), E_USER_ERROR);
             return false;
         }
 
