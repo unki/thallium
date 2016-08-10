@@ -529,8 +529,8 @@ class MainController extends DefaultController
             return false;
         }
 
-        if (isset($guid) && !empty($guid) && !$this->isValidGuid($guid)) {
-            static::raiseError(__CLASS__ .'::isValidGuid() returned false!');
+        if (isset($guid) && !empty($guid) && !$this->isValidGuidSyntax($guid)) {
+            static::raiseError(__CLASS__ .'::isValidGuidSyntax() returned false!');
             return false;
         }
 
