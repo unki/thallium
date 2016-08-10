@@ -70,10 +70,13 @@ class MainController extends DefaultController
 
         $GLOBALS['thallium'] =& $this;
 
-        try {
-            set_exception_handler(array(__CLASS__, 'exceptionHandler'));
-        } catch (\Exception $e) {
-            trigger_error("Failed to register execption handler.", E_USER_ERROR);
+        if (!$this->inTestMode()) {
+            try {
+                set_exception_handler(array(__CLASS__, 'exceptionHandler'));
+            } catch (\Exception $e) {
+                trigger_error("Failed to register execption handler. ". $e->getMessage(), E_USER_ERROR);
+                return;
+            }
         }
 
         if (!$this->loadController("Config", "config")) {
