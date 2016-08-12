@@ -535,22 +535,28 @@ class MainController extends DefaultController
         }
 
         if (($prefix = $this->getNamespacePrefix()) === false) {
-            static::raiseError(__METHOD__ .'(), failed to fetch namespace prefix!');
+            static::raiseError(__CLAS__ .'::getNamespacePrefix() return false!');
             return false;
         }
 
-        if (($known_models =  $this->getRegisteredModels()) === false) {
-            static::raiseError(__METHOD__ .'(), getRegisteredModels returned false!');
+        if (!$this->isValidModel($model_name)) {
+            static::raiseError(__CLASS__ .'::isValidModel() returned false!');
             return false;
         }
 
-        if (in_array(strtolower($model_name), array_keys($known_models))) {
-            $model = $known_models[$model_name];
-        } elseif (in_array($model_name, $known_models)) {
-            $model = $model_name;
+        if (!$this->isRegisteredModel(null, $model_name) &&
+            ($this->isRegisteredModel($model_name, null) &&
+            ($possible_name = $this->getModelByNick($model_name)) !== false)
+        ) {
+            static::raiseError(__METHOD__ .'(), no clue how to get the model!');
+            return false;
         }
 
-        $model = '\\'. $prefix .'\\Models\\'. $model;
+        if (isset($possible_name)) {
+            $model_name = $possible_name;
+        }
+
+        $model = sprintf('\\%s\\Models\\%s', $prefix, $model_name);
 
         $load_by = array();
         if (isset($id) && !empty($id)) {
@@ -560,10 +566,19 @@ class MainController extends DefaultController
             $load_by['guid'] = $guid;
         }
 
+        if (empty($load_by)) {
+            static::raiseError(__METhOD__ .'(), no clue how to load that model!');
+            return false;
+        }
+
         try {
             $obj = new $model($load_by);
         } catch (\Exception $e) {
-            static::raiseError(sprintf("%s(), failed to load model %s", __METHOD__, $model), false, $e);
+            static::raiseError(sprintf(
+                "%s(), failed to load model %s",
+                __METHOD__,
+                $model
+            ), false, $e);
             return false;
         }
 
@@ -656,7 +671,7 @@ class MainController extends DefaultController
             return false;
         }
 
-        $controller = '\\'. $prefix .'\\Controllers\\'.$controller.'Controller';
+        $controller = sprintf('\\%s\\Controllers\\%sController', $prefix, $controller);
 
         if (!class_exists($controller, true)) {
             static::raiseError("{$controller} class is not available!");
