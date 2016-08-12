@@ -547,11 +547,19 @@ abstract class DefaultModel
         if (static::hasFields()) {
             if ($num_rows < 1) {
                 $db->freeStatement($sth);
-                static::raiseError(__METHOD__ ."(), no object with id {$this->id} found!");
+                static::raiseError(sprintf(
+                    '%s(), no object with id %s found!',
+                    __METHOD__,
+                    $this->model_load_by[FIELD_IDX]
+                ));
                 return false;
             } elseif ($num_rows > 1) {
                 $db->freeStatement($sth);
-                static::raiseError(__METHOD__ ."(), more than one object with id {$this->id} found!");
+                static::raiseError(sprintf(
+                    '%s(), more than one object with id % found!',
+                    __METHOD__,
+                    $this->model_load_by[FIELD_IDX]
+                ));
                 return false;
             }
         }
@@ -569,7 +577,11 @@ abstract class DefaultModel
         if (static::hasFields()) {
             if (($row = $sth->fetch(\PDO::FETCH_ASSOC)) === false) {
                 $db->freeStatement($sth);
-                static::raiseError(__METHOD__ ."(), unable to fetch SQL result for object id {$this->id}!");
+                static::raiseError(sprintf(
+                    '%s(), unable to fetch SQL result for object id %s!',
+                    __METHOD__,
+                    $this->model_load_by[FIELD_IDX]
+                ));
                 return false;
             }
 
