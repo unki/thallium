@@ -785,14 +785,14 @@ class DatabaseController extends DefaultController
      * @return int|bool
      * @throws \Thallium\Controllers\ExceptionController if an error occurs.
      */
-    final public function setDatabaseSchemaVersion($version, $mode = 'application')
+    final public function setDatabaseSchemaVersion($version = 0, $mode = 'application')
     {
         $valid_schemas = array(
             'application',
             'framework',
         );
 
-        if (!isset($version) || empty($version) || !is_numeric($version)) {
+        if (!is_int($version) && !is_numeric($version) && !is_null($version)) {
             static::raiseError(__METHOD__ .'(), $version parameter is invalid!');
             return false;
         }
@@ -812,9 +812,9 @@ class DatabaseController extends DefaultController
             return false;
         }
 
-        if ($mode == 'application') {
+        if ($mode === 'application') {
             $key = 'schema_version';
-        } elseif ($mode == 'framework') {
+        } elseif ($mode === 'framework') {
             $key = 'framework_schema_version';
         }
 
