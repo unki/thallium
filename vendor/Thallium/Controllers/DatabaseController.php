@@ -153,6 +153,17 @@ class DatabaseController extends DefaultController
             return false;
         }
 
+        if (isset($this->db_cfg['socket']) &&
+            !empty($this->db_cfg['socket']) && (
+            !is_string($this->db_cfg['socket']) ||
+            !file_exists($this->db_cfg['socket']) ||
+            !is_readable($this->db_cfg['socket']) ||
+            !is_writeable($this->db_cfg['socket']))
+        ) {
+            static::raiseError(__METHOD__ .'(), "socket" parameter in [database] section is invalid!');
+            return false;
+        }
+
         if (!isset($this->db_cfg['db_name']) ||
             empty($this->db_cfg['db_name']) ||
             !is_string($this->db_cfg['db_name'])
@@ -193,12 +204,21 @@ class DatabaseController extends DefaultController
             default:
             case 'mariadb':
             case 'mysql':
-                $dsn = sprintf(
-                    "mysql:dbname=%s;host=%s;port=%s",
-                    $this->db_cfg['db_name'],
-                    $this->db_cfg['host'],
-                    $this->db_cfg['port']
-                );
+                if (isset($this->db_cfg['socket'])) {
+                    $dsn_str = "mysql:unix_socket=%s;dbname=%s";
+                    $dsn_data = array(
+                        $this->db_cfg['socket'],
+                        $this->db_cfg['db_name'],
+                    );
+                } else {
+                    $dsn_str = "mysql:dbname=%s;host=%s;port=%s";
+                    $dsn_data = array(
+                        $this->db_cfg['db_name'],
+                        $this->db_cfg['host'],
+                        $this->db_cfg['port']
+                    );
+                }
+                $dsn = vsprintf($dsn_str, $dsn_data);
                 $user = $this->db_cfg['db_user'];
                 $pass = $this->db_cfg['db_pass'];
                 break;
