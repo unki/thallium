@@ -123,6 +123,10 @@ class InstallerController extends DefaultController
             }
         }
 
+        if (MainController::inTestMode()) {
+            return true;
+        }
+
         if (!empty($this->schema_version_before)) {
             printf(
                 'Application database schema version before upgrade: %s<br />',
