@@ -146,11 +146,15 @@ class MainController extends DefaultController
             global $installer;
 
             if (!$installer->setup()) {
-                exit(1);
+                static::raiseError(get_class($installer) .'::setup() returned false!', true);
+                return;
             }
 
             unset($installer);
-            exit(0);
+
+            if (!static::inTestMode()) {
+                exit(0);
+            }
         }
 
         if (!$this->loadController("Cache", "cache")) {
