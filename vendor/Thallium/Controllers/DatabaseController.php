@@ -136,6 +136,7 @@ class DatabaseController extends DefaultController
             static::raiseError(__METHOD__ .'(), "type" parameter in [database] section is invalid!');
             return false;
         }
+
         if (!isset($this->db_cfg['host']) ||
             empty($this->db_cfg['host']) ||
             !is_string($this->db_cfg['host'])
@@ -143,6 +144,15 @@ class DatabaseController extends DefaultController
             static::raiseError(__METHOD__ .'(), "host" parameter in [database] section is invalid!');
             return false;
         }
+
+        if (!isset($this->db_cfg['port']) ||
+            empty($this->db_cfg['port']) ||
+            !is_numeric($this->db_cfg['port'])
+        ) {
+            static::raiseError(__METHOD__ .'(), "port" parameter in [database] section is invalid!');
+            return false;
+        }
+
         if (!isset($this->db_cfg['db_name']) ||
             empty($this->db_cfg['db_name']) ||
             !is_string($this->db_cfg['db_name'])
@@ -150,6 +160,7 @@ class DatabaseController extends DefaultController
             static::raiseError(__METHOD__ .'(), "db_name" parameter in [database] section is invalid!');
             return false;
         }
+
         if (!isset($this->db_cfg['db_user']) ||
             empty($this->db_cfg['db_user']) ||
             !is_string($this->db_cfg['db_user'])
@@ -157,6 +168,7 @@ class DatabaseController extends DefaultController
             static::raiseError(__METHOD__ .'(), "db_user" parameter in [database] section is invalid!');
             return false;
         }
+
         if (!isset($this->db_cfg['db_pass']) ||
             empty($this->db_cfg['db_pass']) ||
             !is_string($this->db_cfg['db_pass'])
@@ -181,7 +193,12 @@ class DatabaseController extends DefaultController
             default:
             case 'mariadb':
             case 'mysql':
-                $dsn = "mysql:dbname=". $this->db_cfg['db_name'] .";host=". $this->db_cfg['host'];
+                $dsn = sprintf(
+                    "mysql:dbname=%s;host=%s;port=%s",
+                    $this->db_cfg['db_name'],
+                    $this->db_cfg['host'],
+                    $this->db_cfg['port']
+                );
                 $user = $this->db_cfg['db_user'];
                 $pass = $this->db_cfg['db_pass'];
                 break;
