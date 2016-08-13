@@ -52,6 +52,13 @@ host = localhost
 port = 3306
 
 ;
+; Socket
+;  if a socket is provided, then this one is preferred instead
+;  of connect by host:port.
+;
+; socket = /var/run/mysqld/mysqld.sock
+
+;
 ; Database name
 ;
 db_name = database-name
