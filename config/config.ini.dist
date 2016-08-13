@@ -47,6 +47,11 @@ type = mysql
 host = localhost
 
 ;
+; Port
+;
+port = 3306
+
+;
 ; Database name
 ;
 db_name = database-name
