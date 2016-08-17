@@ -108,7 +108,7 @@ class AuditController extends DefaultController
      * returns the audit log entries for a specific GUID
      *
      * @param string $guid
-     * @return array|bool
+     * @return string|bool
      * @throws \MasterShaper\Controller\ExceptionController
      */
     public function retrieveAuditLog($guid)
@@ -135,7 +135,7 @@ class AuditController extends DefaultController
         }
 
         if (!$log->hasItems()) {
-            return array();
+            return 'No audit log entries available!';
         }
 
         if (($entries = $log->getItems()) === false) {
@@ -149,7 +149,7 @@ class AuditController extends DefaultController
         }
 
         if (empty($entries)) {
-            return array();
+            return 'No audit log entries available!';
         }
 
         $txt_ary = array();
