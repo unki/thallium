@@ -123,7 +123,7 @@ class HttpRouterController extends DefaultController
      */
     public function __construct()
     {
-        global $config;
+        global $thallium, $config;
 
         $this->query = new \stdClass();
 
@@ -132,6 +132,15 @@ class HttpRouterController extends DefaultController
         if ($filtered_server === false || (!is_null($filtered_server) && !is_array($filtered_server))) {
             static::raiseError(__METHOD__ .'(), failure on retrieving SERVER variables!', true);
             return false;
+        }
+
+        if ($thallium->inTestMode()) {
+            $filtered_server['REQUEST_URI'] = sprintf(
+                '/thallium/documents/test-%d-%s?testparam=foobar',
+                1,
+                '0123456789012345678901234567890123456789012345678901234567890123'
+            );
+            $filtered_server['REQUEST_METHOD'] = 'GET';
         }
 
         if (!array_key_exists('REQUEST_URI', $filtered_server) ||
