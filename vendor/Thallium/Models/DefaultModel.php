@@ -4580,6 +4580,38 @@ abstract class DefaultModel
 
         return $called_class::$model_friendly_name;
     }
+
+    /**
+     * returns true if the provided $value represents the logical
+     * state 'enabled'.
+     *
+     * @param string $value
+     * @return bool
+     */
+    protected static function isEnabled($value)
+    {
+        if (!in_array($value, array('yes','y','true','on','1'))) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * returns true if the provided $value represents the logical
+     * state 'disabled'.
+     *
+     * @param string $value
+     * @return bool
+     */
+    protected static function isDisabled($value)
+    {
+        if (!in_array($value, array('no','n','false','off','0'))) {
+            return false;
+        }
+
+        return true;
+    }
 }
 
 // vim: set filetype=php expandtab softtabstop=4 tabstop=4 shiftwidth=4:
