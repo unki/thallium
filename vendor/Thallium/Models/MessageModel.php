@@ -501,7 +501,7 @@ class MessageModel extends DefaultModel
             return false;
         }
 
-        if (!$this->isEnabled($in_processing)) {
+        if (!static::isEnabled($in_processing)) {
             return false;
         }
 
