@@ -190,7 +190,7 @@ class JobModel extends DefaultModel
             return false;
         }
 
-        if (!$this->isEnabled($flag)) {
+        if (!static::isEnabled($flag)) {
             return false;
         }
 
