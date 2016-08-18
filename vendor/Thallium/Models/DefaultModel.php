@@ -548,17 +548,15 @@ abstract class DefaultModel
             if ($num_rows < 1) {
                 $db->freeStatement($sth);
                 static::raiseError(sprintf(
-                    '%s(), no object with id %s found!',
-                    __METHOD__,
-                    $this->model_load_by[FIELD_IDX]
+                    '%s(), no object found!',
+                    __METHOD__
                 ));
                 return false;
             } elseif ($num_rows > 1) {
                 $db->freeStatement($sth);
                 static::raiseError(sprintf(
-                    '%s(), more than one object with id % found!',
-                    __METHOD__,
-                    $this->model_load_by[FIELD_IDX]
+                    '%s(), more than one object found!',
+                    __METHOD__
                 ));
                 return false;
             }
