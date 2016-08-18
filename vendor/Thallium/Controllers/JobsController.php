@@ -340,6 +340,8 @@ class JobsController extends DefaultController
                 static::raiseError(__METHOD__ .'(), failed to load JobModel!', false, $e);
                 return false;
             }
+        } else {
+            $job =& $run_job;
         }
 
         if (($command = $job->getCommand()) === false) {
@@ -362,9 +364,13 @@ class JobsController extends DefaultController
             return false;
         }
 
-        if (!isset($handler) || empty($handler) || !is_array($handler) ||
-            !isset($handler[0]) || empty($handler[0]) || !is_object($handler[0]) ||
-            !isset($handler[1]) || empty($handler[1]) || !is_string($handler[1])
+        if (!isset($handler) || empty($handler) ||
+            (!is_string($handler) && !is_array($handler) && !is_callable($handler) && !is_object($handler)) ||
+            (is_array($handler) && (
+                !isset($handler[0]) || empty($handler[0]) || !is_object($handler[0]) ||
+                !isset($handler[1]) || empty($handler[1]) || !is_string($handler[1])
+            )) ||
+            (is_object($handler) && !is_a($handler, '\Closure'))
         ) {
             static::raiseError(__CLASS__ .'::getHandler() returned invalid data!');
             return false;
@@ -486,7 +492,10 @@ class JobsController extends DefaultController
             return false;
         }
 
-        if (!isset($handler) || empty($handler) || (!is_string($handler) && !is_array($handler))) {
+        if (!isset($handler) ||
+            empty($handler) ||
+            (!is_string($handler) && !is_array($handler) && !is_callable($handler) && !is_object($handler))
+        ) {
             static::raiseError(__METHOD__ .'(), $handler parameter is invalid!');
             return false;
         }
@@ -499,6 +508,11 @@ class JobsController extends DefaultController
                 !isset($handler[1]) || empty($handler[1]) || !is_string($handler[1])
             ) {
                 static::raiseError(__METHOD__ .'(), $handler parameter contains invalid data!');
+                return false;
+            }
+        } elseif (is_object($handler)) {
+            if (!is_a($handler, '\Closure')) {
+                static::raiseError(__METHOD__ .'(), $handler is not a Closure class!');
                 return false;
             }
         }
