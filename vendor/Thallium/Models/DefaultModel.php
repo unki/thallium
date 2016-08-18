@@ -1510,7 +1510,7 @@ abstract class DefaultModel
             $this->model_values[FIELD_GUID] = $thallium->createGuid();
         }
 
-        $sql = $this->isNew() ? 'INSERT INTO ' : 'UPDATE';
+        $sql = $this->isNew() ? 'INSERT INTO ' : 'UPDATE ';
 
         $sql.= sprintf("TABLEPREFIX%s SET ", static::$model_table_name);
 
