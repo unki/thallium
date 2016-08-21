@@ -413,7 +413,6 @@ class TemplatesController extends DefaultController
 
         if (!isset($callback) ||
             empty($callback) ||
-            !is_array($callback) ||
             !is_callable($callback)
         ) {
             static::raiseError(__METHOD__ .'(), $callback parameter is invalid!');
