@@ -270,14 +270,21 @@ class TemplatesController extends DefaultController
      */
     public function getMenuState($params, &$smarty)
     {
-        global $query;
+        global $router;
 
         if (!array_key_exists('page', $params)) {
             static::raiseError(__METHOD__ .'(), missing "page" parameter!');
             return false;
         }
 
-        if ($params['page'] !== $query->view) {
+        if (!$router->hasQueryParams() ||
+            !$router->hasQueryParam('view') ||
+            ($view = $router->getQueryParam('view')) === false
+        ) {
+            return null;
+        }
+
+        if ($params['page'] !== $view) {
             return null;
         }
 
