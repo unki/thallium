@@ -188,7 +188,7 @@ class MessageModel extends DefaultModel
     {
         if (!isset($body) ||
             empty($body) ||
-            (!is_string($body) || !is_array($body) || !is_object($body))
+            (!is_string($body) && !is_array($body) && !is_object($body))
         ) {
             static::raiseError(__METHOD__ .'(), $body parameter is invalid!');
             return false;
