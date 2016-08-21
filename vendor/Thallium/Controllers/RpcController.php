@@ -132,7 +132,7 @@ class RpcController extends DefaultController
             return false;
         }
 
-        if (!$this->$rpc_method()) {
+        if (($retval = $this->$rpc_method()) === false) {
             static::raiseError(sprintf(
                 '%s::%s() has returned false!',
                 __CLASS__,
@@ -141,7 +141,7 @@ class RpcController extends DefaultController
             return false;
         }
 
-        return true;
+        return $retval;
     }
 
     /**
