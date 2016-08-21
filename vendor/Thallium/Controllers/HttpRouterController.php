@@ -282,9 +282,17 @@ class HttpRouterController extends DefaultController
         if (!is_null($filtered_get)) {
             foreach ($filtered_get as $key => $value) {
                 if (is_array($value)) {
-                    array_walk($value, function (&$item_value) {
+                    if (!array_walk($value, function (&$item_value) {
                         return htmlentities($item_value, ENT_QUOTES);
-                    });
+                    })) {
+                        static::raiseError(__METHOD__ .'(), array_walk() returned false!');
+                        return false;
+                    }
+
+                    if (!$this->addQueryParam($key, $value, ENT_QUOTES)) {
+                        static::raiseError(__CLASS__ .'::addQueryParam() returned false!', true);
+                        return false;
+                    }
                     continue;
                 }
 
@@ -298,9 +306,17 @@ class HttpRouterController extends DefaultController
         if (!is_null($filtered_post)) {
             foreach ($filtered_post as $key => $value) {
                 if (is_array($value)) {
-                    array_walk($value, function (&$item_value) {
+                    if (!array_walk($value, function (&$item_value) {
                         return htmlentities($item_value, ENT_QUOTES);
-                    });
+                    })) {
+                        static::raiseError(__METHOD__ .'(), array_walk() returned false!');
+                        return false;
+                    }
+
+                    if (!$this->addQueryParam($key, $value, ENT_QUOTES)) {
+                        static::raiseError(__CLASS__ .'::addQueryParam() returned false!', true);
+                        return false;
+                    }
                     continue;
                 }
 
