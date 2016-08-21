@@ -134,9 +134,12 @@ class HttpRouterController extends DefaultController
             return false;
         }
 
+        /**
+         * in test mode, fake some HTTP request parameters.
+         */
         if ($thallium->inTestMode()) {
             $filtered_server['REQUEST_URI'] = sprintf(
-                '/thallium/documents/test-%d-%s?testparam=foobar',
+                '/thallium/documents/show-%d-%s?testparam=foobar',
                 1,
                 '0123456789012345678901234567890123456789012345678901234567890123'
             );
@@ -261,6 +264,19 @@ class HttpRouterController extends DefaultController
         if ($filtered_post === false || (!is_null($filtered_post) && !is_array($filtered_post))) {
             static::raiseError(__METHOD__ .'(), failure on retrieving POST variables!', true);
             return false;
+        }
+
+        /**
+         * in test mode, fake some POST data for RPC testing.
+         */
+        if ($thallium->inTestMode()) {
+            $filtered_post = array(
+                'action' => 'get-content',
+                'view' => 'InternalTest',
+                'data' => array(
+                    'content' => 'testcontent',
+                ),
+            );
         }
 
         if (!is_null($filtered_get)) {
