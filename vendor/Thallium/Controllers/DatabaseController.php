@@ -717,6 +717,7 @@ class DatabaseController extends DefaultController
         }
 
         if (!$this->checkTableExists("TABLEPREFIXmeta")) {
+            static::raiseError(__CLASS__ .'::checkTableExists() returned false!');
             return false;
         }
 
@@ -729,14 +730,14 @@ class DatabaseController extends DefaultController
                 meta_key LIKE 'schema_version'"
         );
 
-        if (isset($result->meta_value) && is_numeric($result->meta_value)) {
-            return $result->meta_value;
-        } elseif (isset($result->meta_value) && !is_numeric($result->meta_value)) {
-            return false;
+        // in doubt we claim it's version 0
+        if (!isset($result->meta_value) ||
+            (!is_int($result->meta_value) && !is_numeric($result->meta_value))
+        ) {
+            return 0;
         }
 
-        // in doubt we claim it's version 0
-        return 0;
+        return (int) $result->meta_value;
     }
 
     /**
@@ -766,14 +767,14 @@ class DatabaseController extends DefaultController
                 meta_key LIKE 'framework_schema_version'"
         );
 
-        if (isset($result->meta_value) && is_numeric($result->meta_value)) {
-            return $result->meta_value;
-        } elseif (isset($result->meta_value) && !is_numeric($result->meta_value)) {
+        // in doubt we claim it's version 0
+        if (!isset($result->meta_value) ||
+            (!is_int($result->meta_value) && !is_numeric($result->meta_value))
+        ) {
             return false;
         }
 
-        // in doubt we claim it's version 0
-        return 0;
+        return (int) $result->meta_value;
     }
 
     /**
