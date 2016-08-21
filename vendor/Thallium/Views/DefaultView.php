@@ -59,6 +59,9 @@ abstract class DefaultView
     /** @var object $view_current_item */
     protected $view_current_item;
 
+    /** @var array $view_contents */
+    protected $view_contents = array();
+
     /** @var int $default_items_limit */
     protected $default_items_limit;
 
@@ -198,7 +201,7 @@ abstract class DefaultView
                     $mode = 'list';
                     $current_page = $parts[1];
                     if (!$this->setSessionVar("current_page", $parts[1])) {
-                        $this->raiseError(__CLASS__ .'::setSessionVar() returned false!');
+                        static::raiseError(__CLASS__ .'::setSessionVar() returned false!');
                         return false;
                     }
                 }
@@ -323,7 +326,7 @@ abstract class DefaultView
                 'delta' => 2,
             ));
         } catch (\Exception $e) {
-            $this->raiseError(__METHOD__ .'(), failed to load PagingController!', false, $e);
+            static::raiseError(__METHOD__ .'(), failed to load PagingController!', false, $e);
             return false;
         }
 
@@ -337,39 +340,39 @@ abstract class DefaultView
         }
 
         if (!$pager->setPagingData($view_data)) {
-            $this->raiseError(get_class($pager) .'::setPagingData() returned false!');
+            static::raiseError(get_class($pager) .'::setPagingData() returned false!');
             return false;
         }
 
         if (!$pager->setCurrentPage($current_page)) {
-            $this->raiseError(get_class($pager) .'::setCurrentPage() returned false!');
+            static::raiseError(get_class($pager) .'::setCurrentPage() returned false!');
             return false;
         }
 
         if (!$pager->setItemsLimit($current_items_limit)) {
-            $this->raiseError(get_class($pager) .'::setItemsLimit() returned false!');
+            static::raiseError(get_class($pager) .'::setItemsLimit() returned false!');
             return false;
         }
 
         if (($items = $pager->getPageData()) === false) {
-            $this->raiseError(get_class($pager) .'::getPageData() returned false!');
+            static::raiseError(get_class($pager) .'::getPageData() returned false!');
             return false;
         }
 
         if (!isset($items) || !is_array($items)) {
-            $this->raiseError(get_class($pager) .'::getPageData() returned invalid data!');
+            static::raiseError(get_class($pager) .'::getPageData() returned invalid data!');
             return false;
         }
 
         $this->view_items = $items;
 
         if (!$this->setSessionVar("current_page", $current_page)) {
-            $this->raiseError(__CLASS__ .'::setSessionVar() returned false!');
+            static::raiseError(__CLASS__ .'::setSessionVar() returned false!');
             return false;
         }
 
         if (!$this->setSessionVar("current_items_limit", $current_items_limit)) {
-            $this->raiseError(__CLASS__ .'::setSessionVar() returned false!');
+            static::raiseError(__CLASS__ .'::setSessionVar() returned false!');
             return false;
         }
 
@@ -1129,6 +1132,69 @@ abstract class DefaultView
         }
 
         return $item;
+    }
+
+    public function addContent($name)
+    {
+        if (!isset($name) || empty($name) || !is_string($name)) {
+            static::raiseError(__METHOD__ .'(), $name parameter is invalid!');
+            return false;
+        }
+
+        if (in_array($name, $this->view_contents)) {
+            return true;
+        }
+
+        array_push($this->view_contents, $name);
+        return true;
+    }
+
+    public function hasContent($name)
+    {
+        if (!isset($name) || empty($name) || !is_string($name)) {
+            static::raiseError(__METHOD__ .'(), $name parameter is invalid!');
+            return false;
+        }
+
+        if (!in_array($name, $this->view_contents)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function getContent($name, &$data = null)
+    {
+        if (!isset($name) || empty($name) || !is_string($name)) {
+            static::raiseError(__METHOD__ .'(), $name parameter is invalid!');
+            return false;
+        }
+
+        if (!$this->hasContent($name)) {
+            static::raiseError(__CLASS__ .'::hasContent() returned false!');
+            return false;
+        }
+
+        if (!preg_match('/^[a-z]+$/', $name)) {
+            static::raiseError(__METHOD__ .'(), $name parameter is invalid!');
+            return false;
+        }
+
+        $method_name = 'get'. ucwords(strtolower($name));
+
+        if (!method_exists($this, $method_name) ||
+            !is_callable(array($this, $method_name))
+        ) {
+            static::raiseError(__CLASS__ ." does not have a content method {$method_name}!");
+            return false;
+        }
+
+        if (($content = $this->$method_name($data)) === false) {
+            static::raiseError(__CLASS__ ."::{$method_name} returned false!");
+            return false;
+        }
+
+        return $content;
     }
 }
 
