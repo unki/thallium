@@ -94,7 +94,7 @@ class RpcController extends DefaultController
         } elseif ($action == 'find-prev-next') {
             $rpc_method = 'rpcFindPrevNextObject';
         } elseif ($action == 'get-content') {
-            $rpc_method = 'rpcGetContent';
+            $rpc_method = 'rpcGetViewContent';
         } elseif ($action == 'get-view') {
             $rpc_method = 'rpcGetView';
         } elseif ($action == 'submit-messages') {
@@ -267,7 +267,7 @@ class RpcController extends DefaultController
     }
 
     /**
-     * retrieves content from a specific template.
+     * retrieves content from a specific view.
      *
      * @param none
      * @return bool
@@ -601,6 +601,96 @@ class RpcController extends DefaultController
             return false;
         }
 
+        return true;
+    }
+
+    /**
+     * retrieves content snippets from a specific view.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    protected function rpcGetViewContent()
+    {
+        global $thallium, $router;
+
+        if (!$router->hasQueryParams() ||
+            !$router->hasQueryParam('view') ||
+            !$router->hasQueryParam('data') ||
+            (($view = $router->getQueryParam('view')) === false) ||
+            (($data = $router->getQueryParam('data')) === false) ||
+            empty($view) || !is_string($view) ||
+            empty($data) || !is_array($data)
+        ) {
+            static::raiseError(__METHOD__ .'(), invalid content-request data!');
+            return false;
+        }
+
+        if (!isset($data['content']) || empty($data['content']) || !is_string($data['content'])) {
+            static::raiseError(__METHOD__ .'(), $data["content"] is invalid!');
+            return false;
+        }
+
+        if (!preg_match('/^[a-z]+$/', strtolower($view))) {
+            static::raiseError(__METHOD__ .'(), $_POST["view"] contains invalid data!');
+            return false;
+        }
+
+        if (!preg_match('/^[a-z]+$/', strtolower($data['content']))) {
+            static::raiseError(__METHOD__ .'(), $data["content"] contains invalid data!');
+            return false;
+        }
+
+        if (!$thallium->loadController("Templates", "tmpl")) {
+            static::raiseError(__METHOD__ .'(), failed to load TemplatesController!');
+            return false;
+        }
+
+        if (($prefix = $thallium->getNamespacePrefix()) === false) {
+            static::raiseError(get_class($thallium) .'::getNamespacePrefix() returned false!');
+            return false;
+        }
+
+        if (!isset($prefix) || empty($prefix) || !is_string($prefix)) {
+            static::raiseError(get_class($thallium) .'::getNamespacePrefix() returned no valid data!');
+            return false;
+        }
+
+        $view_name = ucwords(strtolower($view));
+        $view_name = sprintf(
+            '\\%s\\Views\\%sView',
+            $prefix,
+            $view
+        );
+
+        try {
+            $view = new $view_name;
+        } catch (\Exception $e) {
+            static::raiseError(__METHOD__ ."(), failed to load view ${view_name}!");
+            return false;
+        }
+
+        if (!$view->hasContent($data['content'])) {
+            static::raiseError(get_class($view) .'::hasContent() returned false!');
+            return false;
+        }
+
+        if (($content = $view->getContent($data['content'], $data)) === false) {
+            static::raiseError(get_class($view) .'::getContent() returned false!');
+            return false;
+        }
+
+        if (!isset($content) || empty($content)) {
+            static::raiseError(get_class($view) .'::getContent() returned invalid content!');
+            return false;
+        }
+
+        if ($thallium->inTestMode()) {
+            return $content;
+        }
+
+        print $content;
         return true;
     }
 }
