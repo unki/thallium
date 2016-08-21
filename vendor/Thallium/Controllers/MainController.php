@@ -120,20 +120,21 @@ class MainController extends DefaultController
             }
 
             global $router;
-
-            if (($GLOBALS['query'] = $router->select()) === false) {
-                static::raiseError(__METHOD__ .'(), HttpRouterController::select() returned false!', true);
-                return;
-            }
-
-            global $query;
         }
 
-        if (isset($query) && isset($query->view) && $query->view == "install") {
+        if (isset($router) &&
+            $router->hasQueryParams() &&
+            $router->hasQueryParam('view') &&
+            ($view = $router->getQueryParam('view')) === false &&
+            $view === 'install'
+        ) {
             $mode = "install";
         }
 
-        if ($mode != "install" && $this->checkUpgrade()) {
+        if (((isset($mode) && $mode !== "install") ||
+            !isset($mode)) &&
+            $this->checkUpgrade()
+        ) {
             return;
         }
 
@@ -1244,14 +1245,18 @@ class MainController extends DefaultController
      */
     protected function viewHandler()
     {
-        global $views, $query;
+        global $views, $router;
 
-        if (!isset($query->view) || empty($query->view)) {
+        if (!$router->hasQueryParams() ||
+            !$router->hasQueryParam('view') ||
+            ($view = $router->getQueryParam('view')) === false ||
+            empty($view)
+        ) {
             static::raiseError(__METHOD__ .'(), no view has been requested!');
             return false;
         }
 
-        if (($page = $views->load($query->view)) === false) {
+        if (($page = $views->load($view)) === false) {
             static::raiseError(get_class($views) .'::load() returned false!');
             return false;
         }
