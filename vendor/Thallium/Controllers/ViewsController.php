@@ -36,6 +36,7 @@ class ViewsController extends DefaultController
         '/^$/' => 'MainView',
         '/^main$/' => 'MainView',
         '/^about$/' => 'AboutView',
+        '/^internaltestview$/' => 'InternalTestView',
     );
 
     /** @var object $page_skeleton */
