@@ -41,7 +41,7 @@ class RpcController extends DefaultController
      */
     public function __construct()
     {
-        global $router, $query;
+        global $router;
 
         if (!isset($router) ||
             empty($router) ||
@@ -52,12 +52,8 @@ class RpcController extends DefaultController
             return;
         }
 
-        if (!isset($query) ||
-            empty($query) ||
-            !is_object($query) ||
-            !is_a($query, 'stdClass')
-        ) {
-            static::raiseError(__METHOD__ .'(), $query not correctly set!', true);
+        if (!$router->hasQueryParams()) {
+            static::raiseError(get_class($router) .'::hasQueryParams() returned false!', true);
             return;
         }
 
@@ -74,33 +70,38 @@ class RpcController extends DefaultController
      */
     public function perform()
     {
-        global $router, $query;
+        global $router;
 
-        if (!isset($query->action) || empty($query->action) || !is_string($query->action)) {
-            static::raiseError(__METHOD__ .'(), no action has been specified!');
+        if (!$router->hasQueryParam('action')) {
+            static::raiseError(get_class($router) .'::hasQueryParam() returned false!');
             return false;
         }
 
-        if (!$router->isValidRpcAction($query->action)) {
+        if (($action = $router->getQueryParam('action')) === false) {
+            static::raiseError(get_class($router) .'::getQueryParam() returned false!');
+            return false;
+        }
+
+        if (!$router->isValidRpcAction($action)) {
             static::raiseError(get_class($router) .'::isValidRpcAction() returned false!');
             return false;
         }
 
-        if ($query->action == 'delete') {
+        if ($action == 'delete') {
             $rpc_method = 'rpcDelete';
-        } elseif ($query->action == 'add' || $query->action == 'update') {
+        } elseif ($action == 'add' || $action == 'update') {
             $rpc_method = 'rpcUpdate';
-        } elseif ($query->action == 'find-prev-next') {
+        } elseif ($action == 'find-prev-next') {
             $rpc_method = 'rpcFindPrevNextObject';
-        } elseif ($query->action == 'get-content') {
+        } elseif ($action == 'get-content') {
             $rpc_method = 'rpcGetContent';
-        } elseif ($query->action == 'submit-messages') {
+        } elseif ($action == 'submit-messages') {
             $rpc_method == 'rpcSubmitToMessageBus';
-        } elseif ($query->action == 'retrieve-messages') {
+        } elseif ($action == 'retrieve-messages') {
             $rpc_method == 'rpcRetrieveFromMessageBus';
-        } elseif ($query->action == 'process-messages') {
+        } elseif ($action == 'process-messages') {
             $rpc_method == 'rpcProcessMessages';
-        } elseif ($query->action == 'idle') {
+        } elseif ($action == 'idle') {
             $rpc_method == 'rpcIdle';
         } elseif (method_exists($this, 'performApplicationSpecifc')) {
             $rpc_method == 'performApplicationSpecifc';
