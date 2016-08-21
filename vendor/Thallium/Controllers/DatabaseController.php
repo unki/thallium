@@ -991,6 +991,11 @@ class DatabaseController extends DefaultController
             return false;
         }
 
+        if ($this->hasTablePrefix() && !$this->insertTablePrefix($table_name)) {
+            static::raiseError(__CLASS__ .'::insertTablePrefix() returned false!');
+            return false;
+        }
+
         if (($result = $this->query("DESC ". $table_name, \PDO::FETCH_NUM)) === false) {
             static::raiseError(__METHOD__ .'(), failed to fetch table structure!');
             return false;
