@@ -95,6 +95,8 @@ class RpcController extends DefaultController
             $rpc_method = 'rpcFindPrevNextObject';
         } elseif ($action == 'get-content') {
             $rpc_method = 'rpcGetContent';
+        } elseif ($action == 'get-view') {
+            $rpc_method = 'rpcGetView';
         } elseif ($action == 'submit-messages') {
             $rpc_method == 'rpcSubmitToMessageBus';
         } elseif ($action == 'retrieve-messages') {
@@ -271,42 +273,49 @@ class RpcController extends DefaultController
      * @return bool
      * @throws \Thallium\Controllers\ExceptionController
      */
-    protected function rpcGetContent()
+    protected function rpcGetView()
     {
         global $views, $router;
 
         $valid_content = array(
+            'internaltestview',
             'preview',
         );
 
-        if (!$router->hasQueryParam('content') ||
-            ($requested_content = $router->getQueryParam('content')) === false ||
-            !empty($requested_content) || !is_string($requested_content)
+        if (!$router->hasQueryParam('view') ||
+            ($requested_view = $router->getQueryParam('view')) === false ||
+            empty($requested_view) || !is_string($requested_view)
         ) {
-            static::raiseError(__METHOD__ .'(), no content requested!');
+            static::raiseError(__METHOD__ .'(), no view requested!');
             return false;
         }
 
-        if (!in_array($requested_content, $valid_content)) {
-            static::raiseError(__METHOD__ .'(), no valid content requested!');
+        if (!in_array($requested_view, $valid_view)) {
+            static::raiseError(__METHOD__ .'(), no valid view requested!');
             return false;
         }
 
-        switch ($requested_content) {
+        switch ($requested_view) {
             case 'preview':
-                if (($content = $views->load('PreviewView', false)) === false) {
+                if (($view = $views->load('PreviewView', false)) === false) {
+                    static::raiseError(get_class($views) .'::load() returned false!');
+                    return false;
+                }
+                break;
+            case 'internaltestview':
+                if (($view = $views->load('internaltestview', false)) === false) {
                     static::raiseError(get_class($views) .'::load() returned false!');
                     return false;
                 }
                 break;
         }
 
-        if (!isset($content) || empty($content) || !is_string($content)) {
+        if (!isset($view) || empty($view) || !is_string($view)) {
             static::raiseError(__METHOD__ .'(), no content returned from View!');
             return false;
         }
 
-        print $content;
+        print $view;
         return true;
     }
 
