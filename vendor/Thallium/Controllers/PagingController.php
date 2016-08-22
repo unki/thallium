@@ -284,9 +284,11 @@ class PagingController extends DefaultController
 
         $totalPages = 1;
 
-        if ($items_per_page > 0) {
-            $totalPages = ceil($totalItems/$items_per_page);
+        if ($items_per_page <= 1) {
+            return $totalPages;
         }
+
+        $totalPages = floor(($totalItems/$items_per_page));
 
         if (!isset($totalPages) ||
             empty($totalPages) ||
@@ -297,7 +299,7 @@ class PagingController extends DefaultController
             return false;
         }
 
-        return $totalPages;
+        return (int) $totalPages;
     }
 
     /**
@@ -315,7 +317,12 @@ class PagingController extends DefaultController
             return false;
         }
 
-        if ($this->currentPage > $this->getNumberOfPages()) {
+        if (($total_pages = $this->getNumberOfPages()) === false) {
+            static::raiseError(__CLASS__ .'::getNumberOfPages() returned false!');
+            return false;
+        }
+
+        if ($this->currentPage > $total_pages) {
             $this->currentPage = 1;
         }
 
