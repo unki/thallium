@@ -3356,9 +3356,34 @@ abstract class DefaultModel
             return false;
         }
 
-        if (!isset($data) || empty($data) || !is_array($data)) {
+        if (!isset($data) ||
+            empty($data) ||
+            (!is_array($data) && !is_object($data))
+        ) {
             static::raiseError(__METHOD__ .'(), $data parameter is invalid!');
             return false;
+        }
+
+        if (is_object($data)) {
+            if (!method_exists($data, 'getFields')) {
+                static::raiseError(__METHOD__ .'(), \$data provides no getFields() method!');
+                return false;
+            }
+            if (($fields = $data->getFields()) === false) {
+                static::raiseError(get_class($data) .'::getFields() returned false!');
+                return false;
+            }
+
+            array_walk($fields, function (&$item, $idx) {
+                if (!array_key_exists('name', $item) ||
+                    !array_key_exists('value', $item)
+                ) {
+                    static::raiseError(__METHOD__ .'(), incomplete item received!');
+                    return false;
+                }
+                $item = $item['value'];
+            });
+            $data = $fields;
         }
 
         if (!$this->hasItem($key)) {
