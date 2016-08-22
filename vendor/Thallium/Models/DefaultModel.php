@@ -3088,7 +3088,7 @@ abstract class DefaultModel
         }
 
         if (($item_model = $this->getItemModel($idx)) === false) {
-            static::raiseError(__CLASS__ .'::getItemData() returned false!');
+            static::raiseError(__CLASS__ .'::getItemModel() returned false!');
             return false;
         }
 
