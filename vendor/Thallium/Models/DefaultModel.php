@@ -186,10 +186,13 @@ abstract class DefaultModel
 
         if (static::hasModelItems()) {
             if (!static::hasModelItemsModel() ||
-                ($items_model = static::getModelItemsModel()) === false ||
-                !$thallium->isRegisteredModel(null, $items_model)
+                ($items_model = static::getModelItemsModel()) === false
             ) {
                 static::raiseError(__METHOD__ .'(), $model_items_model is invalid!');
+                return false;
+            }
+            if (!$thallium->isRegisteredModel(null, $items_model)) {
+                static::raiseError(get_class($thallium) .'::isRegisteredModel() returned false!');
                 return false;
             }
         }
