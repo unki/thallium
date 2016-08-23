@@ -4356,24 +4356,24 @@ abstract class DefaultModel
     public function __toString()
     {
         if (($model_name = static::getModelName(true)) === false) {
-            static::raiseError(__CLASS__ .'::getModelName() returned false!');
-            return false;
+            trigger_error(__CLASS__ .'::getModelName() returned false!');
+            return 'error';
         }
 
         if (($idx = $this->getIdx()) === false) {
-            static::raiseError(__CLASS__ .'::getIdx() returend false!');
-            return false;
+            trigger_error(__CLASS__ .'::getIdx() returend false!');
+            return 'error';
         }
 
         if (($guid = $this->getGuid()) === false) {
-            static::raiseError(__CLASS__ .'::getGuid() returend false!');
-            return false;
+            trigger_error(__CLASS__ .'::getGuid() returend false!');
+            return 'error';
         }
 
         if (method_exists($this, 'hasName') && $this->hasName()) {
             if (($name = $this->getName()) === false) {
-                static::raiseError(__CLASS__ .'::getName() returned false!');
-                return false;
+                trigger_error(__CLASS__ .'::getName() returned false!');
+                return 'error';
             }
         }
 
