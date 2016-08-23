@@ -4360,6 +4360,14 @@ abstract class DefaultModel
             return 'error';
         }
 
+        if (!static::hasFields()) {
+            return 'error';
+        }
+
+        if (!$this->hasIdx() || !$this->hasGuid()) {
+            return 'error';
+        }
+
         if (($idx = $this->getIdx()) === false) {
             trigger_error(__CLASS__ .'::getIdx() returend false!');
             return 'error';
