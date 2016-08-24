@@ -136,7 +136,7 @@ abstract class DefaultModel
             return;
         }
 
-        if (static::hasFields() && $this->isNewModel()) {
+        if (static::hasModelFields() && $this->isNewModel()) {
             if (!$this->initFields()) {
                 static::raiseError(__CLASS__ .'::initFields() returned false!', true);
                 return;
@@ -179,12 +179,12 @@ abstract class DefaultModel
             return false;
         }
 
-        if (static::hasFields() && static::hasModelItems()) {
+        if (static::hasModelFields() && static::hasModelItems()) {
             static::raiseError(__METHOD__ .'(), model must no have fields and items at the same times!');
             return false;
         }
 
-        if (!static::hasFields() && !static::hasModelItems()) {
+        if (!static::hasModelFields() && !static::hasModelItems()) {
             static::raiseError(__METHOD__ .'(), model is neither configured having fields nor items!');
             return false;
         }
@@ -323,7 +323,7 @@ abstract class DefaultModel
                 if (!isset($field) ||
                     empty($field) ||
                     !is_string($field) ||
-                    !$full_model::hasFields() ||
+                    !$full_model::hasModelFields() ||
                     !$full_model::hasField($field)
                 ) {
                     static::raiseError(__METHOD__ ."(), \$model_sort_order contains an invalid field {$field}!");
@@ -423,11 +423,11 @@ abstract class DefaultModel
 
         global $thallium, $db;
 
-        if (!static::hasFields() && !static::hasModelItems()) {
+        if (!static::hasModelFields() && !static::hasModelItems()) {
             return true;
         }
 
-        if (static::hasFields() && empty($this->model_load_by)) {
+        if (static::hasModelFields() && empty($this->model_load_by)) {
             return true;
         }
 
@@ -459,7 +459,7 @@ abstract class DefaultModel
         $sql_query_columns = array();
         $sql_query_data = array();
 
-        if (static::hasFields()) {
+        if (static::hasModelFields()) {
             if (($fields = $this->getFieldNames()) === false) {
                 static::raiseError(__CLASS__ .'::getFieldNames() returned false!');
                 return false;
@@ -558,7 +558,7 @@ abstract class DefaultModel
 
         $num_rows = $sth->rowCount();
 
-        if (static::hasFields()) {
+        if (static::hasModelFields()) {
             if ($num_rows < 1) {
                 $db->freeStatement($sth);
                 static::raiseError(sprintf(
@@ -581,12 +581,12 @@ abstract class DefaultModel
             return true;
         }
 
-        if (!static::hasFields() && !static::hasModelItems()) {
+        if (!static::hasModelFields() && !static::hasModelItems()) {
             static::raiseError(__METHOD__ .'(), unsupported model constelation found!');
             return false;
         }
 
-        if (static::hasFields()) {
+        if (static::hasModelFields()) {
             if (($row = $sth->fetch(\PDO::FETCH_ASSOC)) === false) {
                 $db->freeStatement($sth);
                 static::raiseError(sprintf(
@@ -922,7 +922,7 @@ abstract class DefaultModel
     {
         global $db;
 
-        if (static::hasFields() && $this->isNew()) {
+        if (static::hasModelFields() && $this->isNew()) {
             return true;
         }
 
@@ -1220,7 +1220,7 @@ abstract class DefaultModel
      */
     final protected function initFields($override = array())
     {
-        if (!static::hasFields()) {
+        if (!static::hasModelFields()) {
             static::raiseError(__METHOD__ .'(), this model has no fields!');
             return false;
         }
@@ -1266,7 +1266,7 @@ abstract class DefaultModel
     {
         global $thallium;
 
-        if (!static::hasFields() && !static::hasModelItems()) {
+        if (!static::hasModelFields() && !static::hasModelItems()) {
             if (!isset($thallium::$permit_undeclared_class_properties)) {
                 static::raiseError(__METHOD__ ."(), trying to set an undeclared property {$name}!", true);
                 return;
@@ -1294,7 +1294,7 @@ abstract class DefaultModel
             return;
         }
 
-        if (!static::hasFields()) {
+        if (!static::hasModelFields()) {
             static::raiseError(__METHOD__ ."(), model_fields array not set for class ". get_class($this), true);
             return;
         }
@@ -1439,7 +1439,7 @@ abstract class DefaultModel
      */
     final public function __get($name)
     {
-        if (!static::hasFields() && !static::hasModelItems()) {
+        if (!static::hasModelFields() && !static::hasModelItems()) {
             return isset($this->$name) ? $this->$name : null;
         }
 
@@ -1503,7 +1503,7 @@ abstract class DefaultModel
     {
         global $thallium, $db;
 
-        if (!static::hasFields()) {
+        if (!static::hasModelFields()) {
             static::raiseError(__METHOD__ ."(), model_fields array not set for class ". get_class($this));
         }
 
@@ -2161,7 +2161,7 @@ abstract class DefaultModel
      */
     final public function hasIdx()
     {
-        if (!static::hasFields()) {
+        if (!static::hasModelFields()) {
             static::raiseError(__METHOD__ .'(), this model has no fields!');
             return false;
         }
@@ -2226,7 +2226,7 @@ abstract class DefaultModel
      */
     final public function hasGuid()
     {
-        if (!static::hasFields()) {
+        if (!static::hasModelFields()) {
             static::raiseError(__METHOD__ .'(), this model has no fields!');
             return false;
         }
@@ -2304,7 +2304,7 @@ abstract class DefaultModel
      * @return bool
      * @throws \Thallium\Controllers\ExceptionController
      */
-    final public static function hasFields()
+    final public static function hasModelFields()
     {
         $called_class = get_called_class();
 
@@ -2330,7 +2330,7 @@ abstract class DefaultModel
      */
     final public function getFields($no_virtual = false)
     {
-        if (!static::hasFields()) {
+        if (!static::hasModelFields()) {
             static::raiseError(__METHOD__ .'(), this model has no fields defined!');
             return false;
         }
@@ -2395,7 +2395,7 @@ abstract class DefaultModel
      */
     final public function getFieldNames()
     {
-        if (!static::hasFields()) {
+        if (!static::hasModelFields()) {
             static::raiseError(__METHOD__ .'(), this model has no fields defined!');
             return false;
         }
@@ -2423,7 +2423,7 @@ abstract class DefaultModel
 
 
         $called_class = get_called_class();
-        if (!$called_class::hasFields()) {
+        if (!$called_class::hasModelFields()) {
             return false;
         }
 
@@ -3587,8 +3587,8 @@ abstract class DefaultModel
             return false;
         }
 
-        if (!static::hasFields()) {
-            static::raiseError(__CLASS__ .'::hasFields() returned false!');
+        if (!static::hasModelFields()) {
+            static::raiseError(__CLASS__ .'::hasModelFields() returned false!');
             return false;
         }
 
@@ -3762,7 +3762,7 @@ abstract class DefaultModel
             return false;
         }
 
-        if (!static::hasFields()) {
+        if (!static::hasModelFields()) {
             static::raiseError(__METHOD__ .'(), this model has no fields!');
             return false;
         }
@@ -3827,7 +3827,7 @@ abstract class DefaultModel
             return false;
         }
 
-        if (!static::hasFields()) {
+        if (!static::hasModelFields()) {
             static::raiseError(__METHOD__ .'(), this model has no fields!');
             return false;
         }
@@ -3892,7 +3892,7 @@ abstract class DefaultModel
             return false;
         }
 
-        if (!static::hasFields() && isset($this) && !$this->hasVirtualFields()) {
+        if (!static::hasModelFields() && isset($this) && !$this->hasVirtualFields()) {
             static::raiseError(__METHOD__ .'(), this model has no fields!');
             return false;
         }
@@ -3937,7 +3937,7 @@ abstract class DefaultModel
             return false;
         }
 
-        if (!static::hasFields()) {
+        if (!static::hasModelFields()) {
             static::raiseError(__METHOD__ .'(), this model has no fields!');
             return false;
         }
@@ -4023,7 +4023,7 @@ abstract class DefaultModel
             return false;
         }
 
-        if (!static::hasFields()) {
+        if (!static::hasModelFields()) {
             static::raiseError(__METHOD__ .'(), this model has no fields!');
             return false;
         }
@@ -4253,8 +4253,8 @@ abstract class DefaultModel
      */
     public function resetFields()
     {
-        if (!static::hasFields()) {
-            static::raiseError(__CLASS__ .'::hasFields() returned false!');
+        if (!static::hasModelFields()) {
+            static::raiseError(__CLASS__ .'::hasModelFields() returned false!');
             return false;
         }
 
@@ -4288,8 +4288,8 @@ abstract class DefaultModel
             return false;
         }
 
-        if (!$item::hasFields()) {
-            static::raiseError(get_class($item) .'::hasFields() returned false!');
+        if (!$item::hasModelFields()) {
+            static::raiseError(get_class($item) .'::hasModelFields() returned false!');
             return false;
         }
 
@@ -4382,7 +4382,7 @@ abstract class DefaultModel
             return 'error';
         }
 
-        if (!static::hasFields()) {
+        if (!static::hasModelFields()) {
             return 'error';
         }
 
