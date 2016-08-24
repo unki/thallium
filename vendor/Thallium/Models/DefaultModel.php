@@ -237,7 +237,8 @@ abstract class DefaultModel
                         return false;
                     }
 
-                    if (!isset($params[FIELD_TYPE]) ||
+                    if (!array_key_exists(FIELD_TYPE, $params) ||
+                        !isset($params[FIELD_TYPE]) ||
                         empty($params[FIELD_TYPE]) ||
                         !is_string($params[FIELD_TYPE]) ||
                         !ctype_alnum($params[FIELD_TYPE])
@@ -1516,7 +1517,8 @@ abstract class DefaultModel
 
         $time_field = static::column('time');
 
-        if (!isset($this->model_values[FIELD_GUID]) ||
+        if (!array_key_exists(FIELD_GUID, $this->model_values) ||
+            !isset($this->model_values[FIELD_GUID]) ||
             empty($this->model_values[FIELD_GUID])
         ) {
             $this->model_values[FIELD_GUID] = $thallium->createGuid();
@@ -1535,7 +1537,9 @@ abstract class DefaultModel
                 return false;
             }
 
-            if (!isset($this->model_values[$field])) {
+            if (!array_key_exists($field, $this->model_values) ||
+                !isset($this->model_values[$field])
+            ) {
                 continue;
             }
 
@@ -1581,9 +1585,11 @@ abstract class DefaultModel
             }
         }
 
-        if (!isset($this->model_values[FIELD_IDX]) ||
+        if (!array_key_exists(FIELD_IDX, $this->model_values) ||
+            !isset($this->model_values[FIELD_IDX]) ||
             empty($this->model_values[FIELD_IDX]) ||
-            is_null($this->model_values[FIELD_IDX])) {
+            is_null($this->model_values[FIELD_IDX])
+        ) {
             $this->model_values[FIELD_IDX] = $this->id;
         }
 
@@ -1600,7 +1606,8 @@ abstract class DefaultModel
         $this->model_init_values = array();
 
         foreach (array_keys(static::$model_fields) as $field) {
-            if (!isset($this->model_values[$field])) {
+            if (!array_key_exists($field, $this->model_values) ||
+                !isset($this->model_values[$field])) {
                 continue;
             }
 
@@ -1875,8 +1882,12 @@ abstract class DefaultModel
             return false;
         }
 
-        if ((!isset($this->model_values[FIELD_IDX]) || empty($this->model_values[FIELD_IDX])) &&
-            (!isset($this->model_values[FIELD_GUID]) || empty($this->model_values[FIELD_GUID]))
+        if ((!array_key_exists(FIELD_IDX, $this->model_values) ||
+                !isset($this->model_values[FIELD_IDX]) ||
+                empty($this->model_values[FIELD_IDX])) &&
+            (!array_key_exists(FIELD_GUID, $this->model_values) ||
+                !isset($this->model_values[FIELD_GUID]) ||
+                empty($this->model_values[FIELD_GUID]))
         ) {
             static::raiseError(
                 __METHOD__ ."(), can't check for duplicates if neither \$idx_field or \$guid_field is set!"
@@ -2171,7 +2182,8 @@ abstract class DefaultModel
             return false;
         }
 
-        if (!isset($this->model_values[FIELD_IDX]) ||
+        if (!array_key_exists(FIELD_IDX, $this->model_values) ||
+            !isset($this->model_values[FIELD_IDX]) ||
             empty($this->model_values[FIELD_IDX])
         ) {
             return false;
@@ -2236,7 +2248,8 @@ abstract class DefaultModel
             return false;
         }
 
-        if (!isset($this->model_values[FIELD_GUID]) ||
+        if (!array_key_exists(FIELD_GUID, $this->model_values) ||
+            !isset($this->model_values[FIELD_GUID]) ||
             empty($this->model_values[FIELD_GUID])
         ) {
             return false;
@@ -2255,12 +2268,7 @@ abstract class DefaultModel
     final public function getGuid()
     {
         if (!$this->hasGuid()) {
-            static::raiseError(__CLASS__ .'hasGuid() returned false!');
-            return false;
-        }
-
-
-        if (!isset($this->model_values[FIELD_GUID])) {
+            static::raiseError(__CLASS__ .'::hasGuid() returned false!');
             return false;
         }
 
@@ -2427,7 +2435,7 @@ abstract class DefaultModel
             return false;
         }
 
-        if (!in_array($field_name, array_keys($called_class::$model_fields))) {
+        if (!array_key_exists($field_name, $called_class::$model_fields)) {
             return false;
         }
 
@@ -2887,7 +2895,7 @@ abstract class DefaultModel
                 static::raiseError(__METHOD__ .'(), $items parameter contains an invalid іtem!');
                 return false;
             }
-            if (!isset($hits[$key])) {
+            if (!array_key_exists($key, $hits) || !isset($hits[$key])) {
                 $hits[$key] = 0;
             }
             foreach ($filter as $field => $pattern) {
@@ -3029,15 +3037,27 @@ abstract class DefaultModel
                 static::raiseError(__METHOD__ .'(), $item misses FIELD_GUID key!');
                 return false;
             }
-            if (!isset($item[FIELD_IDX]) || empty($item[FIELD_IDX]) || !is_numeric($item[FIELD_IDX])) {
+            if (!array_key_exists(FIELD_IDX, $item) ||
+                !isset($item[FIELD_IDX]) ||
+                empty($item[FIELD_IDX]) ||
+                !is_numeric($item[FIELD_IDX])
+            ) {
                 static::raiseError(__METHOD__ .'(), $item FIELD_IDX is invalid!');
                 return false;
             }
-            if (!isset($item[FIELD_GUID]) || empty($item[FIELD_GUID]) || !is_string($item[FIELD_GUID])) {
+            if (!array_key_exists(FIELD_GUID, $item) ||
+                !isset($item[FIELD_GUID]) ||
+                empty($item[FIELD_GUID]) ||
+                !is_string($item[FIELD_GUID])
+            ) {
                 static::raiseError(__METHOD__ .'(), $item FIELD_GUID is invalid!');
                 return false;
             }
-            if (!isset($item[FIELD_MODEL]) || empty($item[FIELD_MODEL]) || !is_string($item[FIELD_MODEL])) {
+            if (!array_key_exists(FIELD_MODEL, $item) ||
+                !isset($item[FIELD_MODEL]) ||
+                empty($item[FIELD_MODEL]) ||
+                !is_string($item[FIELD_MODEL])
+            ) {
                 static::raiseError(__METHOD__ .'(), $item FIELD_MODEL is invalid!');
                 return false;
             }
@@ -3223,7 +3243,8 @@ abstract class DefaultModel
             return false;
         }
 
-        if (!isset($this->model_items[$key][FIELD_INIT]) ||
+        if (!array_key_exists(FIELD_INT, $this->model_items[$key]) ||
+            !isset($this->model_items[$key][FIELD_INIT]) ||
             !is_bool($this->model_items[$key][FIELD_INIT]) ||
             !$this->model_items[$key][FIELD_INIT]
         ) {
@@ -3909,7 +3930,8 @@ abstract class DefaultModel
         }
 
         if (static::hasField($field)) {
-            if (!isset($this->model_values[$field]) ||
+            if (!array_key_exists($field, $this->model_values) ||
+                !isset($this->model_values[$field]) ||
                 empty($this->model_values[$field])
             ) {
                 return false;
@@ -4038,7 +4060,7 @@ abstract class DefaultModel
             return false;
         }
 
-        if (empty(static::model_model_fields[$field][FIELD_DEFAULT])) {
+        if (empty(static::$model_fields[$field][FIELD_DEFAULT])) {
             return false;
         }
 
@@ -4064,7 +4086,7 @@ abstract class DefaultModel
             return false;
         }
 
-        return static::$model_model_fields[$field][FIELD_DEFAULT];
+        return static::$model_fields[$field][FIELD_DEFAULT];
     }
 
     /**
@@ -4326,7 +4348,9 @@ abstract class DefaultModel
                 continue;
             }
 
-            if (!isset($this->model_items_lookup_index[$field])) {
+            if (!array_key_exists($field, $this->model_items_lookup_index) ||
+                !isset($this->model_items_lookup_index[$field])
+            ) {
                 $this->model_items_lookup_index[$field] = array();
             }
 
