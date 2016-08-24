@@ -184,84 +184,95 @@ abstract class DefaultModel
             return false;
         }
 
+        if (!static::hasFields() && !static::hasModelItems()) {
+            static::raiseError(__METHOD__ .'(), model is neither configured having fields nor items!');
+            return false;
+        }
+
         if (static::hasModelItems()) {
-            if (!static::hasModelItemsModel() ||
-                ($items_model = static::getModelItemsModel()) === false
-            ) {
-                static::raiseError(__METHOD__ .'(), $model_items_model is invalid!');
+            if (!static::hasModelItemsModel()) {
+                static::raiseError(__CLASS__ .'::hasModelItemsModel() returned false!');
                 return false;
             }
+
+            if (($items_model = static::getModelItemsModel()) === false) {
+                static::raiseError(__CLASS__ .'::getModelItemsModel() returned false!');
+                return false;
+            }
+
             if (!$thallium->isRegisteredModel(null, $items_model)) {
                 static::raiseError(get_class($thallium) .'::isRegisteredModel() returned false!');
                 return false;
             }
-        }
+        } elseif (static::hasModelFields()) {
+            if (!isset(static::$model_fields) || !is_array(static::$model_fields)) {
+                static::raiseError(__METHOD__ .'(), missing property "model_fields"');
+                return false;
+            }
 
-        if (!isset(static::$model_fields) || !is_array(static::$model_fields)) {
-            static::raiseError(__METHOD__ .'(), missing property "model_fields"');
-            return false;
-        }
+            if (!empty(static::$model_fields)) {
+                $known_field_types = array(
+                    FIELD_TYPE,
+                    FIELD_INT,
+                    FIELD_STRING,
+                    FIELD_BOOL,
+                    FIELD_TIMESTAMP,
+                    FIELD_YESNO,
+                    FIELD_DATE,
+                    FIELD_GUID,
+                );
 
-        if (!empty(static::$model_fields)) {
-            $known_field_types = array(
-                FIELD_TYPE,
-                FIELD_INT,
-                FIELD_STRING,
-                FIELD_BOOL,
-                FIELD_TIMESTAMP,
-                FIELD_YESNO,
-                FIELD_DATE,
-                FIELD_GUID,
-            );
-
-            foreach (static::$model_fields as $field => $params) {
-                if (!isset($field) ||
-                    empty($field) ||
-                    !is_string($field) ||
-                    !preg_match('/^[a-zA-Z0-9_]+$/', $field)
-                ) {
-                    static::raiseError(__METHOD__ .'(), invalid field entry (field name) found!');
-                    return false;
-                }
-
-                if (!isset($params) || empty($params) || !is_array($params)) {
-                    static::raiseError(__METHOD__ .'(), invalid field params found!');
-                    return false;
-                }
-
-                if (!isset($params[FIELD_TYPE]) ||
-                    empty($params[FIELD_TYPE]) ||
-                    !is_string($params[FIELD_TYPE]) ||
-                    !ctype_alnum($params[FIELD_TYPE])
-                ) {
-                    static::raiseError(__METHOD__ .'(), invalid field type found!');
-                    return false;
-                }
-                if (!in_array($params[FIELD_TYPE], $known_field_types)) {
-                    static::raiseError(__METHOD__ .'(), unknown field type found!');
-                    return false;
-                }
-                if (array_key_exists(FIELD_LENGTH, $params)) {
-                    if (!is_int($params[FIELD_LENGTH])) {
-                        static::raiseError(__METHOD__ ."(), FIELD_LENGTH of {$field} is not an integer!");
+                foreach (static::$model_fields as $field => $params) {
+                    if (!isset($field) ||
+                        empty($field) ||
+                        !is_string($field) ||
+                        !preg_match('/^[a-zA-Z0-9_]+$/', $field)
+                    ) {
+                        static::raiseError(__METHOD__ .'(), invalid field entry (field name) found!');
                         return false;
                     }
-                    if ($params[FIELD_LENGTH] < 0 && $params[FIELD_LENGTH] < 16384) {
-                        static::raiseError(__METHOD__ ."(), FIELD_LENGTH of {$field} is out of bound!");
+
+                    if (!isset($params) || empty($params) || !is_array($params)) {
+                        static::raiseError(__METHOD__ .'(), invalid field params found!');
                         return false;
+                    }
+
+                    if (!isset($params[FIELD_TYPE]) ||
+                        empty($params[FIELD_TYPE]) ||
+                        !is_string($params[FIELD_TYPE]) ||
+                        !ctype_alnum($params[FIELD_TYPE])
+                    ) {
+                        static::raiseError(__METHOD__ .'(), invalid field type found!');
+                        return false;
+                    }
+
+                    if (!in_array($params[FIELD_TYPE], $known_field_types)) {
+                        static::raiseError(__METHOD__ .'(), unknown field type found!');
+                        return false;
+                    }
+
+                    if (array_key_exists(FIELD_LENGTH, $params)) {
+                        if (!is_int($params[FIELD_LENGTH])) {
+                            static::raiseError(__METHOD__ ."(), FIELD_LENGTH of {$field} is not an integer!");
+                            return false;
+                        }
+                        if ($params[FIELD_LENGTH] < 0 && $params[FIELD_LENGTH] < 16384) {
+                            static::raiseError(__METHOD__ ."(), FIELD_LENGTH of {$field} is out of bound!");
+                            return false;
+                        }
                     }
                 }
             }
-        }
 
-        if (isset(static::$model_fields_index) &&
-            !empty(static::$model_fields_index) &&
-            is_array(static::$model_fields_index)
-        ) {
-            foreach (static::$model_fields_index as $field) {
-                if (!static::hasField($field)) {
-                    static::raiseError(__CLASS__ .'::hasField() returned false!');
-                    return false;
+            if (isset(static::$model_fields_index) &&
+                !empty(static::$model_fields_index) &&
+                is_array(static::$model_fields_index)
+            ) {
+                foreach (static::$model_fields_index as $field) {
+                    if (!static::hasField($field)) {
+                        static::raiseError(__CLASS__ .'::hasField() returned false!');
+                        return false;
+                    }
                 }
             }
         }
