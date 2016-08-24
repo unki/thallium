@@ -1053,8 +1053,8 @@ abstract class DefaultModel
             return false;
         }
 
-        if (($src_fields = $srcobj->getFields()) === false) {
-            static::raiseError(get_class($srcobj) .'::getFields() returned false!');
+        if (($src_fields = $srcobj->getModelFields()) === false) {
+            static::raiseError(get_class($srcobj) .'::getModelFields() returned false!');
             return false;
         }
 
@@ -2328,7 +2328,7 @@ abstract class DefaultModel
      * @return array
      * @throws \Thallium\Controllers\ExceptionController
      */
-    final public function getFields($no_virtual = false)
+    final public function getModelFields($no_virtual = false)
     {
         if (!static::hasModelFields()) {
             static::raiseError(__METHOD__ .'(), this model has no fields defined!');
@@ -3379,12 +3379,12 @@ abstract class DefaultModel
         }
 
         if (is_object($data)) {
-            if (!method_exists($data, 'getFields')) {
-                static::raiseError(__METHOD__ .'(), \$data provides no getFields() method!');
+            if (!method_exists($data, 'getModelFields')) {
+                static::raiseError(__METHOD__ .'(), \$data provides no getModelFields() method!');
                 return false;
             }
-            if (($fields = $data->getFields()) === false) {
-                static::raiseError(get_class($data) .'::getFields() returned false!');
+            if (($fields = $data->getModelFields()) === false) {
+                static::raiseError(get_class($data) .'::getModelFields() returned false!');
                 return false;
             }
 
@@ -4312,7 +4312,7 @@ abstract class DefaultModel
         }
 
         if (($fields = $item->getFieldNames()) === false) {
-            static::raiseError(get_class($item) .'::getFields() returned false!');
+            static::raiseError(get_class($item) .'::getModelFields() returned false!');
             return false;
         }
 
