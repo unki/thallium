@@ -2337,7 +2337,7 @@ abstract class DefaultModel
 
         $fields = array();
 
-        foreach (static::$model_fields as $field => $sec) {
+        foreach (static::$model_fields as $field => $params) {
             $value = null;
 
             if ($this->hasFieldValue($field)) {
@@ -2350,7 +2350,7 @@ abstract class DefaultModel
             $field_ary = array(
                 'name' => $field,
                 'value' => $value,
-                'privacy' => $sec,
+                'params' => $params,
             );
             $fields[$field] = $field_ary;
         }
@@ -2377,11 +2377,12 @@ abstract class DefaultModel
             $field_ary = array(
                 'name' => $field,
                 'value' => $value,
-                'privacy' => 'public'
+                'params' => array(
+                    'privacy' => 'public',
+                ),
             );
             $fields[$field] = $field_ary;
         }
-
 
         return $fields;
     }
