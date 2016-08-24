@@ -927,7 +927,7 @@ abstract class DefaultModel
         }
 
         if (static::hasModelLinks()) {
-            if (!$this::deleteModelLinks()) {
+            if (!$this->deleteModelLinks()) {
                 static::raiseError(__CLASS__ .'::deleteModelLinks() returned false!');
                 return false;
             }
@@ -4191,8 +4191,19 @@ abstract class DefaultModel
             return false;
         }
 
+        if (empty($links)) {
+            return true;
+        }
+
         foreach ($links as $link) {
             list($model, $field) = explode('/', $link);
+
+            if (!isset($model) || empty($model) ||
+                !isset($field) || empty($field)
+            ) {
+                static::raiseError(__METHOD__ .'(), encountered invalid model link!');
+                return false;
+            }
 
             if (($model_name = $thallium->getFullModelName($model)) === false) {
                 static::raiseError(get_class($thallium) .'::getFullModelName() returned false!');
