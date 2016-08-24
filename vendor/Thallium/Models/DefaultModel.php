@@ -2421,7 +2421,6 @@ abstract class DefaultModel
             return false;
         }
 
-
         $called_class = get_called_class();
         if (!$called_class::hasModelFields()) {
             return false;
@@ -3731,7 +3730,7 @@ abstract class DefaultModel
      * @return bool
      * @throws \Thallium\Controllers\ExceptionController
      */
-    public function flushTable()
+    protected function flushTable()
     {
         global $db;
 
@@ -3741,7 +3740,7 @@ abstract class DefaultModel
                 static::$model_table_name
             ));
         } catch (\Exception $e) {
-            static::raiseError(__METHOD__ .'(), SQL command TRUNCATE TABLE failed!');
+            static::raiseError(__METHOD__ .'(), SQL command TRUNCATE TABLE failed!', false, $e);
             return false;
         }
 
