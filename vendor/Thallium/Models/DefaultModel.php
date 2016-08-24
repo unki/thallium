@@ -1236,12 +1236,12 @@ abstract class DefaultModel
                 continue;
             }
 
-            if (!$this->hasDefaultValue($field)) {
+            if (!static::hasDefaultValue($field)) {
                 $this->model_values[$field] = null;
                 continue;
             }
 
-            if (($this->model_values[$field] = $this->getDefaultValue($field)) === false) {
+            if (($this->model_values[$field] = static::getDefaultValue($field)) === false) {
                 static::raiseError(__CLASS__ .'::getDefaultValue() returned false!');
                 return false;
             }
@@ -4017,7 +4017,7 @@ abstract class DefaultModel
      * @return bool
      * @throws \Thallium\Controllers\ExceptionController
      */
-    final public function hasDefaultValue($field)
+    final public static function hasDefaultValue($field)
     {
         if (!isset($field) || empty($field) || !is_string($field)) {
             static::raiseError(__METHOD__ .'(), $field parameter is invalid!');
@@ -4034,7 +4034,11 @@ abstract class DefaultModel
             return false;
         }
 
-        if (!isset($this->model_fields[$field][FIELD_DEFAULT])) {
+        if (!array_key_exists(FIELD_DEFAULT, static::$model_fields[$field])) {
+            return false;
+        }
+
+        if (empty(static::model_model_fields[$field][FIELD_DEFAULT])) {
             return false;
         }
 
@@ -4048,19 +4052,19 @@ abstract class DefaultModel
      * @return mixed
      * @throws \Thallium\Controllers\ExceptionController
      */
-    final public function getDefaultValue($field)
+    final public static function getDefaultValue($field)
     {
         if (!isset($field) || empty($field) || !is_string($field)) {
             static::raiseError(__METHOD__ .'(), $field parameter is invalid!');
             return false;
         }
 
-        if (!$this->hasDefaultValue($field)) {
+        if (!static::hasDefaultValue($field)) {
             static::raiseError(__CLASS__ .'::hasDefaultValue() returned false!');
             return false;
         }
 
-        return $this->model_model_fields[$field][FIELD_DEFAULT];
+        return static::$model_model_fields[$field][FIELD_DEFAULT];
     }
 
     /**
