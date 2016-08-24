@@ -4206,8 +4206,8 @@ abstract class DefaultModel
             return true;
         }
 
-        foreach ($links as $link) {
-            list($model, $field) = explode('/', $link);
+        foreach ($links as $target => $field) {
+            list($model, $field) = explode('/', $target);
 
             if (!isset($model) || empty($model) ||
                 !isset($field) || empty($field)
