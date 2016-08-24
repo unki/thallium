@@ -3707,7 +3707,8 @@ abstract class DefaultModel
     public function flush()
     {
         if (!static::hasModelItems()) {
-            return $this->flushTable();
+            static::raiseError(__CLASS__ .'::hasModelItems() returned false!');
+            return false;
         }
 
         if (!$this->delete()) {
