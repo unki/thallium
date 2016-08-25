@@ -3260,7 +3260,7 @@ abstract class DefaultModel
      */
     public function hasItem($idx)
     {
-        if (!isset($idx) || empty($idx) || (!is_string($idx) && !is_numeric($idx))) {
+        if (!isset($idx) || (!is_string($idx) && !is_numeric($idx))) {
             static::raiseError(__METHOD__ .'(), $idx parameter is invalid!');
             return false;
         }
