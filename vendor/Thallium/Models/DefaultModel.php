@@ -1047,93 +1047,65 @@ abstract class DefaultModel
     }
 
     /**
-     * clones a model into a new one.
+     * this method is called after PHP has finshed a clone process.
      *
-     * @param object $srcobj
+     * @param none
      * @return bool
      * @throws \Thallium\Controllers\ExceptionController
      */
-    final public function createClone(&$srcobj)
+    final public function __clone()
     {
-        global $thallium, $db;
-
-        if (!isset($srcobj->id)) {
-            return false;
-        }
-
-        if (!is_numeric($srcobj->id)) {
-            return false;
-        }
-
-        if (!isset($srcobj::$model_fields)) {
-            return false;
-        }
-
-        if (($src_fields = $srcobj->getModelFields()) === false) {
-            static::raiseError(get_class($srcobj) .'::getModelFields() returned false!');
-            return false;
-        }
-
-        foreach (array_keys($src_fields) as $field) {
-            // check for a matching key in clone's model_fields array
-            if (!static::hasField($field)) {
-                continue;
-            }
-
-            if (!$srcobj->hasFieldValue($field)) {
-                continue;
-            }
-
-            if (($src_value = $srcobj->getFieldValue($field)) === false) {
-                static::raiseError(get_class($srcobj) .'::getFieldValue() returned false!');
-                return false;
-            }
-
-            if (!$this->setFieldValue($field, $src_value)) {
-                static::raiseError(__CLASS__ .':setFieldValue() returned false!');
-                return false;
-            }
-        }
-
-        if (method_exists($this, 'preClone') && is_callable(array($this, 'preClone'))) {
-            if (!$this->preClone($srcobj)) {
-                static::raiseError(get_called_class() ."::preClone() method returned false!");
-                return false;
-            }
-        }
-
-        $pguid = 'derivation_guid';
+        global $thallium;
 
         $this->id = null;
 
-        if (isset($this->model_values[FIELD_IDX])) {
+        if (array_key_exists(FIELD_IDX, $this->model_values) ||
+            isset($this->model_values[FIELD_IDX]) ||
+            !empty($this->model_values[FIELD_IDX])
+        ) {
             $this->model_values[FIELD_IDX] = null;
         }
 
-        if (isset($this->model_values[FIELD_GUID])) {
-            $this->model_values[FIELD_GUID] = $thallium->createGuid();
+        if (array_key_exists(FIELD_GUID, $this->model_values) ||
+            isset($this->model_values[FIELD_GUID]) ||
+            !empty($this->model_values[FIELD_GUID])
+        ) {
+            if (($old_guid = $this->getGuid()) === false) {
+                static::raiseError(__CLASS__ .'::getGuid() returned false!', true);
+                return;
+            }
+
+            if (($new_guid = $thallium->createGuid()) === false) {
+                static::raiseError(get_class($thallium) .'::createGuid() returned false!', true);
+                return;
+            }
+
+            if (!$this->setGuid($new_guid)) {
+                static::raiseError(__CLASS__ .'::setGuid() returned false!', true);
+                return;
+            }
         }
 
+        $pguid_field = 'derivation_guid';
+
         // record the parent objects GUID
-        if (isset($srcobj->model_values[FIELD_GUID]) &&
-            !empty($srcobj->model_values[FIELD_GUID]) &&
-            static::hasField($pguid)
-        ) {
-            $this->model_values[$pguid] = $srcobj->getGuid();
+        if (isset($old_guid) && static::hasField($pguid_field)) {
+            if (!$this->setFieldValue($pguid_field, $old_guid)) {
+                static::raiseError(__CLASS__ .'::setFieldValue() returned false!', true);
+                return;
+            }
         }
 
         if (!$this->save()) {
-            static::raiseError(__CLASS__ .'::save() returned false!');
-            return false;
+            static::raiseError(__CLASS__ .'::save() returned false!', true);
+            return;
         }
 
         // if saving was successful, our new object should have an ID now
-        if (!isset($this->id) || empty($this->id)) {
-            static::raiseError(__METHOD__ ."(), error on saving clone. no ID was returned from database!");
-            return false;
+        if ($this->isNew()) {
+            static::raiseError(__METHOD__ .'(), error on saving clone. no ID was returned from database!', true);
+            return;
         }
-
-        $this->model_values[FIELD_IDX] = $this->id;
 
         // now check for assigned childrens and duplicate those links too
         if (isset($this->child_names) && !isset($this->ignore_child_on_clone)) {
@@ -1218,13 +1190,11 @@ abstract class DefaultModel
         }
 
         if (method_exists($this, 'postClone') && is_callable(array($this, 'postClone'))) {
-            if (!$this->postClone($srcobj)) {
-                static::raiseError(get_called_class() ."::postClone() method returned false!");
-                return false;
+            if (!$this->postClone()) {
+                static::raiseError(__CLASS__ .'::postClone() method returned false!', true);
+                return;
             }
         }
-
-        return true;
     }
 
     /**
