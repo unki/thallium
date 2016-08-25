@@ -2601,7 +2601,7 @@ abstract class DefaultModel
         }
 
         if (!$this->hasVirtualField($field)) {
-            static::raiseError(__CLASS__ .'::getVirtualFieldValue() returned false!');
+            static::raiseError(__CLASS__ .'::hasVirtualField() returned false!');
             return false;
         }
 
