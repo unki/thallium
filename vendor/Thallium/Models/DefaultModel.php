@@ -1746,6 +1746,16 @@ abstract class DefaultModel
     {
         global $thallium, $db;
 
+        if (!$this->hasIdx()) {
+            static::raiseError(__CLASS__ .'::hasIdx() returned false!');
+            return false;
+        }
+
+        if (($idx = $this->getIdx()) === false) {
+            static::raiseError(__CLASS__ .'::getIdx() returned false!');
+            return false;
+        }
+
         $idx_field = static::column(FIELD_IDX);
         $guid_field = static::column(FIELD_GUID);
 
@@ -1764,14 +1774,14 @@ abstract class DefaultModel
                     WHERE
                         %s < %s
                 )",
-            $id,
+            $idx_field,
             $guid_field,
             static::$model_table_name,
-            $id,
-            $id,
+            $idx_field,
+            $idx_field,
             static::$model_table_name,
-            $id,
-            $this->id
+            $idx_field,
+            $idx
         ));
 
         if (!isset($result)) {
@@ -1780,7 +1790,6 @@ abstract class DefaultModel
         }
 
         if (!isset($result->$idx_field) || !isset($result->$guid_field)) {
-            static::raiseError(__METHOD__ ."(), no previous record available!");
             return false;
         }
 
@@ -1791,7 +1800,7 @@ abstract class DefaultModel
             return false;
         }
 
-        return $result->$id ."-". $result->$guid_field;
+        return $result->$idx_field ."-". $result->$guid_field;
     }
 
     /**
@@ -1804,6 +1813,16 @@ abstract class DefaultModel
     final public function next()
     {
         global $thallium, $db;
+
+        if (!$this->hasIdx()) {
+            static::raiseError(__CLASS__ .'::hasIdx() returned false!');
+            return false;
+        }
+
+        if (($idx = $this->getIdx()) === false) {
+            static::raiseError(__CLASS__ .'::getIdx() returned false!');
+            return false;
+        }
 
         $idx_field = static::column(FIELD_IDX);
         $guid_field = static::column(FIELD_GUID);
@@ -1823,14 +1842,14 @@ abstract class DefaultModel
                     WHERE
                         %s > %s
                 )",
-            $id,
+            $idx_field,
             $guid_field,
             static::$model_table_name,
-            $id,
-            $id,
+            $idx_field,
+            $idx_field,
             static::$model_table_name,
-            $id,
-            $this->id
+            $idx_field,
+            $idx
         ));
 
         if (!isset($result)) {
@@ -1839,7 +1858,6 @@ abstract class DefaultModel
         }
 
         if (!isset($result->$idx_field) || !isset($result->$guid_field)) {
-            static::raiseError(__METHOD__ ."(), no next record available!");
             return false;
         }
 
@@ -1848,7 +1866,7 @@ abstract class DefaultModel
             return false;
         }
 
-        return $result->$id ."-". $result->$guid_field;
+        return $result->$idx_field ."-". $result->$guid_field;
     }
 
     /**
