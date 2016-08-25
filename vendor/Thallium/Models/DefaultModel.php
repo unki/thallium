@@ -3698,7 +3698,7 @@ abstract class DefaultModel
      * @return bool
      * @throws \Thallium\Controllers\ExceptionController
      */
-    public static function validateItemsFilter($filter)
+    protected static function validateItemsFilter($filter)
     {
         if (!isset($filter) || empty($filter) || !is_array($filter)) {
             static::raiseError(__METHOD__ .'(), $filter parameter is invalid!');
