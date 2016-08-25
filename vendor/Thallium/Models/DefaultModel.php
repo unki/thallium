@@ -3077,7 +3077,10 @@ abstract class DefaultModel
                 static::raiseError(get_class($item) .'::getIdx() returned false!');
                 return false;
             }
-            $model = $item::$model_column_prefix;
+            if (($model = $item->getModelName()) === false) {
+                static::raiseError(get_class($item) .'::getModelName() returned false!');
+                return false;
+            }
         }
 
         if (array_key_exists($idx, $this->model_items)) {
@@ -3118,6 +3121,11 @@ abstract class DefaultModel
 
         if (!$this->hasItem($idx)) {
             static::raiseError(__CLASS__ .'::hasItem() returned false!');
+            return false;
+        }
+
+        if (!$this->hasItemModel($idx)) {
+            static::raiseError(__CLASS__ .'::hasItemModel() returned false!');
             return false;
         }
 
