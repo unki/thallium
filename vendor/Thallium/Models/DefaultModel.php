@@ -1011,12 +1011,22 @@ abstract class DefaultModel
             return true;
         }
 
-        if (($items = $this->getItems()) === false) {
+        if (($items = $this->getItemsKeys()) === false) {
             static::raiseError(__CLASS__ .'::getItems() returned false!');
             return false;
         }
 
-        foreach ($items as $item) {
+        foreach ($items as $item_idx) {
+            if (!$this->hasItem($item_idx)) {
+                static::raiseError(__CLASS__ .'::hasItem() returned false!');
+                return false;
+            }
+
+            if (($item = $this->getItem($item_idx)) === false) {
+                static::raiseError(__CLASS__ .'::getItem() returned false!');
+                return false;
+            }
+
             if (!method_exists($item, 'delete') || !is_callable(array($item, 'delete'))) {
                 static::raiseError(__METHOD__ .'(), model '. get_class($item) .' does not provide a delete() method!');
                 return false;
@@ -1024,6 +1034,11 @@ abstract class DefaultModel
 
             if (!$item->delete()) {
                 static::raiseError(get_class($item) .'::delete() returned false!');
+                return false;
+            }
+
+            if (!$this->removeItem($item_idx)) {
+                static::raiseError(__CLASS__ .'::removeItem() returned false!');
                 return false;
             }
         }
@@ -3098,6 +3113,34 @@ abstract class DefaultModel
             return false;
         }
 
+        return true;
+    }
+
+    /**
+     * removes an item by clearing its data.
+     *
+     * @param int $idx,
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    public function removeItem($idx)
+    {
+        if (!isset($idx) || (!is_int($idx) && !is_numeric($idx))) {
+            static::raiseError(__METHOD__ .'(), $idx parameter is invalid!');
+            return false;
+        }
+
+        if (!static::hasModelItems()) {
+            static::raiseError(__CLASS__ .'::hasModelItems() returned false!');
+            return false;
+        }
+
+        if (!$this->hasItem($idx)) {
+            static::raiseError(__CLASS__ .'::hasItem() returned false!');
+            return false;
+        }
+
+        unset($this->model_items[$idx]);
         return true;
     }
 
