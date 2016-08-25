@@ -4050,6 +4050,15 @@ abstract class DefaultModel
             return false;
         }
 
+        if ($this->hasVirtualFields() && $this->hasVirtualField($field)) {
+            if (($value = $this->getVirtualFieldValue($field)) === false) {
+                static::raiseError(__CLASS__ .'::getVirtualFieldValue() returned false!');
+                return false;
+            }
+
+            return $value;
+        }
+
         return $this->model_values[$field];
     }
 
