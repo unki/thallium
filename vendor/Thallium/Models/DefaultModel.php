@@ -4003,7 +4003,8 @@ abstract class DefaultModel
             return true;
         }
 
-        if ($this->hasFieldLength($field)) {
+        // for non-virtual-fields, check their field length, if it has been declared.
+        if (static::hasField($field) && $this->hasFieldLength($field)) {
             if ($this->getFieldType($field) === FIELD_STRING) {
                 if (($field_length = $this->getFieldLength($field)) === false) {
                     static::raiseError(__CLASS__ .'::getFieldLength() returned false!');
@@ -4021,11 +4022,17 @@ abstract class DefaultModel
 
         if (static::hasField($field)) {
             $this->model_values[$field] = $value;
-        } elseif ($this->hasVirtualField($field)) {
-            if (!$this->setVirtualFieldValue($field, $value)) {
-                static::raiseError(__CLASS__ .'::setVirtualFieldValue() returned false!');
-                return false;
-            }
+            return true;
+        }
+
+        if (!$this->hasVirtualFields() || !$this->hasVirtualField($field)) {
+            static::raiseError(__METHOD__ .'(), unknown how to set that field!');
+            return false;
+        }
+
+        if (!$this->setVirtualFieldValue($field, $value)) {
+            static::raiseError(__CLASS__ .'::setVirtualFieldValue() returned false!');
+            return false;
         }
 
         return true;
