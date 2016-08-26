@@ -365,6 +365,22 @@ class MessageModel extends DefaultModel
     }
 
     /**
+     * returns true if the scope field is set.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    public function hasScope()
+    {
+        if (!$this->hasFieldValue('scope')) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * returns the value of the scope field.
      *
      * @param none
@@ -373,8 +389,8 @@ class MessageModel extends DefaultModel
      */
     public function getScope()
     {
-        if (!$this->hasFieldValue('scope')) {
-            static::raiseError(__CLASS__ .'::hasFieldValue() returned false!');
+        if (!$this->hasScope()) {
+            static::raiseError(__CLASS__ .'::hasScope() returned false!');
             return false;
         }
 
@@ -400,6 +416,10 @@ class MessageModel extends DefaultModel
      */
     public function isClientMessage()
     {
+        if (!$this->hasScope()) {
+            return false;
+        }
+
         if (($scope = $this->getScope()) === false) {
             static::raiseError(__CLASS__ .'::getScope() returned false!');
             return false;
@@ -421,6 +441,10 @@ class MessageModel extends DefaultModel
      */
     public function isServerMessage()
     {
+        if (!$this->hasScope()) {
+            return false;
+        }
+
         if (($scope = $this->getScope()) === false) {
             static::raiseError(__CLASS__ .'::getScope() returned false!');
             return false;
