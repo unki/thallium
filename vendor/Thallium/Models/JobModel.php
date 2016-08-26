@@ -143,7 +143,7 @@ class JobModel extends DefaultModel
 
         $flag = 'N';
 
-        if ($value === 'true') {
+        if ($value === true) {
             $flag = 'Y';
         }
 
