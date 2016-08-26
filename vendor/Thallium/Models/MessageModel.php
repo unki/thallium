@@ -471,13 +471,13 @@ class MessageModel extends DefaultModel
             return false;
         }
 
-        $value = 'N';
+        $flag = 'N';
 
         if ($value === true) {
-            $value = 'Y';
+            $flag = 'Y';
         }
 
-        if (!$this->setFieldValue('in_processing', $value)) {
+        if (!$this->setFieldValue('in_processing', $flag)) {
             static::raiseError(__CLASS__ .'::setFieldValue() returned false!');
             return false;
         }
@@ -515,12 +515,12 @@ class MessageModel extends DefaultModel
             return false;
         }
 
-        if (($in_processing = $this->getFieldValue('in_processing')) === false) {
+        if (($flag = $this->getFieldValue('in_processing')) === false) {
             static::raiseError(__CLASS__ .'::getFieldValue() returned false!');
             return false;
         }
 
-        return $in_processing;
+        return $flag;
     }
 
     /**
@@ -536,12 +536,12 @@ class MessageModel extends DefaultModel
             return false;
         }
 
-        if (($in_processing = $this->getFieldValue('in_processing')) === false) {
+        if (($flag = $this->getFieldValue('in_processing')) === false) {
             static::raiseError(__CLASS__ .'::getFieldValue() returned false!');
             return false;
         }
 
-        if (!static::isEnabled($in_processing)) {
+        if (!static::isEnabled($flag)) {
             return false;
         }
 
@@ -617,7 +617,7 @@ class MessageModel extends DefaultModel
      */
     protected function preSave()
     {
-        if ($this->hasFieldValue('in_processing')) {
+        if ($this->hasProcessingFlag()) {
             return true;
         }
 
