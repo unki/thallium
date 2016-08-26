@@ -34,6 +34,9 @@ class InternalTestView extends DefaultView
     /** @var string $view_class_name */
     protected static $view_class_name = 'internaltestview';
 
+    /** @var string $bar */
+    protected $bar;
+
     /**
      * overwrite parents __construct() method as we do not have a lot to do here.
      *
@@ -64,14 +67,69 @@ class InternalTestView extends DefaultView
         return;
     }
 
-    public function show()
+    public function getTestContent()
     {
         return __CLASS__;
     }
 
-    public function getTestContent()
+    /**
+     * overwrite parents show() method as we do not have a lot to do here.
+     *
+     * @param none
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    public function show()
     {
-        return __CLASS__;
+        global $tmpl;
+
+        if (!$tmpl->templateExists('skeleton.tpl')) {
+            static::raiseError(__METHOD__ .'(), skeleton.tpl does not exist!');
+            return false;
+        }
+
+        $tmpl->assign('page_content', 'foobar');
+        return $tmpl->fetch('skeleton.tpl');
+    }
+
+    /**
+     * overwrite parents showList() method as we do not have a lot to do here.
+     *
+     * @param none
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    public function showList($pageno = null, $items_limit = null)
+    {
+        global $tmpl;
+
+        if (!$tmpl->templateExists('skeleton.tpl')) {
+            static::raiseError(__METHOD__ .'(), skeleton.tpl does not exist!');
+            return false;
+        }
+
+        $tmpl->assign('page_content', 'foobar');
+        return $tmpl->fetch('skeleton.tpl');
+    }
+
+    /**
+     * overwrite parents showEdit() method as we do not have a lot to do here.
+     *
+     * @param none
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    public function showEdit($id, $guid)
+    {
+        global $tmpl;
+
+        if (!$tmpl->templateExists('skeleton.tpl')) {
+            static::raiseError(__METHOD__ .'(), skeleton.tpl does not exist!');
+            return false;
+        }
+
+        $tmpl->assign('page_content', 'foobar');
+        return $tmpl->fetch('skeleton.tpl');
     }
 }
 
