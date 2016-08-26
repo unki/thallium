@@ -4730,7 +4730,17 @@ abstract class DefaultModel
      */
     protected static function isEnabled($value)
     {
-        if (!in_array($value, array('yes','y','true','on','1'))) {
+        $means_enabled = array(
+            true,
+            1,
+            'yes',
+            'y',
+            'true',
+            'on',
+            '1'
+        );
+
+        if (!in_array($value, $means_enabled)) {
             return false;
         }
 
@@ -4746,7 +4756,17 @@ abstract class DefaultModel
      */
     protected static function isDisabled($value)
     {
-        if (!in_array($value, array('no','n','false','off','0'))) {
+        $means_disabled = array(
+            false,
+            0,
+            'no',
+            'n',
+            'false',
+            'off',
+            '0'
+        );
+
+        if (!in_array($value, $means_disabled)) {
             return false;
         }
 
