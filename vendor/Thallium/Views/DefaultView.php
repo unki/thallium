@@ -74,7 +74,25 @@ abstract class DefaultView
      */
     public function __construct()
     {
-        global $tmpl;
+        global $thallium, $tmpl;
+
+        if (!isset($thallium) ||
+            empty($thallium) ||
+            !is_object($thallium) ||
+            !is_a($thallium, 'Thallium\Controllers\MainController')
+        ) {
+            trigger_error(__METHOD__ .'(), Thallium is not loaded!');
+            return;
+        }
+
+        if (!isset($tmpl) ||
+            empty($tmpl) ||
+            !is_object($tmpl) ||
+            !is_a($tmpl, 'Thallium\Controllers\TemplatesController')
+        ) {
+            static::raiseError(__METHOD__ .'(), TemplatesController is not loaded!', true);
+            return;
+        }
 
         if (!static::validateView()) {
             static::raiseError(__CLASS__ .'::validateView() returned false!', true);
