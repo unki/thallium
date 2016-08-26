@@ -118,6 +118,22 @@ class MessageModel extends DefaultModel
     }
 
     /**
+     * returns true if the session_id field is set.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    public function hasSessionId()
+    {
+        if (!$this->hasFieldValue('session_id')) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * returns the value of the session_id field.
      *
      * @param none
@@ -126,8 +142,8 @@ class MessageModel extends DefaultModel
      */
     public function getSessionId()
     {
-        if (!$this->hasFieldValue('session_id')) {
-            static::raiseError(__CLASS__ .'::hasFieldValue() returned false!');
+        if (!$this->hasSessionId()) {
+            static::raiseError(__CLASS__ .'::hasSessionId() returned false!');
             return false;
         }
 
