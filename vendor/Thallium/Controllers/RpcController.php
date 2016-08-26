@@ -667,7 +667,7 @@ class RpcController extends DefaultController
         try {
             $view = new $view_name;
         } catch (\Exception $e) {
-            static::raiseError(__METHOD__ ."(), failed to load view ${view_name}!");
+            static::raiseError(__METHOD__ ."(), failed to load view ${view_name}!", false, $e);
             return false;
         }
 
