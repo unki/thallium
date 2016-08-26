@@ -98,8 +98,8 @@ class JobModel extends DefaultModel
      */
     public function getSessionId()
     {
-        if (!$this->hasFieldValue('session_id')) {
-            static::raiseError(__METHOD__ .'(), \$job_session_id has not been set yet!');
+        if (!$this->hasSessionId()) {
+            static::raiseError(__CLASS__ .'::hasSessionId() returned false!');
             return false;
         }
 
@@ -224,8 +224,8 @@ class JobModel extends DefaultModel
             return true;
         }
 
-        if (!$this->setFieldValue('in_processing', 'N')) {
-            static::raiseError(__CLASS__ .'::setFieldValue() returned false!');
+        if (!$this->setProcessingFlag(false)) {
+            static::raiseError(__CLASS__ .'::setProcessingFlag() returned false!');
             return false;
         }
 
@@ -261,6 +261,22 @@ class JobModel extends DefaultModel
     }
 
     /**
+     * returns true if the request_guid field is set.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    public function hasRequestGuid()
+    {
+        if (!$this->hasFieldValue('request_guid')) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * returns the value of the request_guid field
      *
      * @param none
@@ -269,8 +285,8 @@ class JobModel extends DefaultModel
      */
     public function getRequestGuid()
     {
-        if (!$this->hasFieldValue('request_guid')) {
-            static::raiseError(__CLASS__ .'::hasFieldValue() returned false!');
+        if (!$this->hasRequestGuid()) {
+            static::raiseError(__CLASS__ .'::hasRequestGuid() returned false!');
             return false;
         }
 
@@ -283,6 +299,22 @@ class JobModel extends DefaultModel
     }
 
     /**
+     * returns true if the command field is set.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    public function hasCommand()
+    {
+        if (!$this->hasFieldValue('command')) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * returns the value of the command field
      *
      * @param none
@@ -291,8 +323,8 @@ class JobModel extends DefaultModel
      */
     public function getCommand()
     {
-        if (!$this->hasFieldValue('command')) {
-            static::raiseError(__CLASS__ .'::hasFieldValue() returned false!');
+        if (!$this->hasCommand()) {
+            static::raiseError(__CLASS__ .'::hasCommand() returned false!');
             return false;
         }
 
