@@ -164,8 +164,9 @@ class JobModel extends DefaultModel
      */
     public function getProcessingFlag()
     {
-        if (!$this->hasFieldValue('in_processing')) {
-            return 'N';
+        if (!$this->hasProcessingFlag()) {
+            static::raiseError(__CLASS__ .'::hasProcessingFlag() returned false!');
+            return false;
         }
 
         if (($flag = $this->getFieldValue('in_processing')) === false) {
@@ -177,6 +178,22 @@ class JobModel extends DefaultModel
     }
 
     /**
+     * returns true if the processing flag is set.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    public function hasProcessingFlag()
+    {
+        if (!$this->hasFieldValue('in_processing')) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * returns true if the in_processing flag is true.
      *
      * @param none
@@ -185,6 +202,10 @@ class JobModel extends DefaultModel
      */
     public function isProcessing()
     {
+        if (!$this->hasProcessingFlag()) {
+            return false;
+        }
+
         if (($flag = $this->getProcessingFlag()) === false) {
             static::raiseError(__CLASS__ .'::getProcessingFlag() returned false!');
             return false;
