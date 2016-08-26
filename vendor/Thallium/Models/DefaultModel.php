@@ -4423,11 +4423,6 @@ abstract class DefaultModel
                 return false;
             }
 
-            if (isset($this->model_items_lookup_index[$field][$idx])) {
-                static::raiseError(__METHOD__ .'(), a lookup index entry is already present for that item!');
-                return false;
-            }
-
             $this->model_items_lookup_index[$field][$idx] = $value;
         }
 
