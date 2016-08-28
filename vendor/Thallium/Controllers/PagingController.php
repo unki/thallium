@@ -288,7 +288,11 @@ class PagingController extends DefaultController
             return $totalPages;
         }
 
-        $totalPages = floor(($totalItems/$items_per_page));
+        $totalPages = ($totalItems/$items_per_page);
+
+        if ($totalPages < 1) {
+            $totalPages = 1;
+        }
 
         if (!isset($totalPages) ||
             empty($totalPages) ||
