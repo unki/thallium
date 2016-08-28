@@ -208,7 +208,7 @@ abstract class DefaultController
             default:
             case 'display':
                 print $logtext;
-                if (!$this->isCmdline()) {
+                if (!static::isCmdline()) {
                     print "<br />";
                 } elseif (!isset($no_newline)) {
                     print "\n";
@@ -227,14 +227,14 @@ abstract class DefaultController
     }
 
     /**
-     * this method detects if itself has been executed from within
-     * the command line.
+     * this method detects if execution is currently in a
+     * command-line environment. if so, it will return true.
      *
      * @param none
      * @return bool
      * @throws \Thallium\Controllers\ExceptionController
      */
-    public function isCmdline()
+    public static function isCmdline()
     {
         if (php_sapi_name() !== 'cli') {
             return false;
