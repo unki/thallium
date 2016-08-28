@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Thallium is an PHP 7 compatible framework for developing web applications.
+Thallium is a PHP 7 compatible framework for developing web applications.
 It is provided open source (see License section) - and yes, its yet another PHP framework.
 
 ## Design
@@ -46,18 +46,18 @@ Views are managing the frameworks output. They provide ways to display and edit 
 On client-side (e.g. browsers) Thallium provides its own Javascript-based libraries to interact with the framework. In the background it utilizes [jQuery](http://jquery.com). Right now these client-side libraries provide:
 
 * **ThalliumStore** - a common interface that is used by the other Thallium libraries to store data on the client-side.
-* **ThalliumInlineEditable** - allowing to inline-edit a Field Model without the need of a traditional overall-form-concept (but in fact it still uses HTML <form>s).
-* **ThalliumMessageBus** - send/receive messages to/from the (server-side) framework allowing asynchronous communication.
+* **ThalliumInlineEditable** - allowing to inline-edit a Field Model without the need of a traditional overall-form-concept (but in fact it still uses HTML-forms).
+* **ThalliumMessageBus** - send/receive messages to/from the (server-side) Thallium framework allowing asynchronous communication.
 * **Remote Procedure Calls** - traditional RPC-support.
 
 ## License
 
-This software is licensed under **GNU Affero General Public License**.
+This software is licensed under **GNU Affero General Public License 3**.
 See the LICENSE file or [gnu.org](http://www.gnu.org/licenses/agpl-3.0.de.html) for more.
 
 ## Side Note
 
-Development of Thallium right now is a one-man show. So please also consider other frameworks like [Zend Framework](https://framework.zend.com) or [Symfony](https://symfony.com). Thallium is my own approach to have a slim framework that I can use as the code-base for my other project allowing me some kind of rapid development.
+Development of Thallium right now is a one-man show. So please also consider other frameworks like [Zend Framework](https://framework.zend.com) or [Symfony](https://symfony.com). Thallium is my own approach to have a slim framework that I can use as a common code-base for my own projects allowing me some kind of rapid development. By automated testing and using code-analyzers I am trying to keep it secure. But well - this is best effort. Nothing else.
 
 ## Links
 
