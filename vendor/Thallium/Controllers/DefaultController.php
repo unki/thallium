@@ -160,6 +160,13 @@ abstract class DefaultController
             $catched_exception = null;
         }
 
+        // If in test-mode, just throw the exception and return.
+        // It is then phpunits job to pick up the exception.
+        if (MainController::inTestMode()) {
+            throw new ExceptionController($text, $catched_exception);
+            return;
+        }
+
         try {
             throw new ExceptionController($text, $catched_exception);
         } catch (\Exception $e) {
