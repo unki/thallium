@@ -152,11 +152,26 @@ abstract class DefaultController
             $stop_execution = false;
         }
 
-        if (isset($catched_exception) && (!is_null($catched_exception) && !is_object($catched_exception))) {
+        if (isset($catched_exception) &&
+            !is_null($catched_exception) &&
+            !is_object($catched_exception) &&
+            !is_a($catched_exception, '\Exception')
+        ) {
             $catched_exception = null;
         }
 
-        throw new ExceptionController($text, $catched_exception, $stop_execution);
+        try {
+            throw new ExceptionController($text, $catched_exception);
+        } catch (\Exception $e) {
+            do {
+                print $e;
+            } while ($e = $e->getPrevious());
+        }
+
+        if ($stop_execution === true) {
+            trigger_error("Execution stopped.", E_USER_ERROR);
+        }
+
         return;
     }
 
