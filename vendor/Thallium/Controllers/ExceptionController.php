@@ -34,9 +34,6 @@ class ExceptionController extends \Exception
     /** @var string $previous keeps track of the last error message. */
     protected $previous;
 
-    /** @var bool $stop_execution */
-    protected $stop_execution = false;
-
     /**
      * class constructor
      *
@@ -45,14 +42,8 @@ class ExceptionController extends \Exception
      * @return void
      * @throws \Exception
      */
-    public function __construct($message, $captured_exception = null, $stop_execution = false)
+    public function __construct($message, $captured_exception = null)
     {
-        if ($captured_exception !== null) {
-            $this->previous = $captured_exception;
-        }
-
-        $this->stop_execution = $stop_execution;
-
         parent::__construct($message, null, $captured_exception);
     }
 
@@ -66,20 +57,6 @@ class ExceptionController extends \Exception
     public function getText()
     {
         $text = "";
-
-        if (($previous = $this->getPrevious()) !== null &&
-            is_a($previous, 'Exception')
-        ) {
-            $text.= sprintf(
-                '<br /><br />%s<br /><br />\n',
-                str_replace("\n", "<br />\n", $previous->getMessage())
-            );
-            $text.= sprintf(
-                'Backtrace:<br />\n%s',
-                str_replace("\n", "<br />\n", $previous->getTraceAsString())
-            );
-            return $text;
-        }
 
         $text.= sprintf(
             '<br /><br />%s<br /><br />\n',
@@ -104,13 +81,6 @@ class ExceptionController extends \Exception
     {
         $text = array();
         $trace = array();
-
-        if (($previous = $this->getPrevious()) !== null &&
-            is_a($previous, 'Exception')
-        ) {
-            $text[] = $previous->getMessage();
-            $trace[] = $previous->getTraceAsString();
-        }
 
         $text[] = $this->getMessage();
         $trace[] = parent::getTraceAsString();
@@ -149,19 +119,6 @@ class ExceptionController extends \Exception
         }
 
         return $this->getText();
-    }
-
-    /**
-     * returns true if execution-stop-flag has been set on
-     * throwing the exception.
-     *
-     * @param none
-     * @return bool
-     * @throws none
-     */
-    public function isStopExecution()
-    {
-        return $this->stop_execution;
     }
 }
 
