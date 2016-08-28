@@ -113,7 +113,7 @@ class MainController extends DefaultController
             return;
         }
 
-        if (!$this->isCmdline()) {
+        if (!static::isCmdline()) {
             if (!$this->loadController("HttpRouter", "router")) {
                 static::raiseError(__CLASS__ .'::loadController() returned false!');
                 return;
