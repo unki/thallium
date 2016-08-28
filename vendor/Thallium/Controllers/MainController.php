@@ -1428,6 +1428,15 @@ class MainController extends DefaultController
         return true;
     }
 
+    /**
+     * install an generic exception handler that catches all not
+     * previously catched exceptions. as soon as the exception
+     * handler is called, PHP aborts.
+     *
+     * @param none
+     * @return bool
+     * @throws none
+     */
     protected function setExceptionHandler()
     {
         if ($this->inTestMode()) {
@@ -1444,16 +1453,16 @@ class MainController extends DefaultController
         return true;
     }
 
+    /**
+     * a generic exception handler that takes care of exceptions not
+     * previously have been catched by a try-catch-block.
+     *
+     * Note: as soon as PHP has executed exceptionHandler(), it will
+     * stop execution.
+     */
     public static function exceptionHandler($e)
     {
         print $e;
-
-        if (!method_exists($e, 'isStopExecution') ||
-            !is_callable(array($e, 'isStopExecution')) ||
-            !$e->isStopExecution()
-        ) {
-            return;
-        }
 
         trigger_error("Execution stopped.", E_USER_ERROR);
         return;
