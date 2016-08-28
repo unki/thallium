@@ -232,17 +232,22 @@ class HttpRouterController extends DefaultController
                 rtrim($filtered_server['REQUEST_URI'], '/') === $webpath
             )
         ) {
-            $this->query->view = "main";
+            $view = "main";
         /* select View according parsed request URI */
         } elseif (isset($this->query_parts[0]) && !empty($this->query_parts[0])) {
-            $this->query->view = $this->query_parts[0];
+            $view = $this->query_parts[0];
         }
 
-        if (!isset($this->query->view) ||
-            empty($this->query->view) ||
-            !is_string($this->query->view)
+        if (!isset($view) ||
+            empty($view) ||
+            !is_string($view)
         ) {
             static::raiseError(__METHOD__ .'(), check if base_web_path is correctly defined!', true);
+            return;
+        }
+
+        if (!$this->setQueryView($view)) {
+            static::raiseError(__CLASS__ .'::setQueryView() returned false!', true);
             return;
         }
 
@@ -372,8 +377,9 @@ class HttpRouterController extends DefaultController
             (isset($this->query->mode) && $this->query->mode == 'rpc.html') ||
             /* object update RPC calls */
             (
-                $this->hasQueryMethod() && $this->getQueryMethod === 'POST' &&
-                $this->isValidUpdateObject($this->query->view)
+                $this->hasQueryMethod() && $this->getQueryMethod() === 'POST' &&
+                $this->hasQueryView() && ($view = $this->getQueryView()) !== false &&
+                $this->isValidUpdateObject($view)
             )
         ) {
             if (!$this->hasQueryParam('type') || !$this->hasQueryParam('action')) {
@@ -437,8 +443,8 @@ class HttpRouterController extends DefaultController
     public function isUploadCall()
     {
         if ($this->hasQueryMethod() && $this->getQueryMethod() === 'POST' &&
-            isset($this->query->view) &&
-            $this->query->view == 'upload'
+            $this->hasQueryView() && ($view = $this->getQueryView()) !== 'false' &&
+            $iew === 'upload'
         ) {
             return true;
         }
@@ -868,6 +874,60 @@ class HttpRouterController extends DefaultController
         }
 
         $this->query->uri = $uri;
+        return true;
+    }
+
+    /**
+     * returns true if the name of the view that has been requested is known.
+     *
+     * @param none
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    public function hasQueryView()
+    {
+        if (!isset($this->query->view) ||
+            empty($this->query->view) ||
+            !is_string($this->query->view)
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * returns name of the view that has been requested.
+     *
+     * @param none
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    public function getQueryView()
+    {
+        if (!$this->hasQueryView()) {
+            static::raiseError(__CLASS__ .'::hasQueryView() returned false!');
+            return false;
+        }
+
+        return $this->query->view;
+    }
+
+    /**
+     * records the View name that has been requested.
+     *
+     * @param string $view
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    protected function setQueryView($view)
+    {
+        if (!isset($view) || empty($view) || !is_string($view)) {
+            static::raiseError(__METHOD__ .'(), $view parameter is invalid!');
+            return false;
+        }
+
+        $this->query->view = $view;
         return true;
     }
 }
