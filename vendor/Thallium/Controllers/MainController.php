@@ -75,7 +75,6 @@ class MainController extends DefaultController
             return;
         }
 
-
         if (!$this->loadController("Config", "config")) {
             static::raiseError(__CLASS__ .'::loadController() returned false!', true);
             return;
@@ -123,9 +122,9 @@ class MainController extends DefaultController
         }
 
         if (isset($router) &&
-            $router->hasQueryParams() &&
-            $router->hasQueryParam('view') &&
-            ($view = $router->getQueryParam('view')) === false &&
+            $router->hasQueryView() &&
+            ($view = $router->getQueryView()) !== false &&
+            !empty($view) && is_string($view) &&
             $view === 'install'
         ) {
             $mode = "install";
@@ -1247,10 +1246,9 @@ class MainController extends DefaultController
     {
         global $views, $router;
 
-        if (!$router->hasQueryParams() ||
-            !$router->hasQueryParam('view') ||
-            ($view = $router->getQueryParam('view')) === false ||
-            empty($view)
+        if (!$router->hasQueryView() ||
+            ($view = $router->getQueryView()) === false ||
+            empty($view) || !is_string($view)
         ) {
             static::raiseError(__METHOD__ .'(), no view has been requested!');
             return false;
