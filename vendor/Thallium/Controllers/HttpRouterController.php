@@ -169,7 +169,11 @@ class HttpRouterController extends DefaultController
             return;
         }
 
-        $this->query->method = $filtered_server['REQUEST_METHOD'];
+        if (!$this->setQueryMethod($filtered_server['REQUEST_METHOD'])) {
+            static::raiseError(__CLASS__ .'::setQueryMethod() returned false!', true);
+            return;
+        }
+
         $this->query->uri = $filtered_server['REQUEST_URI'];
 
         // check HTTP request URI
@@ -365,7 +369,7 @@ class HttpRouterController extends DefaultController
             (isset($this->query->mode) && $this->query->mode == 'rpc.html') ||
             /* object update RPC calls */
             (
-                isset($this->query->method) && $this->query->method == 'POST' &&
+                $this->hasQueryMethod() && $this->getQueryMethod === 'POST' &&
                 $this->isValidUpdateObject($this->query->view)
             )
         ) {
@@ -429,8 +433,7 @@ class HttpRouterController extends DefaultController
      */
     public function isUploadCall()
     {
-        if (isset($this->query->method) &&
-            $this->query->method == 'POST' &&
+        if ($this->hasQueryMethod() && $this->getQueryMethod() === 'POST' &&
             isset($this->query->view) &&
             $this->query->view == 'upload'
         ) {
@@ -751,6 +754,61 @@ class HttpRouterController extends DefaultController
         }
 
         $this->query->params[$name] = $value;
+        return true;
+    }
+
+    /**
+     * returns true if the HTTP method used by the original HTTP
+     * request is known.
+     *
+     * @param none
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    public function hasQueryMethod()
+    {
+        if (!isset($this->query->method) ||
+            empty($this->query->method) ||
+            !is_string($this->query->method)
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * returns the method used by the original HTTP request.
+     *
+     * @param none
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    public function getQueryMethod()
+    {
+        if (!$this->hasQueryMethod()) {
+            static::raiseError(__CLASS__ .'::hasQueryMethod() returned false!');
+            return false;
+        }
+
+        return $this->query->method;
+    }
+
+    /**
+     * records the HTTP method used by the original HTTP request into
+     * the internal $query object.
+     * @param string $method
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    protected function setQueryMethod($method)
+    {
+        if (!isset($method) || empty($method) || !is_string($method)) {
+            static::raiseError(__METHOD__ .'(), $method parameter is invalid!');
+            return false;
+        }
+
+        $this->query->method = $method;
         return true;
     }
 }
