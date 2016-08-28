@@ -174,7 +174,10 @@ class HttpRouterController extends DefaultController
             return;
         }
 
-        $this->query->uri = $filtered_server['REQUEST_URI'];
+        if (!$this->setQueryUri($filtered_server['REQUEST_URI'])) {
+            static::raiseError(__CLASS__ .'::setQueryUri() returned false!', true);
+            return;
+        }
 
         // check HTTP request URI
         $uri = $filtered_server['REQUEST_URI'];
@@ -797,6 +800,7 @@ class HttpRouterController extends DefaultController
     /**
      * records the HTTP method used by the original HTTP request into
      * the internal $query object.
+     *
      * @param string $method
      * @return bool
      * @throws \Thallium\Controllers\ExceptionController
@@ -809,6 +813,61 @@ class HttpRouterController extends DefaultController
         }
 
         $this->query->method = $method;
+        return true;
+    }
+
+    /**
+     * returns true if the URI of the original HTTP request is known.
+     *
+     * @param none
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    public function hasQueryUri()
+    {
+        if (!isset($this->query->uri) ||
+            empty($this->query->uri) ||
+            !is_string($this->query->uri)
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * returns the URI of the original HTTP request.
+     *
+     * @param none
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    public function getQueryUri()
+    {
+        if (!$this->hasQueryUri()) {
+            static::raiseError(__CLASS__ .'::hasQueryUri() returned false!');
+            return false;
+        }
+
+        return $this->query->uri;
+    }
+
+    /**
+     * records the URI of the original HTTP request into
+     * the internal $query object.
+     *
+     * @param string $uri
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    protected function setQueryUri($uri)
+    {
+        if (!isset($uri) || empty($uri) || !is_string($uri)) {
+            static::raiseError(__METHOD__ .'(), $uri parameter is invalid!');
+            return false;
+        }
+
+        $this->query->uri = $uri;
         return true;
     }
 }
