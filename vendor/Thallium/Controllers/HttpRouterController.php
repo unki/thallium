@@ -324,7 +324,7 @@ class HttpRouterController extends DefaultController
                         return false;
                     }
 
-                    if (!$this->addQueryParam($key, $value, ENT_QUOTES)) {
+                    if (!$this->addQueryParam($key, $value)) {
                         static::raiseError(__CLASS__ .'::addQueryParam() returned false!', true);
                         return false;
                     }
