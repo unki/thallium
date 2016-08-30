@@ -672,7 +672,12 @@ class PagingController extends DefaultController
     final public function getCurrentItemsLimit()
     {
         if (!isset($this->currentItemsLimit)) {
-            return static::$itemsPerPageLimits[0];
+            if (($limit = static::getFirstItemsLimit()) === false) {
+                static::raiseError(__CLASS__ .'::getFirstItemsLimit() returned false!');
+                return false;
+            }
+
+            return $limit;
         }
 
         return $this->currentItemsLimit;
