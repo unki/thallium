@@ -451,7 +451,7 @@ ThalliumInlineEditable.prototype.isSaved = function () {
 
 ThalliumInlineEditable.prototype.save = function () {
 
-    var content_select, input, action, model, key, id, value, url;
+    var content_select, input, action, model, key, id, guid, value, url;
 
     /* if data hasn't change, just swap views */
     if (this.getContentValue() == this.getLastUsedValue()) {
@@ -489,6 +489,11 @@ ThalliumInlineEditable.prototype.save = function () {
         return false;
     }
 
+    if (typeof (guid = input.attr('data-guid')) === 'undefined') {
+        throw new Error("Unable to locate 'data-guid' attribute!");
+        return false;
+    }
+
     if (typeof (value = input.val()) === 'undefined') {
         throw new Error("Unable to locate 'value' attribute!");
         return false;
@@ -498,6 +503,7 @@ ThalliumInlineEditable.prototype.save = function () {
     model = safe_string(model);
     key = safe_string(key);
     id = safe_string(id);
+    guid = safe_string(guid);
     value = safe_string(value);
 
     if (typeof window.location.pathname !== 'undefined' &&
@@ -519,6 +525,7 @@ ThalliumInlineEditable.prototype.save = function () {
             action : action,
             model  : model,
             id     : id,
+            guid   : guid,
             key    : key,
             value  : value
         }),
