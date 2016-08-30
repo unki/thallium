@@ -436,13 +436,17 @@ class RpcController extends DefaultController
         $input_fields = array(
             'key',
             'id',
+            'guid',
             'value',
             'model'
         );
 
         foreach ($input_fields as $field) {
             if (!$router->hasQueryParam($field)) {
-                static::raiseError(get_class($router) .'::hasQueryParam() returned false!');
+                static::raiseError(sprintf(
+                    get_class($router) .'::hasQueryParam() returned false for field %s!',
+                    $field
+                ));
                 return false;
             }
         }
