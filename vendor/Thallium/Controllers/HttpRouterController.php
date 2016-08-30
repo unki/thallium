@@ -76,65 +76,52 @@ class HttpRouterController extends DefaultController
 
     protected static $allowed_get_parameters = array(
         'items-per-page' => array(
-            'filter' => FILTER_VALIDATE_INT,
-            'flags' => FILTER_SANITIZE_NUMBER_INT,
+            'filter' => FILTER_VALIDATE_INT | FILTER_SANITIZE_NUMBER_INT,
         ),
     );
     protected static $allowed_post_parameters = array(
         'type' => array(
-            'filter' => FILTER_UNSAFE_RAW,
-            'flags' => FILTER_SANITIZE_STRING,
+            'filter' =>  FILTER_SANITIZE_STRING,
         ),
         'action' => array(
-            'filter' => FILTER_UNSAFE_RAW,
-            'flags' => FILTER_SANITIZE_STRING,
+            'filter' => FILTER_SANITIZE_STRING,
         ),
         'id' => array(
-            'filter' => FILTER_VALIDATE_INT,
-            'flags' => FILTER_SANITIZE_NUMBER_INT,
+            'filter' => FILTER_VALIDATE_INT | FILTER_SANITIZE_NUMBER_INT,
         ),
         'guid' => array(
-            'filter' => FILTER_UNSAFE_RAW,
-            'flags' => FILTER_SANITIZE_STRING,
+            'filter' => FILTER_SANITIZE_STRING,
         ),
         'model' => array(
-            'filter' => FILTER_UNSAFE_RAW,
-            'flags' => FILTER_SANITIZE_STRING,
+            'filter' => FILTER_SANITIZE_STRING,
         ),
         'key' => array(
-            'filter' => FILTER_UNSAFE_RAW,
-            'flags' => FILTER_SANITIZE_STRING,
+            'filter' => FILTER_SANITIZE_STRING,
         ),
         'value' => array(
-            'filter' => FILTER_UNSAFE_RAW,
-            'flags' => FILTER_SANITIZE_STRING,
+            'filter' => FILTER_SANITIZE_STRING,
         ),
         'messages' => array(
-            'filter' => FILTER_UNSAFE_RAW,
-            'flags' => FILTER_SANITIZE_STRING,
+            'filter' => FILTER_SANITIZE_STRING,
+            'flags' => FILTER_FLAG_NO_ENCODE_QUOTES,
         ),
         'view' => array(
-            'filter' => FILTER_UNSAFE_RAW,
-            'flags' => FILTER_SANITIZE_STRING,
+            'filter' => FILTER_SANITIZE_STRING,
         ),
         'data' => array(
-            'filter' => FILTER_UNSAFE_RAW,
-            'flags' => FILTER_SANITIZE_STRING,
+            'filter' => FILTER_SANITIZE_STRING,
         ),
         'direction' => array(
-            'filter' => FILTER_UNSAFE_RAW,
-            'flags' => FILTER_SANITIZE_STRING,
+            'filter' => FILTER_SANITIZE_STRING,
         ),
     );
 
     protected static $allowed_server_parameters = array(
         'REQUEST_URI' => array(
-            'filter' => FILTER_UNSAFE_RAW,
-            'flags' => FILTER_SANITIZE_STRING,
+            'filter' => FILTER_SANITIZE_STRING,
         ),
         'REQUEST_METHOD' => array(
-            'filter' => FILTER_UNSAFE_RAW,
-            'flags' => FILTER_SANITIZE_STRING,
+            'filter' => FILTER_SANITIZE_STRING,
         ),
     );
 
