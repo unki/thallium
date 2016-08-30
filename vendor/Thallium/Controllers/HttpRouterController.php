@@ -412,7 +412,11 @@ class HttpRouterController extends DefaultController
                 return false;
             }
 
-            $this->query->action = $action;
+            if (!$this->setQueryAction($action)) {
+                static::raiseError(__CLASS__ .'::setQueryAction() returned false!');
+                return false;
+            }
+
             return $this->query;
         }
 
@@ -1003,6 +1007,60 @@ class HttpRouterController extends DefaultController
         }
 
         $this->query->call_type = $call_type;
+        return true;
+    }
+
+    /**
+     * returns true if the query action that has been requested is known.
+     *
+     * @param none
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    public function hasQueryAction()
+    {
+        if (!isset($this->query->action) ||
+            empty($this->query->action) ||
+            !is_string($this->query->action)
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * returns the query action that has been requested.
+     *
+     * @param none
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    public function getQueryAction()
+    {
+        if (!$this->hasQueryAction()) {
+            static::raiseError(__CLASS__ .'::hasQueryAction() returned false!');
+            return false;
+        }
+
+        return $this->query->action;
+    }
+
+    /**
+     * records the query action that has been requested.
+     *
+     * @param string $action
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    protected function setQueryAction($action)
+    {
+        if (!isset($action) || empty($action) || !is_string($action)) {
+            static::raiseError(__METHOD__ .'(), $action parameter is invalid!');
+            return false;
+        }
+
+        $this->query->action = $action;
         return true;
     }
 }
