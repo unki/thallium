@@ -119,6 +119,11 @@ class MainController extends DefaultController
             }
 
             global $router;
+
+            if (!$router->select()) {
+                static::raiseError(get_class($router) .'::select() returned false!');
+                return false;
+            }
         }
 
         if (isset($router) &&
