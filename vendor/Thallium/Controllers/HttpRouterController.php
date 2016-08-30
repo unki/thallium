@@ -105,6 +105,10 @@ class HttpRouterController extends DefaultController
             'filter' => FILTER_UNSAFE_RAW,
             'flags' => FILTER_SANITIZE_STRING,
         ),
+        'value' => array(
+            'filter' => FILTER_UNSAFE_RAW,
+            'flags' => FILTER_SANITIZE_STRING,
+        ),
     );
 
     protected static $allowed_server_parameters = array(
