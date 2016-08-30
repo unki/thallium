@@ -755,8 +755,8 @@ class HttpRouterController extends DefaultController
         }
 
         if (!isset($value) ||
-            empty($value) ||
-            (!is_string($value) && !is_array($value))
+            (!is_int($value) && !is_numeric($value) && empty($value)) ||
+            (!is_int($value) && !is_string($value) && !is_array($value))
         ) {
             static::raiseError(__METHOD__ .'(), $value parameter is invalid!');
             return false;
