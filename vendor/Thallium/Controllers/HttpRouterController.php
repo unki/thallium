@@ -407,7 +407,11 @@ class HttpRouterController extends DefaultController
                 return false;
             }
 
-            $this->query->call_type = $type;
+            if (!$this->setQueryCallType($type)) {
+                static::raiseError(__CLASS__ .'::setQueryCallType() returned false!');
+                return false;
+            }
+
             $this->query->action = $action;
             return $this->query;
         }
@@ -417,7 +421,11 @@ class HttpRouterController extends DefaultController
             return $this->query;
         }
 
-        $this->query->call_type = "common";
+        if (!$this->setQueryCallType('common')) {
+            static::raiseError(__CLASS__ .'::setQueryCallType() returned false!');
+            return false;
+        }
+
         return $this->query;
     }
 
@@ -430,13 +438,21 @@ class HttpRouterController extends DefaultController
      */
     public function isRpcCall()
     {
-        if (isset($this->query->call_type) && $this->query->call_type == "rpc") {
-            return true;
+        if (!$this->hasQueryCallType()) {
+            return false;
         }
 
-        return false;
-    }
+        if (($call_type = $this->getQueryCallType()) === false) {
+            static::raiseError(__CLASS__ .'::getQueryCallType() returned false!');
+            return false;
+        }
 
+        if ($call_type !== 'rpc') {
+            return false;
+        }
+
+        return true;
+    }
 
     /**
      * return true if current request is a file-upload request
@@ -933,6 +949,60 @@ class HttpRouterController extends DefaultController
         }
 
         $this->query->view = $view;
+        return true;
+    }
+
+    /**
+     * returns true if the call type that has been requested is known.
+     *
+     * @param none
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    public function hasQueryCallType()
+    {
+        if (!isset($this->query->call_type) ||
+            empty($this->query->call_type) ||
+            !is_string($this->query->call_type)
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * returns the call type that has been requested.
+     *
+     * @param none
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    public function getQueryCallType()
+    {
+        if (!$this->hasQueryCallType()) {
+            static::raiseError(__CLASS__ .'::hasQueryCallType() returned false!');
+            return false;
+        }
+
+        return $this->query->call_type;
+    }
+
+    /**
+     * records the call type that has been requested.
+     *
+     * @param string $call_type
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    protected function setQueryCallType($call_type)
+    {
+        if (!isset($call_type) || empty($call_type) || !is_string($call_type)) {
+            static::raiseError(__METHOD__ .'(), $call_type parameter is invalid!');
+            return false;
+        }
+
+        $this->query->call_type = $call_type;
         return true;
     }
 }
