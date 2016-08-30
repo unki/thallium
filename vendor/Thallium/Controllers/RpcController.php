@@ -546,10 +546,22 @@ class RpcController extends DefaultController
     {
         global $mbus, $router;
 
-        if (!$router->hasQueryParam('messages') ||
-            ($messages = $router->getQueryParam('messages')) === false ||
-            empty($messages) || !is_string($messages)
-        ) {
+        if (!$router->hasQueryParams()) {
+            static::raiseError(get_class($router) .'::hasQueryParams() returned false!');
+            return false;
+        }
+
+        if (!$router->hasQueryParam('messages')) {
+            static::raiseError(get_class($router) .'::hasQueryParam() returned false!');
+            return false;
+        }
+
+        if (($messages = $router->getQueryParam('messages')) === false) {
+            static::raiseError(get_class($router) .'::getQueryParam() returned false!');
+            return false;
+        }
+
+        if (!isset($messages) || empty($messages) || !is_string($messages)) {
             static::raiseError(__METHOD__ .'(), no message provided!');
             return false;
         }
