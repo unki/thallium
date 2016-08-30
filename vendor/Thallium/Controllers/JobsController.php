@@ -126,7 +126,7 @@ class JobsController extends DefaultController
 
         if (isset($parameters) && (
             empty($parameters) ||
-            !is_array($parameters)
+            (!is_string($parameters) || !is_array($parameters) || !is_object($parameters))
         )) {
             static::raiseError(__METHOD__ .'(), $parameters parameter is invalid!');
             return false;
