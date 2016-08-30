@@ -4735,7 +4735,7 @@ abstract class DefaultModel
             '1'
         );
 
-        if (!in_array($value, $means_enabled)) {
+        if (!in_array(strtolower($value), $means_enabled)) {
             return false;
         }
 
@@ -4761,7 +4761,7 @@ abstract class DefaultModel
             '0'
         );
 
-        if (!in_array($value, $means_disabled)) {
+        if (!in_array(strtolower($value), $means_disabled)) {
             return false;
         }
 
