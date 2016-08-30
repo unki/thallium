@@ -99,6 +99,21 @@ class MessageBusController extends DefaultController
             return false;
         }
 
+        // In HttpRouterController htmlentites() was used to sanitize POST data ('messages').
+        // Before we can pass this data to json_decode(), we have to undo the changes
+        // htmlentites() has made.
+        try {
+            $messages_raw = html_entity_decode($messages_raw);
+        } catch (\Exception $e) {
+            static::raiseError(__METHOD__ .'8), html_entity_decode() failed!', false, $e);
+            return false;
+        }
+
+        if (!isset($messages_raw) || empty($messages_raw) || !is_string($messages_raw)) {
+            static::raiseError(__METHOD__ .'(), $messages_raw parameter is invalid!');
+            return false;
+        }
+
         if (($json = json_decode($messages_raw, false, 2)) === null) {
             static::raiseError(__METHOD__ .'(), json_decode() returned false! '. $this->json_errors[json_last_error()]);
             return false;
