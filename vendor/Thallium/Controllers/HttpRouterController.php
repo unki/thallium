@@ -449,7 +449,7 @@ class HttpRouterController extends DefaultController
     {
         if ($this->hasQueryMethod() && $this->getQueryMethod() === 'POST' &&
             $this->hasQueryView() && ($view = $this->getQueryView()) !== 'false' &&
-            $iew === 'upload'
+            $view === 'upload'
         ) {
             return true;
         }
