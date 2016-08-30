@@ -183,7 +183,7 @@ abstract class DefaultView
     {
         global $thallium, $router, $tmpl;
 
-        $items_per_page = $this->default_items_limit;
+        $items_per_page = null;
         $current_page = 1;
 
         if ($router->hasQueryParams()) {
@@ -318,10 +318,14 @@ abstract class DefaultView
             ($this->hasSessionVar("current_items_limit") &&
             ($current_items_limit = $this->getSessionVar("current_items_limit")) === false)
         ) {
-            $current_items_limit = 0;
+            $current_items_limit = $this->default_items_limit;
         }
 
-        if (!isset($current_items_limit)) {
+        if (isset($items_limit) &&
+            !is_null($items_limit) &&
+            (is_int($items_limit) || is_numeric($items_limit)) &&
+            (int) $items_limit >= 0
+        ) {
             $current_items_limit = $items_limit;
         }
 
