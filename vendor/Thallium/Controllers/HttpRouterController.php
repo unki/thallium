@@ -102,8 +102,7 @@ class HttpRouterController extends DefaultController
             'filter' => FILTER_SANITIZE_STRING,
         ),
         'messages' => array(
-            'filter' => FILTER_SANITIZE_STRING,
-            'flags' => FILTER_FLAG_NO_ENCODE_QUOTES,
+            'filter' => FILTER_UNSAFE_RAW,
         ),
         'view' => array(
             'filter' => FILTER_SANITIZE_STRING,
