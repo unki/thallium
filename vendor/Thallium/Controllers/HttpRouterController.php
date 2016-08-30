@@ -340,6 +340,11 @@ class HttpRouterController extends DefaultController
         }
 
         for ($i = 1; $i < count($this->query_parts); $i++) {
+            // if the query part is empty (may occur for URIs like 'xxx/?items-per-page=0', ignore.
+            if (is_string($this->query_parts[1]) && empty($this->query_parts[1])) {
+                continue;
+            }
+
             if (!$this->addQueryParam($i, $this->query_parts[$i])) {
                 static::raiseError(__CLASS__ .'::addQueryParam() returned false!', true);
                 return false;
