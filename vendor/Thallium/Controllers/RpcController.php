@@ -98,15 +98,15 @@ class RpcController extends DefaultController
         } elseif ($action == 'get-view') {
             $rpc_method = 'rpcGetView';
         } elseif ($action == 'submit-messages') {
-            $rpc_method == 'rpcSubmitToMessageBus';
+            $rpc_method = 'rpcSubmitToMessageBus';
         } elseif ($action == 'retrieve-messages') {
-            $rpc_method == 'rpcRetrieveFromMessageBus';
+            $rpc_method = 'rpcRetrieveFromMessageBus';
         } elseif ($action == 'process-messages') {
-            $rpc_method == 'rpcProcessMessages';
+            $rpc_method = 'rpcProcessMessages';
         } elseif ($action == 'idle') {
-            $rpc_method == 'rpcIdle';
+            $rpc_method = 'rpcIdle';
         } elseif (method_exists($this, 'performApplicationSpecifc')) {
-            $rpc_method == 'performApplicationSpecifc';
+            $rpc_method = 'performApplicationSpecifc';
         }
 
         if (!isset($rpc_method) || empty($rpc_method) || !is_string($rpc_method)) {
