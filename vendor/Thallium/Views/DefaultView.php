@@ -181,21 +181,21 @@ abstract class DefaultView
      */
     public function show()
     {
-        global $thallium, $query, $router, $tmpl;
+        global $thallium, $router, $tmpl;
 
         $items_per_page = $this->default_items_limit;
         $current_page = 1;
 
         if ($router->hasQueryParams()) {
             if ($router->hasQueryParam('items-per-page')) {
-                if (($items_per_page = $query->getQueryParam('items-per-page')) === false) {
-                    static::raiseError(get_class($query) .'::getQueryParam() returned false!');
+                if (($items_per_page = $router->getQueryParam('items-per-page')) === false) {
+                    static::raiseError(get_class($router) .'::getQueryParam() returned false!');
                     return false;
                 }
             }
             if ($router->hasQueryParam(1)) {
                 if (($mode = $router->getQueryParam(1)) === false) {
-                    static::raiseError(get_class($query) .'::getQueryParam() returned false!');
+                    static::raiseError(get_class($router) .'::getQueryParam() returned false!');
                     return false;
                 }
                 if (isset($mode) &&
