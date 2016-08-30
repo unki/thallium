@@ -435,7 +435,7 @@ class JobsController extends DefaultController
 
         foreach ($pending as $job) {
             if ($job->isProcessing()) {
-                return true;
+                continue;
             }
 
             if (!$job->setProcessingFlag()) {
