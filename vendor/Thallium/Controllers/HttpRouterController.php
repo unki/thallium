@@ -307,6 +307,13 @@ class HttpRouterController extends DefaultController
 
         if (!is_null($filtered_get)) {
             foreach ($filtered_get as $key => $value) {
+                // while $filtered_get will contain also $key if that one was
+                // actually not present in $_GET, it will end up with an unset
+                // value. We can move on in that case.
+                if (!isset($value)) {
+                    continue;
+                }
+
                 if (is_array($value)) {
                     if (!array_walk($value, function (&$item_value) {
                         return htmlentities($item_value, ENT_QUOTES);
@@ -331,6 +338,13 @@ class HttpRouterController extends DefaultController
 
         if (!is_null($filtered_post)) {
             foreach ($filtered_post as $key => $value) {
+                // while $filtered_get will contain also $key if that one was
+                // actually not present in $_POST, it will end up with an unset
+                // value. We can move on in that case.
+                if (!isset($value)) {
+                    continue;
+                }
+
                 if (is_array($value)) {
                     if (!array_walk($value, function (&$item_value) {
                         return htmlentities($item_value, ENT_QUOTES);
