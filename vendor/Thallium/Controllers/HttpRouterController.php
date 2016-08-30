@@ -255,10 +255,16 @@ class HttpRouterController extends DefaultController
             if (!isset($part) || empty($part) || !is_string($part)) {
                 continue;
             }
+
             if (!static::isValidAction($part)) {
                 continue;
             }
-            $this->query->mode = $part;
+
+            if (!$this->setQueryMode($part)) {
+                static::raiseError(__CLASS__ .'::setQueryMode() returned false!');
+                return false;
+            }
+
             break;
         }
 
@@ -379,7 +385,7 @@ class HttpRouterController extends DefaultController
         // RPC
         //
         if (/* common RPC calls */
-            (isset($this->query->mode) && $this->query->mode == 'rpc.html') ||
+            ($this->hasQueryMode() && ($this->getQueryMode() === 'rpc.html')) ||
             /* object update RPC calls */
             (
                 $this->hasQueryMethod() && $this->getQueryMethod() === 'POST' &&
@@ -1061,6 +1067,60 @@ class HttpRouterController extends DefaultController
         }
 
         $this->query->action = $action;
+        return true;
+    }
+
+    /**
+     * returns true if the query mode that has been requested is known.
+     *
+     * @param none
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    public function hasQueryMode()
+    {
+        if (!isset($this->query->mode) ||
+            empty($this->query->mode) ||
+            !is_string($this->query->mode)
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * returns the query mode that has been requested.
+     *
+     * @param none
+     * @return string|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    public function getQueryMode()
+    {
+        if (!$this->hasQueryMode()) {
+            static::raiseError(__CLASS__ .'::hasQueryMode() returned false!');
+            return false;
+        }
+
+        return $this->query->mode;
+    }
+
+    /**
+     * records the query mode that has been requested.
+     *
+     * @param string $mode
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    protected function setQueryMode($mode)
+    {
+        if (!isset($mode) || empty($mode) || !is_string($mode)) {
+            static::raiseError(__METHOD__ .'(), $mode parameter is invalid!');
+            return false;
+        }
+
+        $this->query->mode = $mode;
         return true;
     }
 }
