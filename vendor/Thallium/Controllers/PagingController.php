@@ -807,7 +807,7 @@ class PagingController extends DefaultController
             return false;
         }
 
-        if ($limit !== $cur_limit) {
+        if ((int) $limit !== (int) $cur_limit) {
             return false;
         }
 
