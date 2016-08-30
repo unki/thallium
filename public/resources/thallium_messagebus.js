@@ -35,7 +35,7 @@ var ThalliumMessageBus = function (id) {
         this.notifySubscribers();
     }.bind(this));
 
-    $(window).unload(function () {
+    $(window).on('unload', function () {
         this.ajaxRequests.forEach(function (req) {
             if (typeof req.abort !== 'function') {
                 return true;
@@ -45,6 +45,7 @@ var ThalliumMessageBus = function (id) {
         });
         return true;
     }.bind(this));
+
     return true;
 };
 
