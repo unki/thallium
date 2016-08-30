@@ -553,16 +553,20 @@ class MainController extends DefaultController
             return false;
         }
 
-        if (!$this->isRegisteredModel(null, $model_name) &&
-            ($this->isRegisteredModel($model_name, null) &&
-            ($possible_name = $this->getModelByNick($model_name)) !== false)
-        ) {
-            static::raiseError(__METHOD__ .'(), no clue how to get the model!');
-            return false;
+        if ($this->isRegisteredModel($model_name, null)) {
+            if (($possible_name = $this->getModelByNick($model_name)) === false) {
+                static::raiseError(__CLASS__ .'::getModelByNick() returned false!');
+                return false;
+            }
         }
 
-        if (isset($possible_name)) {
+        if (isset($possible_name) && !empty($possible_name)) {
             $model_name = $possible_name;
+        }
+
+        if (empty($model_name)) {
+            static::raiseError(__METhOD__ .'(), no clue how to get the model!');
+            return false;
         }
 
         $model = sprintf('\\%s\\Models\\%s', $prefix, $model_name);
