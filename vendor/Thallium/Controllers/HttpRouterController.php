@@ -224,14 +224,25 @@ class HttpRouterController extends DefaultController
 
         // remove empty array elements
         $this->query_parts = array_filter($this->query_parts);
-        $last_element = count($this->query_parts)-1;
 
-        if ($last_element >= 0 && strpos($this->query_parts[$last_element], '?') !== false) {
-            if (($query_parts_params = explode('?', $this->query_parts[$last_element], 2)) === false) {
+        $last_element = array_slice($this->query_parts, -1, 1, true) ;
+
+        if (!isset($last_element) ||
+            empty($last_element) ||
+            !is_array($last_element)
+        ) {
+            static::raiseError(__METHOD__ .'(), array_slice() failed!', true);
+            return;
+        }
+
+        $last_element_key = key($last_element);
+
+        if ($last_element_key >= 0 && strpos($this->query_parts[$last_element_key], '?') !== false) {
+            if (($query_parts_params = explode('?', $this->query_parts[$last_element_key], 2)) === false) {
                 static::raiseError(__METHOD__ .'(), explode() returned false!', true);
                 return;
             }
-            $this->query_parts[$last_element] = $query_parts_params[0];
+            $this->query_parts[$last_element_key] = $query_parts_params[0];
             unset($query_parts_params[0]);
         }
 
@@ -369,13 +380,13 @@ class HttpRouterController extends DefaultController
             }
         }
 
-        for ($i = 1; $i < count($this->query_parts); $i++) {
+        foreach ($this->query_parts as $key => $value) {
             // if the query part is empty (may occur for URIs like 'xxx/?items-per-page=0', ignore.
-            if (is_string($this->query_parts[1]) && empty($this->query_parts[1])) {
+            if (is_string($value) && empty($value)) {
                 continue;
             }
 
-            if (!$this->addQueryParam($i, $this->query_parts[$i])) {
+            if (!$this->addQueryParam($key, $value)) {
                 static::raiseError(__CLASS__ .'::addQueryParam() returned false!', true);
                 return false;
             }
@@ -804,7 +815,11 @@ class HttpRouterController extends DefaultController
      */
     protected function addQueryParam($name, $value)
     {
-        if (!isset($name) || empty($name) || (!is_string($name) && !is_int($name))) {
+        if (!isset($name) ||
+            (is_string($name) && empty($name)) ||
+            (is_numeric($name) && (!is_int((int) $name)) || (int) $name < 0) ||
+            (!is_string($name) && !is_numeric($name))
+        ) {
             static::raiseError(__METHOD__ .'(), $name parameter is invalid!');
             return false;
         }
