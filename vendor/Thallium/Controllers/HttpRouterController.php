@@ -225,25 +225,27 @@ class HttpRouterController extends DefaultController
         // remove empty array elements
         $this->query_parts = array_filter($this->query_parts);
 
-        $last_element = array_slice($this->query_parts, -1, 1, true) ;
+        if (!empty($this->query_parts)) {
+            $last_element = array_slice($this->query_parts, -1, 1, true) ;
 
-        if (!isset($last_element) ||
-            empty($last_element) ||
-            !is_array($last_element)
-        ) {
-            static::raiseError(__METHOD__ .'(), array_slice() failed!', true);
-            return;
-        }
-
-        $last_element_key = key($last_element);
-
-        if ($last_element_key >= 0 && strpos($this->query_parts[$last_element_key], '?') !== false) {
-            if (($query_parts_params = explode('?', $this->query_parts[$last_element_key], 2)) === false) {
-                static::raiseError(__METHOD__ .'(), explode() returned false!', true);
+            if (!isset($last_element) ||
+                empty($last_element) ||
+                !is_array($last_element)
+            ) {
+                static::raiseError(__METHOD__ .'(), array_slice() failed!', true);
                 return;
             }
-            $this->query_parts[$last_element_key] = $query_parts_params[0];
-            unset($query_parts_params[0]);
+
+            $last_element_key = key($last_element);
+
+            if ($last_element_key >= 0 && strpos($this->query_parts[$last_element_key], '?') !== false) {
+                if (($query_parts_params = explode('?', $this->query_parts[$last_element_key], 2)) === false) {
+                    static::raiseError(__METHOD__ .'(), explode() returned false!', true);
+                    return;
+                }
+                $this->query_parts[$last_element_key] = $query_parts_params[0];
+                unset($query_parts_params[0]);
+            }
         }
 
         /* for requests to the root page (config item base_web_path), select MainView */
