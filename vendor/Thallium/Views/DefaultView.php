@@ -464,7 +464,7 @@ abstract class DefaultView
         if (!isset($id) ||
             empty($id) ||
             !is_numeric($id) ||
-            $thallium->isValidId($id)
+            !$thallium->isValidId($id)
         ) {
             static::raiseError(__METHOD__ .'(), $id parameter is invalid!');
             return false;
@@ -473,7 +473,7 @@ abstract class DefaultView
         if (!isset($guid) ||
             empty($guid) ||
             !is_string($guid) ||
-            $thallium->isValidGuidSyntax($guid)
+            !$thallium->isValidGuidSyntax($guid)
         ) {
             static::raiseError(__METHOD__ .'(), $guid parameter is invalid!');
             return false;
