@@ -68,6 +68,7 @@ class MainController extends DefaultController
         // we like errors!
         error_reporting(E_ALL);
 
+        /* @global Thallium\Controllers\MainController $thallium */
         $GLOBALS['thallium'] =& $this;
 
         if (!$this->setExceptionHandler()) {
@@ -698,6 +699,7 @@ class MainController extends DefaultController
             return false;
         }
 
+        /* @global Thallium\Controllers\* $$global_name */
         $GLOBALS[$global_name] =& $$global_name;
         return true;
     }
