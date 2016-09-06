@@ -259,7 +259,18 @@ function rpc_object_update(element, successMethod, customData)
     });
 
     if (typeof customData !== 'undefined') {
-        data.customData = customData;
+        if (typeof customData !== 'object') {
+            throw new Error('customData is of an unsupported type!');
+            return false;
+        }
+
+        for (var key in customData) {
+            if (typeof data[key] !== 'undefined') {
+                throw new Error('customData tries to override existing data properties!');
+                return false;
+            }
+            data[key] = customData[key]
+        }
     }
 
     $.ajax({
