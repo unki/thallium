@@ -18,10 +18,15 @@
  */
 
 /**
- * This file is the starting point for application.
- * It registers the autoloader and initializes the
- * applications MainController - which then takes
- * over control.
+ * This file is the starting point for an application.
+ *
+ * It registers the autoloader and initializes the applications MainController -
+ * which then takes over control.
+ *
+ * Usually this script is kicked by public/index.php. index.php is the only
+ * script that needs to be accessible via the web server. Everything else that
+ * belongs to Thallium, or any application that is based on it, should be out
+ * of the document root and not accessible via the web server.
  *
  * @license AGPL3
  * @copyright 2015-2016 Andreas Unterkircher <unki@netshadow.net>
@@ -36,14 +41,6 @@ require_once 'vendor/autoload.php';
 spl_autoload_register("autoload");
 
 $mode = null;
-
-if (isset($_SERVER) &&
-    isset($_SERVER['argv']) &&
-    isset($_SERVER['argv'][1]) &&
-    $_SERVER['argv'][1] == 'incoming'
-) {
-    $mode = 'queue_only';
-}
 
 try {
     $thallium = new \Thallium\Controllers\MainController($mode);
