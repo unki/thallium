@@ -27,6 +27,7 @@ namespace Thallium\Views;
  *
  * @package Thallium\Views\DefaultView
  * @subpackage Views
+ * @abstract
  * @license AGPL3
  * @copyright 2015-2016 Andreas Unterkircher <unki@netshadow.net>
  * @author Andreas Unterkircher <unki@netshadow.net>
