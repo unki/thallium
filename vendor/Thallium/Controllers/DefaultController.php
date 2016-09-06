@@ -27,6 +27,7 @@ namespace Thallium\Controllers;
  *
  * @package Thallium\Controllers\DefaultController
  * @subpackage Controllers
+ * @abstract
  * @license AGPL3
  * @copyright 2015-2016 Andreas Unterkircher <unki@netshadow.net>
  * @author Andreas Unterkircher <unki@netshadow.net>
