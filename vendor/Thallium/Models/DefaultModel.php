@@ -29,6 +29,7 @@ use \PDO;
  *
  * @package Thallium\Models\DefaultModel
  * @subpackage Models
+ * @abstract
  * @license AGPL3
  * @copyright 2015-2016 Andreas Unterkircher <unki@netshadow.net>
  * @author Andreas Unterkircher <unki@netshadow.net>
