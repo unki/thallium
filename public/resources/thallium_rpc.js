@@ -155,12 +155,17 @@ function rpc_object_delete(elements, successMethod)
 
         store.removeSubStore(substore.getUUID());
 
-        if (typeof successMethod !== 'undefined') {
-            return successMethod();
+        if (typeof successMethod === 'undefined') {
+            location.reload();
+            return true;
         }
 
-        location.reload();
-        return true;
+        if (typeof successMethod !== 'function') {
+            throw new Error('successMethod is not a function!');
+            return false;
+        }
+
+        return successMethod();
 
     }.bind(this), substore);
 
@@ -282,6 +287,10 @@ function rpc_object_update(element, successMethod, customData)
                 return;
             }
             if (typeof successMethod === 'undefined') {
+                return;
+            }
+            if (typeof successMethod !== 'function') {
+                throw new Error('successMethod is not a function!');
                 return;
             }
             successMethod(element, data);
