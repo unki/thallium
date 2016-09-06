@@ -2202,6 +2202,7 @@ abstract class DefaultModel
      * @param none
      * @return int|bool
      * @throws \Thallium\Controllers\ExceptionController
+     * @deprecated
      * @todo remove after 31.12.2016
      */
     final public function getId()
@@ -2942,6 +2943,7 @@ abstract class DefaultModel
      * @param string $field
      * @return string
      * @throws \Thallium\Controllers\ExceptionController
+     * @deprecated
      * @todo remove after 31.12.2016
      */
     final public static function isHavingItems()
