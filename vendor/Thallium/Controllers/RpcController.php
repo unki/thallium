@@ -461,6 +461,11 @@ class RpcController extends DefaultController
             return false;
         }
 
+        if (($guid = $router->getQueryParam('guid')) === false) {
+            static::raiseError(get_class($router) .'::getQueryParam() returned false!');
+            return false;
+        }
+
         if (($value = $router->getQueryParam('value')) === false) {
             static::raiseError(get_class($router) .'::getQueryParam() returned false!');
             return false;
@@ -471,10 +476,11 @@ class RpcController extends DefaultController
             return false;
         }
 
-        if (empty($id) || (!is_numeric($id) && !is_string($id)) ||
-            empty($key) || !is_string($key) ||
-            empty($value) || !is_string($value) ||
-            empty($model) || !is_string($model)
+        if (!isset($id) || empty($id) || (!is_numeric($id) && !is_string($id)) ||
+            !isset($guid) || empty($guid) || ($guid !== 'new' && !$thallium->isValidGuidSyntax($guid)) ||
+            !isset($key) || empty($key) || !is_string($key) ||
+            !isset($value) || empty($value) || !is_string($value) ||
+            !isset($model) || empty($model) || !is_string($model)
         ) {
             static::raiseError(__METHOD__ .'(), request contains invalid parameters!');
             return false;
@@ -501,12 +507,16 @@ class RpcController extends DefaultController
             $id = null;
         }
 
+        if ($guid === 'new') {
+            $guid = null;
+        }
+
         if (($model_name = $thallium->getModelByNick($model)) === false) {
             static::raiseError(get_class($thallium) .'::getModelNameByNick() returned false!');
             return false;
         }
 
-        if (($obj = $thallium->loadModel($model_name, $id)) === false) {
+        if (($obj = $thallium->loadModel($model_name, $id, $guid)) === false) {
             static::raiseError(get_class($thallium) .'::loadModel() returned false!');
             return false;
         }
