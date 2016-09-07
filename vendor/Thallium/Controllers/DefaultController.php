@@ -155,8 +155,7 @@ abstract class DefaultController
 
         if (isset($catched_exception) &&
             !is_null($catched_exception) &&
-            !is_object($catched_exception) &&
-            !is_a($catched_exception, '\Exception')
+            !is_object($catched_exception)
         ) {
             $catched_exception = null;
         }
@@ -170,10 +169,14 @@ abstract class DefaultController
 
         try {
             throw new ExceptionController($text, $catched_exception);
-        } catch (\Exception $e) {
-            do {
-                print $e;
-            } while ($e = $e->getPrevious());
+        } catch (\Thallium\Controllers\ExceptionController $e) {
+            // if Previous exceptions have been captured, first display that ones.
+            $prev = $e;
+            while ($prev = $prev->getPrevious()) {
+                print $prev;
+            }
+            // now finally print the actually captured exception.
+            print $e;
         }
 
         if ($stop_execution === true) {
