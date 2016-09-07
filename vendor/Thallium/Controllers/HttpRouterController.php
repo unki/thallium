@@ -399,11 +399,23 @@ class HttpRouterController extends DefaultController
         }
 
         foreach ($query_parts_params as $param) {
-            if (!$this->addQueryParam($i, $param)) {
-                static::raiseError(__CLASS__ .'::addQueryParam() returned false!', true);
-                return false;
+            if (!isset($param) || empty($param) || !is_string($param)) {
+                continue;
             }
-            $i++;
+
+            if (strpos($param, '=') === false) {
+                continue;
+            }
+
+            if ((list($key, $value) = explode('=', $param)) === false) {
+                static::raiseError(__METHOD__ .'(), explode() returned false!', true);
+                return;
+            }
+
+            if (!$this->addQueryParam($key, $value)) {
+                static::raiseError(__CLASS__ .'::addQueryParam() returned false!', true);
+                return;
+            }
         }
 
         return;
