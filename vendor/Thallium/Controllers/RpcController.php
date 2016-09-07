@@ -516,8 +516,46 @@ class RpcController extends DefaultController
             return false;
         }
 
-        if (($obj = $thallium->loadModel($model_name, $id, $guid)) === false) {
-            static::raiseError(get_class($thallium) .'::loadModel() returned false!');
+        if (is_null($id) && is_null($guid)) {
+            if (($full_name = $thallium->getFullModelName($model_name)) === false) {
+                static::raiseError(get_class($thallium) .'::getFullModelName() returned false!');
+                return false;
+            }
+
+            try {
+                $obj = new $full_name;
+            } catch (\Exception $e) {
+                static::raiseError(
+                    sprintf('%s(), failed to instance %s!', __METHOD__, $model_name),
+                    false,
+                    $e
+                );
+                return false;
+            }
+        } elseif (!is_null($id) && !is_null($guid)) {
+            if (($obj = $thallium->loadModel($model_name, $id, $guid)) === false) {
+                static::raiseError(get_class($thallium) .'::loadModel() returned false!');
+                return false;
+            }
+        }
+
+        if (!isset($obj) || empty($obj)) {
+            static::raiseError(__METHOD__ .'(), no valid model loaded!');
+            return false;
+        }
+
+        if (!$obj->hasModelFields()) {
+            static::raiseError(get_class($obj) .'::hasModelFields() returned false!');
+            return false;
+        }
+
+        if (($field_name = $obj->getFieldNameFromColumn($key)) === false) {
+            static::raiseError(get_class($obj) .'::getFieldNameFromColumn() returned false!');
+            return false;
+        }
+            
+        if (!$obj->hasField($field_name)) {
+            static::raiseError(get_class($obj) .'::hasField() returned false!');
             return false;
         }
 
@@ -531,8 +569,7 @@ class RpcController extends DefaultController
             static::raiseError(__METHOD__ ."(), model {$model} denys RPC updates to field {$key}!");
             return false;
         }
-
-        // sanitize input value
+// sanitize input value
         $value = htmlentities($value, ENT_QUOTES);
         $obj->$key = stripslashes($value);
 
