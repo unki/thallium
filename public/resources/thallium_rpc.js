@@ -179,7 +179,7 @@ function rpc_object_delete(elements, successMethod)
 
 function rpc_object_update(element, successMethod, customData)
 {
-    var target, input, action, model, key, id, value, url, data;
+    var target, input, action, model, key, id, guid, value, url, data;
 
     if (!(element instanceof jQuery) ) {
         throw new Error("element is not a jQuery object!");
@@ -193,9 +193,16 @@ function rpc_object_update(element, successMethod, customData)
         return false;
     }
 
-    if (!(input = element.find('input[name="'+target+'"], textarea[name="'+target+'"]'))) {
-        throw new Error("Failed to get input element!");
-        return false;
+    if (!target.match(/^#/)) {
+        if (!(input = element.find('input[name="'+target+'"], textarea[name="'+target+'"]'))) {
+            throw new Error("Failed to get input element!");
+            return false;
+        }
+    } else {
+        if (!(input = $(target)) === undefined) {
+            throw new Error("Failed to get target element!");
+            return false;
+        }
     }
 
     if (!(action = input.attr('data-action'))) {
@@ -218,6 +225,11 @@ function rpc_object_update(element, successMethod, customData)
         return false;
     }
 
+    if (!(guid = input.attr('data-guid'))) {
+        throw new Error("Unable to locate 'data-guid' attribute!");
+        return false;
+    }
+
     if (input.attr('type') === 'checkbox') {
         if (input.prop('checked')) {
             if ((value = input.attr('data-checked')) === undefined) {
@@ -229,7 +241,12 @@ function rpc_object_update(element, successMethod, customData)
             }
         }
     } else {
-        if (typeof (value = input.val()) === 'undefined') {
+        if (input.val()) {
+            value = input.val();
+        } else if (input.attr('data-value')) {
+            value = input.attr('data-value');
+        } else {
+            throw new Error('Failed to read value from element!');
             return false;
         }
     }
@@ -238,6 +255,7 @@ function rpc_object_update(element, successMethod, customData)
     model = safe_string(model);
     key = safe_string(key);
     id = safe_string(id);
+    guid = safe_string(guid);
     value = safe_string(value);
 
     if (typeof window.location.pathname !== 'undefined' &&
@@ -254,6 +272,7 @@ function rpc_object_update(element, successMethod, customData)
         action : action,
         model  : model,
         id     : id,
+        guid   : guid,
         key    : key,
         value  : value
     });
