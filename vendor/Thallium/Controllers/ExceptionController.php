@@ -59,11 +59,11 @@ class ExceptionController extends \Exception
         $text = "";
 
         $text.= sprintf(
-            '<br /><br />%s<br /><br />\n',
+            "<br /><br />%s<br /><br />\n",
             str_replace("\n", "<br />\n", $this->getMessage())
         );
         $text.= sprintf(
-            'Backtrace:<br />\n%s',
+            "Backtrace:<br />\n%s",
             str_replace("\n", "<br />\n", parent::getTraceAsString())
         );
 
