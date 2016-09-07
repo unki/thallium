@@ -4311,6 +4311,12 @@ abstract class DefaultModel
                 return false;
             }
 
+            if (!$model_name::exists(array(
+                $field => $idx,
+            ))) {
+                return true;
+            }
+
             try {
                 $model = new $model_name(array(
                     $field => $idx,
