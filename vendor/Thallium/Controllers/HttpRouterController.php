@@ -721,7 +721,7 @@ class HttpRouterController extends DefaultController
             return false;
         }
 
-        if (!$thallium->isValidModel(null, $update_object)) {
+        if (!$thallium->isValidModel($update_object)) {
             return false;
         }
 
