@@ -230,10 +230,10 @@ function delete_object(element)
     var text = element.attr("data-modal-text");
 
     if (typeof text === 'undefined' || text === "") {
-        if (id instanceof String && !id.match(/-all$/)) {
-            text = "Do you really want to delete this item?";
-        } else {
+        if (id instanceof String && id.match(/-all$/)) {
             text = "Do you really want to delete all items?";
+        } else {
+            text = "Do you really want to delete this item?";
         }
     }
 
