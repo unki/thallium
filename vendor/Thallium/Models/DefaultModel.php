@@ -63,6 +63,12 @@ abstract class DefaultModel
     /** @var string $model_friendly_name */
     protected static $model_friendly_name;
 
+    /** @var bool $model_is_searchable */
+    protected static $model_is_searchable = false;
+
+    /** @var array $model_searchable_fields */
+    protected static $model_searchable_fields = array();
+
     /** @var array $model_load_by */
     protected $model_load_by = array();
 
@@ -4775,6 +4781,62 @@ abstract class DefaultModel
         }
 
         return true;
+    }
+
+    /**
+     * returns true if a model has been marked as searchable.
+     *
+     * @param none
+     * @return bool
+     * @throws none
+     */
+    public static function isSearchable()
+    {
+        if (!isset(static::$model_is_searchable) ||
+            !is_bool(static::$model_is_searchable)
+        ) {
+            static::raiseError(__METHOD__ .'(), $model_is_searchable is not correctly declared!', true);
+            return;
+        }
+
+        return static::$model_is_searchable;
+    }
+
+    /**
+     * returns true if there are files declared that can be used
+     * for searching.
+     *
+     * @param none
+     * @return array|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    public static function hasSearchableFields()
+    {
+        if (!isset(static::$model_searchable_fields) ||
+            empty(static::$model_searchable_fields) ||
+            !is_array(static::$model_searchable_fields)
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * returns an array of fields that this model can search through
+     *
+     * @param none
+     * @return array|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    public static function getSearchableFields()
+    {
+        if (!static::hasSearchableFields()) {
+            static::raiseError(__METHOD__ .'(), $model_searchable_fields is not correctly declared!');
+            return false;
+        }
+
+        return static::$model_searchable_fields;
     }
 }
 
