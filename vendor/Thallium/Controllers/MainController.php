@@ -946,6 +946,25 @@ class MainController extends DefaultController
     }
 
     /**
+     * method returns true if there are registered models.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    final public function hasRegisteredModels()
+    {
+        if (!isset($this->registeredModels) ||
+            empty($this->registeredModels) ||
+            !is_array($this->registeredModels)
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * method returns a list of all registered models.
      *
      * @param none
@@ -954,11 +973,8 @@ class MainController extends DefaultController
      */
     final public function getRegisteredModels()
     {
-        if (!isset($this->registeredModels) ||
-            empty($this->registeredModels) ||
-            !is_array($this->registeredModels)
-        ) {
-            static::raiseError(__METHOD__ .'(), registeredModels property is invalid!');
+        if (!$this->hasRegisteredModels()) {
+            static::raiseError(__CLASS__ .'::hasRegisteredModels() returned false!');
             return false;
         }
 
