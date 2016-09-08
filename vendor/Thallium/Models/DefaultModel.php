@@ -339,7 +339,7 @@ abstract class DefaultModel
                 }
 
                 if (!in_array(strtoupper($mode), array('ASC', 'DESC'))) {
-                    static::raiseError(__METHOD__ .'(), \$order is invalid!');
+                    static::raiseError(__METHOD__ .'(), $order is invalid!');
                     return false;
                 }
             }
@@ -459,7 +459,7 @@ abstract class DefaultModel
 
         if (method_exists($this, 'preLoad') && is_callable(array($this, 'preLoad'))) {
             if (!$this->preLoad()) {
-                static::raiseError(get_called_class() ."::preLoad() method returned false!");
+                static::raiseError(get_called_class() .'::preLoad() method returned false!');
                 return false;
             }
         }
@@ -542,7 +542,7 @@ abstract class DefaultModel
             !is_object($sth) ||
             !is_a($sth, 'PDOStatement')
         ) {
-            static::raiseError(get_class($db) ."::prepare() returned invalid data!");
+            static::raiseError(get_class($db) .'::prepare() returned invalid data!');
             return false;
         }
 
@@ -560,7 +560,7 @@ abstract class DefaultModel
 
         if (!$db->execute($sth, $bind_params)) {
             $db->freeStatement($sth);
-            static::raiseError(__METHOD__ ."(), unable to execute query!");
+            static::raiseError(__METHOD__ .'(), unable to execute query!');
             return false;
         }
 
@@ -697,6 +697,132 @@ abstract class DefaultModel
 
         return true;
 
+    }
+
+    /**
+     * loads data from database into a model
+     *
+     * @param string $extend_query_where
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    public static function find($query, $fields)
+    {
+        global $thallium, $db;
+
+        if (!static::isSearchable()) {
+            static::raiseError(__CLASS__ .'::isSearchable() returned false!');
+            return false;
+        }
+
+        if (!isset($query) ||
+            empty($query) ||
+            !is_array($query) ||
+            !array_key_exists('data', $query) ||
+            !isset($query['data']) ||
+            empty($query['data']) ||
+            !is_string($query['data']) ||
+            !array_key_exists('type', $query) ||
+            !isset($query['type']) ||
+            empty($query['type']) ||
+            !is_string($query['type'])
+        ) {
+            static::raiseError(__METHOD__ .'(), $query parameter is invalid!');
+            return false;
+        }
+
+        if (!isset($fields) ||
+            empty($fields) ||
+            !is_array($fields)
+        ) {
+            static::raiseError(__METHOD__ .'(), $fields parameter is invalid!');
+            return false;
+        }
+
+        $sql_query_columns = array();
+        $sql_query_data = array();
+
+        foreach ($fields as $field) {
+            if (($column = static::column($field)) === false) {
+                static::raiseError(__CLASS__ .'::column() returned false!');
+                return false;
+            }
+
+            if ($field == 'time') {
+                $sql_query_columns[] = sprintf("UNIX_TIMESTAMP(%s) as %s", $column, $column);
+                continue;
+            }
+
+            $sql_query_columns[$field] = $column;
+            $sql_query_data[$column] = $query['data'];
+        }
+
+        $bind_params = array();
+
+        if (($sql = $db->buildQuery(
+            "SELECT",
+            static::getTableName(),
+            $sql_query_columns,
+            $sql_query_data,
+            $bind_params,
+            null,
+            false,
+            true
+        )) === false) {
+            static::raiseError(get_class($db) .'::buildQuery() returned false!');
+            return false;
+        }
+
+        try {
+            $sth = $db->prepare($sql);
+        } catch (\PDOException $e) {
+            static::raiseError(get_class($db) .'::prepare() failed!', false, $e);
+            return false;
+        } catch (\Exception $e) {
+            static::raiseError(get_class($db) .'::prepare() failed!', false, $e);
+            return false;
+        }
+
+        if (!isset($sth) ||
+            empty($sth) ||
+            !is_object($sth) ||
+            !is_a($sth, 'PDOStatement')
+        ) {
+            static::raiseError(get_class($db) ."::prepare() returned invalid data!");
+            return false;
+        }
+
+        foreach ($bind_params as $key => $value) {
+            try {
+                $sth->bindParam($key, $value);
+            } catch (\PDOException $e) {
+                static::raiseError(get_class($sth) .'::bindParam() failed!', false, $e);
+                return false;
+            } catch (\Exception $e) {
+                static::raiseError(get_class($sth) .'::bindParam() failed!', false, $e);
+                return false;
+            }
+        }
+
+        if (!$db->execute($sth, $bind_params)) {
+            $db->freeStatement($sth);
+            static::raiseError(__METHOD__ ."(), unable to execute query!");
+            return false;
+        }
+
+        $num_rows = $sth->rowCount();
+
+        if ($num_rows < 1) {
+            $db->freeStatement($sth);
+            return array();
+        }
+
+        if (($result = $sth->fetchAll(\PDO::FETCH_ASSOC)) === false) {
+            static::raiseError(get_class($sth) .'::fetchAll() returned false!');
+            return false;
+        }
+
+        return $result;
     }
 
     /**
