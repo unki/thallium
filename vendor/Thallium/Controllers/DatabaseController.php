@@ -1020,6 +1020,7 @@ class DatabaseController extends DefaultController
      * @param array $query_data
      * @param array $bind_params
      * @param string $extend_where_query
+     * @param bool $conjunction if set to true AND is used, otherwise OR
      * @return string|bool
      * @throws \Thallium\Controllers\ExceptionController if an error occurs.
      */
@@ -1029,7 +1030,8 @@ class DatabaseController extends DefaultController
         $query_columns = "*",
         $query_data = array(),
         &$bind_params = array(),
-        $extend_where_query = null
+        $extend_where_query = null,
+        $conjunction = true
     ) {
         if (!isset($type) || empty($type) || !is_string($type)) {
             static::raiseError(__METHOD__ .'(), $type parameter is invalid!');
@@ -1061,6 +1063,11 @@ class DatabaseController extends DefaultController
             !is_string($extend_where_query)
         ) {
             static::raiseError(__METHOD__ .'(), $extend_where_query is invalid!');
+            return false;
+        }
+
+        if (!isset($conjunction) || !is_bool($conjunction)) {
+            static::raiseError(__METHOD__ .'(), $conjunction is invalid!');
             return false;
         }
 
@@ -1122,7 +1129,14 @@ class DatabaseController extends DefaultController
             $wheres[] = sprintf("%s LIKE :%s", $key, $value_key);
             $bind_params[$value_key] = $value;
         }
-        if (($query_wheres_str = implode(' AND ', $wheres)) === false) {
+
+        $imploder = ' AND ';
+
+        if ($conjunction === false) {
+            $imploder = ' OR ';
+        }
+
+        if (($query_wheres_str = implode($imploder, $wheres)) === false) {
             static::raiseError(__METHOD__ .'(), implode() returned false!');
             return false;
         }
