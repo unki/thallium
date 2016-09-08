@@ -1021,6 +1021,7 @@ class DatabaseController extends DefaultController
      * @param array $bind_params
      * @param string $extend_where_query
      * @param bool $conjunction if set to true AND is used, otherwise OR
+     * @param bool $fuzzy if set to true wildcard search is performed
      * @return string|bool
      * @throws \Thallium\Controllers\ExceptionController if an error occurs.
      */
@@ -1031,7 +1032,8 @@ class DatabaseController extends DefaultController
         $query_data = array(),
         &$bind_params = array(),
         $extend_where_query = null,
-        $conjunction = true
+        $conjunction = true,
+        $fuzzy = false
     ) {
         if (!isset($type) || empty($type) || !is_string($type)) {
             static::raiseError(__METHOD__ .'(), $type parameter is invalid!');
@@ -1068,6 +1070,11 @@ class DatabaseController extends DefaultController
 
         if (!isset($conjunction) || !is_bool($conjunction)) {
             static::raiseError(__METHOD__ .'(), $conjunction is invalid!');
+            return false;
+        }
+
+        if (!isset($fuzzy) || !is_bool($fuzzy)) {
+            static::raiseError(__METHOD__ .'(), $fuzzy is invalid!');
             return false;
         }
 
@@ -1127,6 +1134,12 @@ class DatabaseController extends DefaultController
         foreach ($query_data as $key => $value) {
             $value_key = sprintf("v_%s", $key);
             $wheres[] = sprintf("%s LIKE :%s", $key, $value_key);
+
+            if ($fuzzy === true) {
+                $bind_params[$value_key] = sprintf('%%%s%%', $value);
+                continue;
+            }
+
             $bind_params[$value_key] = $value;
         }
 
