@@ -113,6 +113,9 @@ class HttpRouterController extends DefaultController
         'direction' => array(
             'filter' => FILTER_SANITIZE_STRING,
         ),
+        'search' => array(
+            'filter' => FILTER_SANITIZE_STRING,
+        ),
     );
 
     protected static $allowed_server_parameters = array(
