@@ -152,7 +152,7 @@ class HttpRouterController extends DefaultController
          */
         if ($thallium->inTestMode()) {
             $filtered_server['REQUEST_URI'] = sprintf(
-                '/thallium/documents/show-%d-%s?testparam=foobar',
+                '/thallium/documents/show/test-%d-%s?testparam=foobar',
                 1,
                 '0123456789012345678901234567890123456789012345678901234567890123'
             );
