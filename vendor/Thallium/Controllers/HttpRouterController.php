@@ -428,7 +428,7 @@ class HttpRouterController extends DefaultController
      * select() method controlls how to react on a HTTP request
      *
      * @param none
-     * @return \stdClass|bool
+     * @return bool
      * @throws \Thallium\Controllers\ExceptionController if an error occurs.
      */
     public function select()
@@ -488,7 +488,7 @@ class HttpRouterController extends DefaultController
             return false;
         }
 
-        return $this->query;
+        return true;
     }
 
     /**
