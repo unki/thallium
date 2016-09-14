@@ -644,15 +644,25 @@ class HttpRouterController extends DefaultController
 
         $matches = array();
 
-        if (!preg_match("/^([0-9]+)\-([a-z0-9]+)$/", $param, $matches)) {
+        if (!preg_match('/^([0-9]+)\-([a-z0-9]+)$/', $param, $matches) &&
+            !preg_match('/^([a-zA-Z0-9_]+)_([0-9]+)_([a-z0-9]+)$/', $param, $matches)
+        ) {
             return array(
                 'id' => null,
                 'guid' => null
             );
         }
 
-        $id = $matches[1];
-        $guid = $matches[2];
+        if (count($matches) === 3) {
+            $id_pos = 1;
+            $guid_pos = 2;
+        } elseif (count($matches) === 4) {
+            $id_pos = 2;
+            $guid_pos = 3;
+        }
+
+        $id = $matches[$id_pos];
+        $guid = $matches[$guid_pos];
 
         return array(
             'id' => $id,
