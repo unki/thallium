@@ -118,7 +118,11 @@ abstract class DefaultModel
      */
     public function __construct($load_by = array(), $sort_order = array())
     {
-        if (!isset($load_by) || (!is_array($load_by) && !is_null($load_by))) {
+        if (!isset($load_by) || (
+            !is_array($load_by) &&
+            !is_null($load_by) &&
+            !is_bool($load_by) && $load_by !== false)
+        ) {
             static::raiseError(__METHOD__ .'(), $load_by parameter is invalid!', true);
             return;
         }
@@ -148,6 +152,10 @@ abstract class DefaultModel
                 static::raiseError(__CLASS__ .'::initFields() returned false!', true);
                 return;
             }
+            return;
+        }
+
+        if ($load_by === false) {
             return;
         }
 
@@ -285,7 +293,11 @@ abstract class DefaultModel
             }
         }
 
-        if (!isset($this->model_load_by) || !is_array($this->model_load_by)) {
+        if (!isset($this->model_load_by) || (
+            !is_array($this->model_load_by) &&
+            !is_bool($this->model_load_by) &&
+            !is_null($this->model_load_by)
+        )) {
             static::raiseError(__METHOD__ .'(), missing property "model_load_by"');
             return false;
         }
@@ -822,7 +834,84 @@ abstract class DefaultModel
             return false;
         }
 
-        return $result;
+        if ($load === false) {
+            return $results;
+        }
+
+        $items_model = get_called_class();
+
+        try {
+            $items = new $items_model(false);
+        } catch (\Exception $e) {
+            static::raiseError(
+                sprintf('%s(), failed to load %s!', __METHOD__, $items_model),
+                false,
+                $e
+            );
+            return false;
+        }
+
+        if (($child_models = static::getModelItemsModel()) === false) {
+            static::raiseError(__CLASS__ .'::getModelItemsModel() returned false!');
+            return false;
+        }
+
+        $idx_field = static::column(FIELD_IDX);
+        $guid_field = static::column(FIELD_GUID);
+
+        foreach ($results as $result) {
+            if (!array_key_exists($idx_field, $result) ||
+                !array_key_exists($guid_field, $result)
+            ) {
+                static::raiseError(__METHOD__ .'(), incomplete result found!');
+                return false;
+            }
+
+            if (!$items->addItem(array(
+                FIELD_IDX => $result[$idx_field],
+                FIELD_GUID => $result[$guid_field],
+                FIELD_MODEL => $child_models,
+            ))) {
+                static::raiseError(get_class($items) .'::addItem() returned false!');
+                return false;
+            }
+        }
+
+        return $items;
+
+        $items_ary = array();
+
+        foreach ($results as $result) {
+            if (!array_key_exists(static::column(FIELD_IDX), $result) ||
+                !array_key_exists(static::column(FIELD_GUID), $result)
+            ) {
+                static::raiseError(__METHOD__ .'(), incomplete result found!');
+                return false;
+            }
+
+            $idx_field = static::column(FIELD_IDX);
+            $items_ary[] = $result[$idx_field];
+        }
+
+        $items_model = get_called_class();
+
+        try {
+            $items = new $items_model;
+        } catch (\Exception $e) {
+            static::raiseError(
+                sprintf('%s(), failed to load %s!', __METHOD__, $items_model),
+                false,
+                $e
+            );
+            return false;
+        }
+
+        if (!$items->bulkLoad($items_ary)) {
+            static::raiseError(get_class($items) .'::bulkLoad() returned false!');
+            return false;
+        }
+
+        return $items;
     }
 
     /**
