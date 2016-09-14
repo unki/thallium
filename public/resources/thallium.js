@@ -35,9 +35,8 @@ $(document).ready(function () {
         return false;
     }
 
-    $('form.ui.form.add').on('submit', rpc_object_update(
-        $(this),
-        function (element, data) {
+    $('form.ui.form.add').on('submit', function () {
+        return rpc_object_update($(this), function (element, data) {
             if (data !== 'ok') {
                 return true;
             }
@@ -48,8 +47,8 @@ $(document).ready(function () {
             }
             savebutton.transition('tada').removeClass('red shape');
             return true;
-        }
-    ));
+        });
+    });
 
     $('.inline.editable.edit.link').click(function () {
         var inlineobj = new ThalliumInlineEditable($(this));
@@ -63,7 +62,9 @@ $(document).ready(function () {
         return true;
     });
 
-    $('a.delete.item').click(delete_object($(this)));
+    $('a.delete.item').click(function () {
+        delete_object($(this))
+    });
 });
 
 function show_modal(type, settings, id, do_function, modalclass)
