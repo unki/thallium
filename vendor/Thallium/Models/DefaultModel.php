@@ -3298,7 +3298,7 @@ abstract class DefaultModel
                 static::raiseError(get_class($item) .'::getIdx() returned false!');
                 return false;
             }
-            if (($model = $item->getModelName()) === false) {
+            if (($model = $item::getModelName()) === false) {
                 static::raiseError(get_class($item) .'::getModelName() returned false!');
                 return false;
             }
