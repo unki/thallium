@@ -23,14 +23,19 @@ class SearchController extends DefaultController
 {
     protected $result = array();
 
-    public function search($objectofdesire)
+    public function search($objectofdesire, $load = false)
     {
+        if (!isset($load) || !is_bool($load)) {
+            static::raiseError(__METHOD__ .'(), $load parameter is invalid!');
+            return false;
+        }
+
         if (!$this->validateInput($objectofdesire)) {
             static::raiseError(__CLASS__ .'::validateInput() returned false!');
             return false;
         }
 
-        if (!$this->query($objectofdesire)) {
+        if (!$this->query($objectofdesire, $load)) {
             static::raiseError(__CLASS__ .'::query() returned false!');
             return false;
         }
@@ -47,8 +52,18 @@ class SearchController extends DefaultController
         return true;
     }
 
-    protected function query($query)
+    protected function query($query, $load = false)
     {
+        if (!isset($query) || empty($query) || !is_string($query)) {
+            static::raiseError(__METHOD__ .'(), $query parameter is invalid!');
+            return false;
+        }
+
+        if (!isset($load) || !is_bool($load)) {
+            static::raiseError(__METHOD__ .'(), $load parameter is invalid!');
+            return false;
+        }
+
         $query_ary = array(
             'data' => $query,
             'type' => 'string'
@@ -66,7 +81,7 @@ class SearchController extends DefaultController
             $query_ary['data'] = $matches[2];
         }
 
-        if (!$this->queryModels($query_ary)) {
+        if (!$this->queryModels($query_ary, $load)) {
             static::raiseError(__CLASS__ .'::queryModels() returned false!');
             return false;
         }
@@ -74,9 +89,19 @@ class SearchController extends DefaultController
         return true;
     }
 
-    protected function queryModels($query)
+    protected function queryModels($query, $load = false)
     {
         global $thallium;
+
+        if (!isset($query) || empty($query) || !is_array($query)) {
+            static::raiseError(__METHOD__ .'(), $query parameter is invalid!');
+            return false;
+        }
+
+        if (!isset($load) || !is_bool($load)) {
+            static::raiseError(__METHOD__ .'(), $load parameter is invalid!');
+            return false;
+        }
 
         if (!$this->isValidSearchQuery($query)) {
             static::raiseError(__CLASS__ .'::isValidSearchQuery() returned false!');
@@ -133,12 +158,16 @@ class SearchController extends DefaultController
         $results = array();
 
         foreach ($selected_fields as $model => $fields) {
-            if (($result = $model::find($query, $fields)) === false) {
+            if (($result = $model::find($query, $fields, $load)) === false) {
                 static::raiseError(sprintf(
                     '%s::find() returned false!',
                     $model
                 ));
                 return false;
+            }
+
+            if (empty($result)) {
+                continue;
             }
 
             $results[$model] = $result;
