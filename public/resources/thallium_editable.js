@@ -19,7 +19,15 @@
 
 var ThalliumInlineEditable = function (id) {
 
+    if (typeof id === 'undefined') {
+        throw new Error('id parameter not defined!');
+        return false;
+    }
+
     this.element = id;
+
+    // flag to indicate that we have been initialized
+    this._initialized = true;
 
     //
     // flag to indicate if that was modified
@@ -44,18 +52,18 @@ var ThalliumInlineEditable = function (id) {
     this._contentBefore = false;
     this._contentEdit = false;
 
-    if (!(id instanceof jQuery)) {
-        throw new Error("id is not a jQuery object!");
+    if ((id instanceof jQuery) === false) {
+        throw new Error('id is not a jQuery object!');
         return false;
     }
 
     if (!this.validate()) {
-        throw new Error("validate() returned false!");
+        throw new Error('validate() returned false!');
         return false;
     }
 
     if (!this.prepare()) {
-        throw new Error("prepare() returned false!");
+        throw new Error('prepare() returned false!');
         return false;
     }
 
@@ -66,43 +74,42 @@ ThalliumInlineEditable.prototype.validate = function () {
 
     var ref = this.element.attr('data-inline-name');
 
-    if (typeof ref === 'undefined' || ref == '') {
+    if (typeof ref === 'undefined' || ref === '') {
         throw new Error('no attribute "data-inline-name" found!');
         return false;
     }
 
     if (!this.setDomReference(ref)) {
-        throw new Error("setDomReference returned false!");
+        throw new Error('setDomReference returned false!');
         return false;
     }
 
     return true;
-
-    var type = this.element.attr('data-type');
-
-    if (typeof type === 'undefined' || type == '') {
-        throw new Error('no attribute "data-type" found!');
-        return false;
-    }
-
-    this.type = type;
 };
 
 ThalliumInlineEditable.prototype.prepare = function () {
 
-    var origval;
+    var origval, domref;
 
     if (typeof (origval = this.getContentAttribute('data-orig-value')) === 'undefined') {
-        throw new Error("getContentAttribute() returned false!");
+        throw new Error('getContentAttribute() returned false!');
         return false;
     }
 
-    this.setOriginalValue(origval);
+    if (!this.setOriginalValue(origval)) {
+        throw new Error('setOriginalValue() returned false!');
+        return false;
+    }
+
+    if ((domref = this.getDomReference()) === false) {
+        throw new Error('this.getDomReference() returned false!');
+        return false;
+    }
 
     this._contentEdit = '<div name="'
-        + this.getDomReference()
+        + domref
         + '" class="inline editable content" data-orig-value="'
-        + this.getOriginalValue() + '"></div>';
+        + origval + '"></div>';
 
     return true;
 };
@@ -110,17 +117,18 @@ ThalliumInlineEditable.prototype.prepare = function () {
 ThalliumInlineEditable.prototype.setOriginalValue = function (value) {
 
     if (typeof value === 'undefined') {
-        throw new Error("Parameter is not set!");
+        throw new Error('Parameter is not set!');
         return false;
     }
 
     this._originalValue = value;
+    return true;
 };
 
 ThalliumInlineEditable.prototype.getOriginalValue = function () {
 
     if (typeof this._originalValue === 'undefined') {
-        throw new Error("_originalValue not set!");
+        throw new Error('_originalValue not set!');
         return false;
     }
 
@@ -131,13 +139,13 @@ ThalliumInlineEditable.prototype.getContentAttribute = function (attr) {
 
     var content_select, value;
 
-    if (typeof (content_select = this.getContentSelector()) === 'undefined') {
-        throw new Error("Can not continue without knowning the name!");
+    if ((content_select = this.getContentSelector()) === false) {
+        throw new Error('Can not continue without knowning the name!');
         return false;
     }
 
     if (typeof (value = $(content_select).attr(attr)) === 'undefined') {
-        throw new Error("no attr '" + attr + "' found!");
+        throw new Error('no attr "' + attr + '" found!');
         return false;
     }
 
@@ -147,7 +155,7 @@ ThalliumInlineEditable.prototype.getContentAttribute = function (attr) {
 ThalliumInlineEditable.prototype.setDomReference = function (element) {
 
     if (typeof element === 'undefined') {
-        throw new Error("Parameter must reference an element name!");
+        throw new Error('Parameter must reference an element name!');
         return false;
     }
 
@@ -168,8 +176,8 @@ ThalliumInlineEditable.prototype.getNameSelector = function () {
 
     var name;
 
-    if (typeof (name = this.getDomReference()) === 'undefined') {
-        throw new Error("Can not continue without knowning the name!");
+    if ((name = this.getDomReference()) === false) {
+        throw new Error('Can not continue without knowning the name!');
         return false;
     }
 
@@ -180,8 +188,8 @@ ThalliumInlineEditable.prototype.getContentSelector = function () {
 
     var name;
 
-    if (typeof (name = this.getNameSelector()) === 'undefined') {
-        throw new Error("getNameSelector() returned false!");
+    if ((name = this.getNameSelector()) === false) {
+        throw new Error('getNameSelector() returned false!');
         return false;
     }
 
@@ -192,8 +200,8 @@ ThalliumInlineEditable.prototype.getContentValue = function () {
 
     var content_select, cur_val;
 
-    if (typeof (content_select = this.getContentSelector()) === 'undefined') {
-        throw new Error("Can not continue without knowning the name!");
+    if ((content_select = this.getContentSelector()) === false) {
+        throw new Error('Can not continue without knowning the name!');
         return false;
     }
 
@@ -202,7 +210,7 @@ ThalliumInlineEditable.prototype.getContentValue = function () {
     }
 
     if (typeof (cur_val = $(content_select).html()) === 'undefined') {
-        throw new Error("Can not read the current value!");
+        throw new Error('Can not read the current value!');
         return false;
     }
 
@@ -210,24 +218,33 @@ ThalliumInlineEditable.prototype.getContentValue = function () {
 }
 
 ThalliumInlineEditable.prototype.getLastUsedValue = function () {
+    if (typeof this._lastUsedValue === 'undefined') {
+        return false;
+    }
+
     return this._lastUsedValue;
 }
 
 ThalliumInlineEditable.prototype.toggle = function () {
-
     var name_select;
 
-    if (typeof (name_select = this.getNameSelector()) === 'undefined') {
-        throw new Error("Can not continue without knowning the name!");
+    if ((name_select = this.getNameSelector()) === false) {
+        throw new Error('Can not continue without knowning the name!');
         return false;
     }
 
     if ($(name_select + '.inline.editable.edit.link').is(':hidden')) {
-        this.showContent();
+        if (!this.showContent()) {
+            throw new Error('showContent() returned false!');
+            return false;
+        }
     } else if ($(name_select + '.inline.editable.edit.link').is(':visible')) {
-        this.showForm();
+        if (!this.showForm()) {
+            throw new Error('showForm() returned false!');
+            return false;
+        }
     } else {
-        throw new Error("Invalid conditions found!");
+        throw new Error('Invalid conditions found!');
         return false;
     }
 
@@ -238,30 +255,30 @@ ThalliumInlineEditable.prototype.showForm = function () {
 
     var name_select, content_select, cur_val, form_src, content;
 
-    if (typeof (name_select = this.getNameSelector()) === 'undefined') {
-        throw new Error("Can not continue without knowning the name!");
+    if ((name_select = this.getNameSelector()) === false) {
+        throw new Error('Can not continue without knowning the name!');
         return false;
     }
 
-    if (typeof (content_select = this.getContentSelector()) === 'undefined') {
-        throw new Error("Can not continue without knowning the name!");
+    if ((content_select = this.getContentSelector()) === false) {
+        throw new Error('Can not continue without knowning the name!');
         return false;
     }
 
-    if (typeof (cur_val = this.getContentValue()) === 'undefined') {
-        throw new Error("Can not read the current value!");
+    if ((cur_val = this.getContentValue()) === false) {
+        throw new Error('Can not read the current value!');
         return false;
     }
 
     this._lastUsedValue = cur_val;
 
     if (typeof (form_src = $(name_select + '.inline.editable.formsrc').html()) === 'undefined') {
-        throw new Error("Can not retrieve inline-editable-formsrc!");
+        throw new Error('Can not retrieve inline-editable-formsrc!');
         return false;
     }
 
     if (typeof (content = $(content_select)) === 'undefined') {
-        throw new Error("Can not retrieve content!");
+        throw new Error('Can not retrieve content!');
         return false;
     }
 
@@ -270,17 +287,19 @@ ThalliumInlineEditable.prototype.showForm = function () {
 
     // renew content handler
     if (typeof (content = $(content_select)) === 'undefined') {
-        throw new Error("Can not retrieve content!");
+        throw new Error('Can not retrieve content!');
         return false;
     }
 
+    // set content
     content.html(form_src);
 
+    // set value
     $(content_select + ' form input').val(cur_val);
 
     $(content_select).on('click', 'button.cancel', function () {
         if (!this.toggle()) {
-            throw new Error("toggle() returned false!");
+            throw new Error('toggle() returned false!');
             return false;
         }
         return true;
@@ -288,7 +307,7 @@ ThalliumInlineEditable.prototype.showForm = function () {
 
     $(content_select).on('input', 'input, textarea', function () {
         if (!this.touch()) {
-            throw new Error("touch() returned false!");
+            throw new Error('touch() returned false!');
             return false;
         }
         return true;
@@ -296,37 +315,42 @@ ThalliumInlineEditable.prototype.showForm = function () {
 
     $(content_select).on('submit', 'form', function () {
         if (!this.save()) {
-            throw new Error("save() returned false!");
+            throw new Error('save() returned false!');
             return false;
         }
         return true;
     }.bind(this));
+
+    return true;
 };
 
 ThalliumInlineEditable.prototype.showContent = function () {
 
     var name_select, content_select, value, content;
 
-    if (typeof (name_select = this.getNameSelector()) === 'undefined') {
-        throw new Error("Can not continue without knowning the name!");
+    if ((name_select = this.getNameSelector()) === false) {
+        throw new Error('Can not continue without knowning the name!');
         return false;
     }
 
-    if (typeof (content_select = this.getContentSelector()) === 'undefined') {
-        throw new Error("Can not continue without knowning the name!");
+    if ((content_select = this.getContentSelector()) === false) {
+        throw new Error('Can not continue without knowning the name!');
         return false;
     }
 
     if (this.isSaved()) {
         value = $(content_select + ' form input').val();
     } else {
-        if (typeof (value = this.getLastUsedValue()) === 'undefined') {
-            value = this.getOriginalValue();
+        if ((value = this.getLastUsedValue()) === false) {
+            if ((value = this.getOriginalValue()) === false) {
+                throw new Error('this.getOriginalValue() returned false!');
+                return false;
+            }
         }
     }
 
     if (typeof (content = $(content_select)) === 'undefined') {
-        throw new Error("Can not retrieve content!");
+        throw new Error('Can not retrieve content!');
         return false;
     }
 
@@ -340,7 +364,7 @@ ThalliumInlineEditable.prototype.showContent = function () {
 
     // renew content handler
     if (typeof (content = $(content_select)) === 'undefined') {
-        throw new Error("Can not retrieve content!");
+        throw new Error('Can not retrieve content!');
         return false;
     }
 
@@ -349,29 +373,30 @@ ThalliumInlineEditable.prototype.showContent = function () {
     content.show();
 
     $(name_select + '.inline.editable.edit.link').show();
+    return true;
 };
 
 ThalliumInlineEditable.prototype.touch = function () {
 
     var content_select, input, savebutton;
 
-    if (typeof (content_select = this.getContentSelector()) === 'undefined') {
-        throw new Error("Can not continue without knowning the name!");
+    if ((content_select = this.getContentSelector()) === false) {
+        throw new Error('Can not continue without knowning the name!');
         return false;
     }
 
     if (typeof (input = $(content_select + ' form input')) === 'undefined') {
-        throw new Error("Failed to locate input field!");
+        throw new Error('Failed to locate input field!');
         return false;
     }
 
-    if (input.val() == this.getLastUsedValue()) {
+    if (input.val() === this.getLastUsedValue()) {
         this.untouch();
         return true;
     }
 
     if (typeof (savebutton = $(content_select + ' form button.save')) === 'undefined') {
-        throw new Error("can not find the save button!");
+        throw new Error('can not find the save button!');
         return false;
     }
 
@@ -386,20 +411,19 @@ ThalliumInlineEditable.prototype.touch = function () {
     }
 
     return true;
-
 };
 
 ThalliumInlineEditable.prototype.untouch = function () {
 
     var content_select, savebutton;
 
-    if (typeof (content_select = this.getContentSelector()) === 'undefined') {
-        throw new Error("Can not continue without knowning the name!");
+    if ((content_select = this.getContentSelector()) === false) {
+        throw new Error('Can not continue without knowning the name!');
         return false;
     }
 
     if (typeof (savebutton = $(content_select + ' form button.save')) === 'undefined') {
-        throw new Error("can not find the save button!");
+        throw new Error('can not find the save button!');
         return false;
     }
 
@@ -431,8 +455,8 @@ ThalliumInlineEditable.prototype.setSaved = function (value) {
         return true;
     }
 
-    if (typeof(value) != "boolean") {
-        throw new Error("Parameter needs to be boolean!");
+    if (typeof(value) !== 'boolean') {
+        throw new Error('Parameter needs to be boolean!');
         return false;
     }
 
@@ -449,53 +473,62 @@ ThalliumInlineEditable.prototype.isSaved = function () {
     return true;
 };
 
+ThalliumInlineEditable.prototype.isInitialized = function () {
+
+    if (typeof this._initialized === 'undefined' || !this._initialized) {
+        return false;
+    }
+
+    return true;
+};
+
 ThalliumInlineEditable.prototype.save = function () {
 
     var content_select, input, action, model, key, id, guid, value, url;
 
     /* if data hasn't change, just swap views */
-    if (this.getContentValue() == this.getLastUsedValue()) {
+    if (this.getContentValue() === this.getLastUsedValue()) {
         this.toggle();
         return true;
     }
 
-    if (typeof (content_select = this.getContentSelector()) === 'undefined') {
-        throw new Error("Can not continue without knowning the name!");
+    if ((content_select = this.getContentSelector()) === false) {
+        throw new Error('Can not continue without knowning the name!');
         return false;
     }
 
     if (typeof (input = $(content_select + ' form input')) === 'undefined') {
-        throw new Error("Failed to get input element!");
+        throw new Error('Failed to get input element!');
         return false;
     }
 
     if (typeof (action = input.attr('data-action')) === 'undefined') {
-        throw new Error("Unable to locate 'data-action' attribute!");
+        throw new Error('Unable to locate "data-action" attribute!');
         return false;
     }
 
     if (typeof (model = input.attr('data-model')) === 'undefined') {
-        throw new Error("Unable to locate 'data-model' attribute!");
+        throw new Error('Unable to locate "data-model" attribute!');
         return false;
     }
 
     if (typeof (key = input.attr('data-key')) === 'undefined') {
-        throw new Error("Unable to locate 'data-key' attribute!");
+        throw new Error('Unable to locate "data-key" attribute!');
         return false;
     }
 
     if (typeof (id = input.attr('data-id')) === 'undefined') {
-        throw new Error("Unable to locate 'data-id' attribute!");
+        throw new Error('Unable to locate "data-id" attribute!');
         return false;
     }
 
     if (typeof (guid = input.attr('data-guid')) === 'undefined') {
-        throw new Error("Unable to locate 'data-guid' attribute!");
+        throw new Error('Unable to locate "data-guid" attribute!');
         return false;
     }
 
     if (typeof (value = input.val()) === 'undefined') {
-        throw new Error("Unable to locate 'value' attribute!");
+        throw new Error('Unable to locate "value" attribute!');
         return false;
     }
 
@@ -521,7 +554,7 @@ ThalliumInlineEditable.prototype.save = function () {
         type: 'POST',
         url: url,
         data: ({
-            type : 'rpc',
+            type   : 'rpc',
             action : action,
             model  : model,
             id     : id,
@@ -533,16 +566,16 @@ ThalliumInlineEditable.prototype.save = function () {
             throw new Error('Failed to contact server! ' + textStatus);
         },
         success: function (data) {
-            if (data != 'ok') {
+            if (data !== 'ok') {
                 throw new Error('Server returned: ' + data + ', length ' + data.length);
                 return;
             }
             this.setSaved();
             this.untouch();
-            if (action == 'add') {
+            if (action === 'add') {
                 location.reload();
                 return;
-            } else if (action == 'update') {
+            } else if (action === 'update') {
                 this.toggle();
             }
             return;
