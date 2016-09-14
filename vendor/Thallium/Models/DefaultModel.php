@@ -712,18 +712,26 @@ abstract class DefaultModel
     }
 
     /**
-     * loads data from database into a model
+     * finds data as defined in $query in the database
+     * by searching fields that have been given in $fields.
      *
-     * @param string $extend_query_where
-     * @return bool
+     * @param array $query
+     * @param array $fields
+     * @param bool $load
+     * @return array|bool
      * @throws \Thallium\Controllers\ExceptionController
      */
-    public static function find($query, $fields)
+    public static function find($query, $fields, $load = false)
     {
         global $thallium, $db;
 
         if (!static::isSearchable()) {
             static::raiseError(__CLASS__ .'::isSearchable() returned false!');
+            return false;
+        }
+
+        if (!isset($load) || !is_bool($load)) {
+            static::raiseError(__METHOD__ .'(), $load parameter is invalid!');
             return false;
         }
 
@@ -750,6 +758,11 @@ abstract class DefaultModel
             static::raiseError(__METHOD__ .'(), $fields parameter is invalid!');
             return false;
         }
+
+        $sql_query_columns = array(
+            static::column(FIELD_IDX),
+            static::column(FIELD_GUID),
+        );
 
         $sql_query_columns = array();
         $sql_query_data = array();
@@ -829,7 +842,7 @@ abstract class DefaultModel
             return array();
         }
 
-        if (($result = $sth->fetchAll(\PDO::FETCH_ASSOC)) === false) {
+        if (($results = $sth->fetchAll(\PDO::FETCH_ASSOC)) === false) {
             static::raiseError(get_class($sth) .'::fetchAll() returned false!');
             return false;
         }
@@ -851,8 +864,13 @@ abstract class DefaultModel
             return false;
         }
 
-        if (($child_models = static::getModelItemsModel()) === false) {
+        if (($child_model = static::getModelItemsModel()) === false) {
             static::raiseError(__CLASS__ .'::getModelItemsModel() returned false!');
+            return false;
+        }
+
+        if (($full_child_model = $thallium->getFullModelName($child_model)) === false) {
+            static::raiseError(get_class($thallium) .'::getFullModelName() returned false!');
             return false;
         }
 
@@ -870,43 +888,19 @@ abstract class DefaultModel
             if (!$items->addItem(array(
                 FIELD_IDX => $result[$idx_field],
                 FIELD_GUID => $result[$guid_field],
-                FIELD_MODEL => $child_models,
+                FIELD_MODEL => $full_child_model,
             ))) {
-                static::raiseError(get_class($items) .'::addItem() returned false!');
+                static::raiseError(get_class($items_model) .'::addItem() returned false!');
                 return false;
             }
         }
 
-        return $items;
-
-        $items_ary = array();
-
-        foreach ($results as $result) {
-            if (!array_key_exists(static::column(FIELD_IDX), $result) ||
-                !array_key_exists(static::column(FIELD_GUID), $result)
-            ) {
-                static::raiseError(__METHOD__ .'(), incomplete result found!');
-                return false;
-            }
-
-            $idx_field = static::column(FIELD_IDX);
-            $items_ary[] = $result[$idx_field];
-        }
-
-        $items_model = get_called_class();
-
-        try {
-            $items = new $items_model;
-        } catch (\Exception $e) {
-            static::raiseError(
-                sprintf('%s(), failed to load %s!', __METHOD__, $items_model),
-                false,
-                $e
-            );
+        if (($item_keys = $items->getItemsKeys()) === false) {
+            static::raiseError(get_class($items) .'::getItemsKeys() returned false!');
             return false;
         }
 
-        if (!$items->bulkLoad($items_ary)) {
+        if (!$items->bulkLoad($item_keys)) {
             static::raiseError(get_class($items) .'::bulkLoad() returned false!');
             return false;
         }
@@ -5051,7 +5045,12 @@ abstract class DefaultModel
             return false;
         }
 
-        return static::$model_searchable_fields;
+        $std_fields = array(
+            FIELD_IDX,
+            FIELD_GUID,
+        );
+
+        return array_merge($std_fields, static::$model_searchable_fields);
     }
 }
 
