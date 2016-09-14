@@ -24,7 +24,7 @@ var ThalliumStore = function () {
 
     this._identifier;
     this._uuid = this.generateUUID();
-    if (typeof this._uuid === 'undefined' || this._uuid == '') {
+    if (typeof this._uuid === 'undefined' || this._uuid === '') {
         throw new Error('ThalliumStore, failed to generate a UUID!');
         return false;
     }
@@ -36,7 +36,7 @@ ThalliumStore.prototype.set = function (key, value, store) {
         throw new Error('set(), key parameter is invalid!');
         return false;
     }
-    if (typeof store === 'undefined' || store == '') {
+    if (typeof store === 'undefined' || store === '') {
         this._store[key] = value;
         return this.get(key);
     }
@@ -167,7 +167,7 @@ ThalliumStore.prototype.generateUUID = function () {
 };
 
 ThalliumStore.prototype.getUUID = function () {
-    if (typeof this._uuid === 'undefined' || this._uuid == '') {
+    if (typeof this._uuid === 'undefined' || this._uuid === '') {
         throw new Error('getUUID(), no UUID available!');
         return false;
     }
@@ -175,7 +175,7 @@ ThalliumStore.prototype.getUUID = function () {
 }
 
 ThalliumStore.prototype.setIdentifier = function (id) {
-    if (typeof id === 'undefined' || id == '') {
+    if (typeof id === 'undefined' || id === '') {
         throw new Error('setIdentifier(), id parameter is invalid!');
         return false;
     }
