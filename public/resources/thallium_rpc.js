@@ -37,7 +37,7 @@ function rpc_object_delete(elements, successMethod)
     elements.forEach(function (element) {
         var id, guid, model, title;
         if (!(element instanceof jQuery) ) {
-            throw new Error("element is not a jQuery object!");
+            throw new Error('element is not a jQuery object!');
             return false;
         }
 
@@ -182,51 +182,51 @@ function rpc_object_update(element, successMethod, customData)
     var target, input, action, model, key, id, guid, value, url, data;
 
     if (!(element instanceof jQuery) ) {
-        throw new Error("element is not a jQuery object!");
+        throw new Error('element is not a jQuery object!');
         return false;
     }
 
     target = element.attr('data-target');
 
-    if (typeof target === 'undefined' || target == '') {
+    if (typeof target === 'undefined' || target === '') {
         throw new Error('no attribute "data-target" found!');
         return false;
     }
 
     if (!target.match(/^#/)) {
         if (!(input = element.find('input[name="'+target+'"], textarea[name="'+target+'"]'))) {
-            throw new Error("Failed to get input element!");
+            throw new Error('Failed to get input element!');
             return false;
         }
     } else {
         if (!(input = $(target)) === undefined) {
-            throw new Error("Failed to get target element!");
+            throw new Error('Failed to get target element!');
             return false;
         }
     }
 
     if (!(action = input.attr('data-action'))) {
-        throw new Error("Unable to locate 'data-action' attribute!");
+        throw new Error('Unable to locate "data-action" attribute!');
         return false;
     }
 
     if (!(model = input.attr('data-model'))) {
-        throw new Error("Unable to locate 'data-model' attribute!");
+        throw new Error('Unable to locate "data-model" attribute!');
         return false;
     }
 
     if (!(key = input.attr('data-key'))) {
-        throw new Error("Unable to locate 'data-key' attribute!");
+        throw new Error('Unable to locate "data-key" attribute!');
         return false;
     }
 
     if (!(id = input.attr('data-id'))) {
-        throw new Error("Unable to locate 'data-id' attribute!");
+        throw new Error('Unable to locate "data-id" attribute!');
         return false;
     }
 
     if (!(guid = input.attr('data-guid'))) {
-        throw new Error("Unable to locate 'data-guid' attribute!");
+        throw new Error('Unable to locate "data-guid" attribute!');
         return false;
     }
 
@@ -298,7 +298,7 @@ function rpc_object_update(element, successMethod, customData)
         retries: 0,
         data: data,
         error: function (XMLHttpRequest, textStatus, errorThrown) {
-            if (textStatus == 'timeout') {
+            if (textStatus === 'timeout') {
                 this.retries++;
                 if (this.retries <= 3) {
                     $.ajax(this);
@@ -312,7 +312,7 @@ function rpc_object_update(element, successMethod, customData)
                 throw new Error('Server returned: ' + data + ', length ' + data.length);
                 return;
             }
-            if (action == 'add') {
+            if (action === 'add') {
                 location.reload();
                 return;
             }
@@ -342,7 +342,7 @@ function rpc_fetch_jobstatus()
 function rpc_object_delete2(element)
 {
     if (!(element instanceof jQuery) ) {
-        throw new Error("element is not a jQuery object!");
+        throw new Error('element is not a jQuery object!');
         return false;
     }
 
