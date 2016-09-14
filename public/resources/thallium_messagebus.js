@@ -26,7 +26,7 @@ var ThalliumMessageBus = function (id) {
     this.pollerId;
     this.rpcEnabled = true;
 
-    if (!(this.pollerId = setInterval("mbus.poll()", 1000))) {
+    if (!(this.pollerId = setInterval('mbus.poll()', 1000))) {
         throw new Error('Failed to start ThalliumMessageBus.poll()!');
         return false;
     }
@@ -125,7 +125,7 @@ ThalliumMessageBus.prototype.send = function (messages) {
     var messages, md;
 
     if (typeof (messages = this.fetchMessages()) === 'undefined') {
-        throw new Error("fetchMessages() failed!");
+        throw new Error('fetchMessages() failed!');
         return false;
     }
 
@@ -194,8 +194,8 @@ ThalliumMessageBus.prototype.send = function (messages) {
         },
         error: function (jqXHR, textStatus, errorThrown) {
             var error_text = 'An error occured during AJAX operation.';
-            if (textStatus == 'timeout' || (
-                textStatus == 'error' &&
+            if (textStatus === 'timeout' || (
+                textStatus === 'error' &&
                 (typeof errorThrown === 'undefined' || !errorThrown)
             )) {
                 if (typeof jqXHR.retries === 'undefined') {
@@ -217,7 +217,7 @@ ThalliumMessageBus.prototype.send = function (messages) {
             throw new Error(error_text);
         },
         success: function (data) {
-            if (data != "ok") {
+            if (data !== 'ok') {
                 throw new Error('Failed to submit messages! ' + data);
                 return false;
             }
@@ -252,8 +252,8 @@ ThalliumMessageBus.prototype.poll = function () {
         },
         error: function (jqXHR, textStatus, errorThrown) {
             var error_text = 'An error occured during AJAX operation.';
-            if (textStatus == 'timeout' || (
-                textStatus == 'error' &&
+            if (textStatus === 'timeout' || (
+                textStatus === 'error' &&
                 (typeof errorThrown === 'undefined' || !errorThrown)
             )) {
                 if (typeof jqXHR.retries === 'undefined') {
@@ -328,7 +328,7 @@ ThalliumMessageBus.prototype.parseResponse = function (data) {
     }
 
     // no messages included? then we are done.
-    if (json.count == 0) {
+    if (json.count === 0) {
         return true;
     }
 
@@ -349,7 +349,7 @@ ThalliumMessageBus.prototype.parseResponse = function (data) {
         this.recvMessages.push(messages[message]);
     }
 
-    $(document).trigger("Thallium:notifySubscribers");
+    $(document).trigger('Thallium:notifySubscribers');
     return true;
 };
 
