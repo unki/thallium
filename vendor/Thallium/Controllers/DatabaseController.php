@@ -793,7 +793,7 @@ class DatabaseController extends DefaultController
         if (!isset($result->meta_value) ||
             (!is_int($result->meta_value) && !is_numeric($result->meta_value))
         ) {
-            return false;
+            return 0;
         }
 
         return (int) $result->meta_value;
