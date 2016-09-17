@@ -129,7 +129,8 @@ class DatabaseController extends DefaultController
             return false;
         }
 
-        if (!isset($this->db_cfg['type']) ||
+        if (!array_key_exists('type', $this->db_cfg) ||
+            !isset($this->db_cfg['type']) ||
             empty($this->db_cfg['type']) ||
             !is_string($this->db_cfg['type'])
         ) {
@@ -137,24 +138,18 @@ class DatabaseController extends DefaultController
             return false;
         }
 
-        if (!isset($this->db_cfg['host']) ||
+        if (array_key_exists('host', $this->db_cfg) && (
+            !isset($this->db_cfg['host']) ||
             empty($this->db_cfg['host']) ||
-            !is_string($this->db_cfg['host'])
+            !is_string($this->db_cfg['host']))
         ) {
             static::raiseError(__METHOD__ .'(), "host" parameter in [database] section is invalid!');
             return false;
         }
 
-        if (!isset($this->db_cfg['port']) ||
-            empty($this->db_cfg['port']) ||
-            !is_numeric($this->db_cfg['port'])
-        ) {
-            static::raiseError(__METHOD__ .'(), "port" parameter in [database] section is invalid!');
-            return false;
-        }
-
-        if (isset($this->db_cfg['socket']) &&
-            !empty($this->db_cfg['socket']) && (
+        if (array_key_exists('socket', $this->db_cfg) && (
+            !isset($this->db_cfg['socket']) &&
+            empty($this->db_cfg['socket']) ||
             !is_string($this->db_cfg['socket']) ||
             !file_exists($this->db_cfg['socket']) ||
             !is_readable($this->db_cfg['socket']) ||
@@ -164,7 +159,32 @@ class DatabaseController extends DefaultController
             return false;
         }
 
-        if (!isset($this->db_cfg['db_name']) ||
+        if (array_key_exists('port', $this->db_cfg) && (
+            !isset($this->db_cfg['port']) ||
+            empty($this->db_cfg['port']) ||
+            !is_numeric($this->db_cfg['port']))
+        ) {
+            static::raiseError(__METHOD__ .'(), "port" parameter in [database] section is invalid!');
+            return false;
+        }
+
+        if (isset($this->db_cfg['host']) &&
+            $this->db_cfg['host'] === 'localhost' &&
+            !isset($this->db_cfg['port'])
+        ) {
+            $this->db_cfg['port'] = 3306;
+        }
+
+        if (!isset($this->db_cfg['host']) &&
+            !isset($this->db_cfg['port']) &&
+            !isset($this->db_cfg['socket'])
+        ) {
+            static::raiseError(__METHOD__ .'(), incomplete [database] configuration!');
+            return false;
+        }
+
+        if (!array_key_exists('db_name', $this->db_cfg) ||
+            !isset($this->db_cfg['db_name']) ||
             empty($this->db_cfg['db_name']) ||
             !is_string($this->db_cfg['db_name'])
         ) {
@@ -172,7 +192,8 @@ class DatabaseController extends DefaultController
             return false;
         }
 
-        if (!isset($this->db_cfg['db_user']) ||
+        if (!array_key_exists('db_user', $this->db_cfg) ||
+            !isset($this->db_cfg['db_user']) ||
             empty($this->db_cfg['db_user']) ||
             !is_string($this->db_cfg['db_user'])
         ) {
@@ -180,7 +201,8 @@ class DatabaseController extends DefaultController
             return false;
         }
 
-        if (!isset($this->db_cfg['db_pass']) ||
+        if (!array_key_exists('db_pass', $this->db_cfg) ||
+            !isset($this->db_cfg['db_pass']) ||
             empty($this->db_cfg['db_pass']) ||
             !is_string($this->db_cfg['db_pass'])
         ) {
