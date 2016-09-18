@@ -475,12 +475,12 @@ class HttpRouterController extends DefaultController
                 return false;
             }
 
-            return $this->query;
+            return true;
         }
 
         // no more information in URI, then we are done
         if (count($this->query_parts) <= 1) {
-            return $this->query;
+            return true;
         }
 
         if (!$this->setQueryCallType('common')) {
