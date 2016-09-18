@@ -4544,8 +4544,17 @@ abstract class DefaultModel
                 return false;
             }
 
-            if (!$model->delete()) {
-                static::raiseError(get_class($model) .'::delete() returned false!');
+            if (static::isModelLinkModel()) {
+                if (!$model->delete()) {
+                    static::raiseError(get_class($model) .'::delete() returned false!');
+                    return false;
+                }
+
+                continue;
+            }
+
+            if (!$model->setFieldValue($field, null)) {
+                static::raiseError(get_class($mode) .'::setFieldValue() returned false!');
                 return false;
             }
         }
