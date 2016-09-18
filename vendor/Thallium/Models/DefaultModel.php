@@ -57,6 +57,9 @@ abstract class DefaultModel
     /** @var array $model_links */
     protected static $model_links = array();
 
+    /** @var bool $model_is_link_model */
+    protected static $model_is_link_model = false;
+
     /** @var int $model_bulk_load_limit */
     protected static $model_bulk_load_limit = 10;
 
@@ -5051,6 +5054,23 @@ abstract class DefaultModel
         );
 
         return array_merge($std_fields, static::$model_searchable_fields);
+    }
+
+    /**
+     * returns true if the model is a link-model.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    public static function isModelLinkModel()
+    {
+        if (!isset(static::$model_is_link_model) || !is_bool(static::$model_is_link_model)) {
+            static::raiseError(__METHOD__ .'(), model_is_link_model is incorrectly declared!');
+            return false;
+        }
+
+        return static::$model_is_link_model;
     }
 }
 
