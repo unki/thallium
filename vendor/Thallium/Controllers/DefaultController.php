@@ -170,6 +170,10 @@ abstract class DefaultController
         try {
             throw new ExceptionController($text, $catched_exception);
         } catch (\Thallium\Controllers\ExceptionController $e) {
+            if ($e->printsJson()) {
+                print $e;
+                exit(1);
+            }
             // if Previous exceptions have been captured, first display that ones.
             $prev = $e;
             while ($prev = $prev->getPrevious()) {
