@@ -4394,10 +4394,16 @@ abstract class DefaultModel
         $query_where = array();
 
         foreach ($load_by as $field => $value) {
+            if (!static::hasField($field)) {
+                static::raiseError(__CLASS__ .'::hasField() returned false!');
+                return false;
+            }
+
             if (($column = static::column($field)) === false) {
                 static::raiseError(__CLASS__ .'::column() returned false!');
                 return false;
             }
+
             $query_where[$column] = $value;
         }
 
