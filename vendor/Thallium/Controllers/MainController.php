@@ -1511,6 +1511,10 @@ class MainController extends DefaultController
     {
         print $e;
 
+        if (method_exists($e, 'printsJson') && $e->printsJson()) {
+            return;
+        }
+
         trigger_error("Execution stopped.", E_USER_ERROR);
         return;
     }
