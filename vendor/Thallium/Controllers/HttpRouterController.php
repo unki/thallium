@@ -37,6 +37,9 @@ class HttpRouterController extends DefaultController
     /** @var array $query_parts holds the exploded parts of the HTTP request query */
     protected $query_parts;
 
+    /** @var array $httpRequestHeaders holds the HTTP request header information */
+    protected $httpRequestHeaders;
+
     /** @var array $valid_request_methods supported list of HTTP request methods */
     protected static $valid_request_methods = array(
         'GET',
@@ -139,6 +142,11 @@ class HttpRouterController extends DefaultController
         global $thallium, $config;
 
         $this->query = new \stdClass();
+
+        if (!$this->getRequestHeaders()) {
+            static::raiseError(__CLASS__ .'::getRequestHeaders() returned false!', true);
+            return;
+        }
 
         $filtered_server = filter_input_array(INPUT_SERVER, static::$allowed_server_parameters);
 
@@ -1188,6 +1196,77 @@ class HttpRouterController extends DefaultController
 
         $this->query->mode = $mode;
         return true;
+    }
+
+    /**
+     * returns true if the client is accepting JSON messages.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    public function isClientAcceptingJson()
+    {
+        if (($accept = $this->getHttpHeaders('Accept')) === false) {
+            return false;
+        }
+
+        if ($accept !== strtolower('application/json')) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * stores all the HTTP request header information
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    protected function getRequestHeaders()
+    {
+        if (!function_exists("getallheaders")) {
+            static::raiseError(__CLASS__ .', PHP does not provide getallheaders() function!');
+            return false;
+        }
+
+        if (($this->httpRequestHeaders = getallheaders()) === false) {
+            static::raiseError(__CLASS__ .', getallheaders() returned false!');
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * returns all or only the HTTP request header specified by $header.
+     *
+     * @param string
+     * @return string|array|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    public function getHttpHeaders($header = null)
+    {
+        if (!is_null($header) && !is_string($header)) {
+            static::raiseError(__METHOD__ .'(), $header parameter is invalid!');
+            return false;
+        }
+
+        if (!isset($this->httpRequestHeaders) || empty($this->httpRequestHeaders)) {
+            return false;
+        }
+
+        if (is_null($header)) {
+            return $this->httpRequestHeaders;
+        }
+
+        if (in_array($header, array_keys($this->httpRequestHeaders))) {
+            return $this->httpRequestHeaders[$header];
+        }
+
+        return false;
     }
 }
 
