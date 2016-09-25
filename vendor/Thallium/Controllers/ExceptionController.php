@@ -62,6 +62,7 @@ class ExceptionController extends \Exception
             "<br /><br />%s<br /><br />\n",
             str_replace("\n", "<br />\n", $this->getMessage())
         );
+
         $text.= sprintf(
             "Backtrace:<br />\n%s",
             str_replace("\n", "<br />\n", parent::getTraceAsString())
@@ -82,8 +83,8 @@ class ExceptionController extends \Exception
         $text = array();
         $trace = array();
 
-        $text[] = $this->getMessage();
-        $trace[] = parent::getTraceAsString();
+        $text = $this->getMessage();
+        $trace = parent::getTraceAsString();
 
         $json_data = array(
             'error' => 1,
@@ -123,10 +124,26 @@ class ExceptionController extends \Exception
             !$thallium->isRunningBackgroundJobs() &&
             $router->isClientAcceptingJson()
         ) {
+            $this->prints_json = true;
             return $this->getJson();
         }
 
         return $this->getText();
+    }
+
+    public function printsJson()
+    {
+        if (!isset($this->prints_json) ||
+            !is_bool($this->prints_json)
+        ) {
+            return false;
+        }
+
+        if ($this->prints_json !== true) {
+            return false;
+        }
+
+        return true;
     }
 }
 
