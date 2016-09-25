@@ -112,8 +112,16 @@ class ExceptionController extends \Exception
     {
         global $thallium, $router;
 
-        if ((isset($router) && $router->isRpcCall()) &&
-            (!isset($thallium->backgroundJobsRunning) || empty($thallium->backgroundJobsRunning))
+        if (isset($router) &&
+            !empty($router) &&
+            is_object($router) &&
+            is_a($router, 'Thallium\Controllers\HttpRouterController') &&
+            $router->isRpcCall() &&
+            isset($thallium) &&
+            !empty($thallium) &&
+            is_object($thallium) &&
+            is_a($thallium, 'Thallium\Controllers\MainController') &&
+            !$thallium->isRunningBackgroundJobs()
         ) {
             return $this->getJson();
         }
