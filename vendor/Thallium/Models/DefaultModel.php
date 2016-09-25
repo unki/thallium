@@ -5087,6 +5087,45 @@ abstract class DefaultModel
 
         return static::$model_is_link_model;
     }
+
+    /**
+     * returns all fields.
+     *
+     * @param none
+     * @return array|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    public function getFieldValues()
+    {
+        if (!static::hasModelFields()) {
+            static::raiseError(__CLASS__ .'::hasModelFields() returned false!');
+            return false;
+        }
+
+        $values = array();
+
+        if (($fields = $this->getModelFields()) === false) {
+            static::raiseError(__CLASS__ .'::getModelFields() returned false!');
+            return false;
+        }
+
+        foreach ($fields as $field) {
+            $field_name = $field['name'];
+
+            if (!$this->hasFieldValue($field_name)) {
+                continue;
+            }
+
+            if (($value = $this->getFieldValue($field_name)) === false) {
+                static::raiseError(__CLASS__ .'::getFieldValue() returned false!');
+                return false;
+            }
+
+            $values[$field_name] = $value;
+        }
+
+        return $values;
+    }
 }
 
 // vim: set filetype=php expandtab softtabstop=4 tabstop=4 shiftwidth=4:
