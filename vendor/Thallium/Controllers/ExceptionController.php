@@ -31,8 +31,8 @@ namespace Thallium\Controllers;
  */
 class ExceptionController extends \Exception
 {
-    /** @var string $previous keeps track of the last error message. */
-    protected $previous;
+    /** @var bool $prints_json */
+    protected $prints_json = false;
 
     /**
      * class constructor
@@ -116,12 +116,12 @@ class ExceptionController extends \Exception
             !empty($router) &&
             is_object($router) &&
             is_a($router, 'Thallium\Controllers\HttpRouterController') &&
-            $router->isRpcCall() &&
             isset($thallium) &&
             !empty($thallium) &&
             is_object($thallium) &&
             is_a($thallium, 'Thallium\Controllers\MainController') &&
-            !$thallium->isRunningBackgroundJobs()
+            !$thallium->isRunningBackgroundJobs() &&
+            $router->isClientAcceptingJson()
         ) {
             return $this->getJson();
         }
