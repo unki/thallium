@@ -290,6 +290,28 @@ class MainController extends DefaultController
     }
 
     /**
+     * returns true if currently processing background jobs.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    public function isRunningBackgroundJobs()
+    {
+        if (!isset($this->backgroundJobsRunning) ||
+            !is_bool($this->backgroundJobsRunning)
+        ) {
+            return false;
+        }
+
+        if ($this->backgroundJobsRunning !== true) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * method to change the default verbosity level
      *
      * @param int $level LOG_INFO, LOG_WARNING, LOG_DEBUG
