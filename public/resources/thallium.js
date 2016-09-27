@@ -53,7 +53,7 @@ $(document).ready(function () {
     $('.inline.editable.edit.link').click(function () {
         var inlineobj = new ThalliumInlineEditable($(this));
 
-        if (!(inline instanceof ThalliumInlineEditable)) {
+        if (!(inlineobj instanceof ThalliumInlineEditable)) {
             throw new Error('Failed to load ThalliumInlineEditable!');
             return false;
         }
