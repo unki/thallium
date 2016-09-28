@@ -553,7 +553,7 @@ class RpcController extends DefaultController
             static::raiseError(get_class($obj) .'::getFieldNameFromColumn() returned false!');
             return false;
         }
-            
+
         if (!$obj->hasField($field_name)) {
             static::raiseError(get_class($obj) .'::hasField() returned false!');
             return false;
