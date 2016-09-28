@@ -43,6 +43,7 @@ abstract class DefaultView
     /** @var array $view_default_modes */
     protected static $view_default_modes = array(
         '^list$',
+        '^list.html$',
         '^list-([0-9]+).html$',
         '^show$',
         '^edit$',
@@ -208,7 +209,7 @@ abstract class DefaultView
                     return false;
                 }
 
-                if ($mode === 'list.html') {
+                if ($mode === 'list.html' || $mode === 'list') {
                     $mode = 'list';
                 } elseif (preg_match('/^list-([0-9]+).html$/', $mode, $parts) &&
                     isset($parts) &&
@@ -296,7 +297,7 @@ abstract class DefaultView
      */
     public function showList($pageno = null, $items_limit = null)
     {
-        global $tmpl;
+        global $thallium, $router, $tmpl;
 
         if ((!isset($pageno) ||
             empty($pageno) ||
@@ -344,6 +345,14 @@ abstract class DefaultView
             return $tmpl->fetch($template_name);
         }
 
+        if ($router->hasQueryParams() &&
+            $router->hasQueryParam(2) &&
+            ($display = $router->getQueryParam(2)) !== false &&
+            $thallium->isModelIdentifier($display)
+        ) {
+            $start_at = $display;
+        }
+
         try {
             $pager = new \Thallium\Controllers\PagingController(array(
                 'delta' => 2,
@@ -367,13 +376,25 @@ abstract class DefaultView
             return false;
         }
 
-        if (!$pager->setCurrentPage($current_page)) {
-            static::raiseError(get_class($pager) .'::setCurrentPage() returned false!');
+        if (!$pager->setItemsLimit($current_items_limit)) {
+            static::raiseError(get_class($pager) .'::setItemsLimit() returned false!');
             return false;
         }
 
-        if (!$pager->setItemsLimit($current_items_limit)) {
-            static::raiseError(get_class($pager) .'::setItemsLimit() returned false!');
+        if (isset($start_at)) {
+            if (!$view_data->hasItem($start_at)) {
+                static::raiseError(get_class($view_data) .'::hasItem() returned false!');
+                return false;
+            }
+
+            if (($current_page = $pager->getPageOfItem($start_at)) === false) {
+                static::raiseError(get_class($pager) .'::getPageOfItem() returned false!');
+                return false;
+            }
+        }
+
+        if (!$pager->setCurrentPage($current_page)) {
+            static::raiseError(get_class($pager) .'::setCurrentPage() returned false!');
             return false;
         }
 
