@@ -498,7 +498,12 @@ class MainController extends DefaultController
 
         $parts = array();
 
-        if (preg_match('/(\w+)-([0-9]+)-([a-z0-9]+)/', $id, $parts) === false) {
+        if (!$this->isModelIdentifier($id)) {
+            static::raiseError(__CLASS__ .'::isModelIdentifier() returned false!');
+            return false;
+        }
+
+        if (preg_match('/(\w+)-([0-9]+)-([[:xdigit:]]+)/', $id, $parts) === false) {
             return false;
         }
 
@@ -1517,6 +1522,21 @@ class MainController extends DefaultController
 
         trigger_error("Execution stopped.", E_USER_ERROR);
         return;
+    }
+
+    public function isModelIdentifier($identifier)
+    {
+        if (!isset($identifier) || empty($identifier) || !is_string($identifier)) {
+            return false;
+        }
+
+        if (!preg_match('/^[a-zA-Z]+Model_[0-9]+_[[:xdigit:]]+$/', $identifier) &&
+            !preg_match('/^[a-zA-Z]+Model_[a-zA-Z0-9]+_[0-9]+_[[:xdigit:]]+$/', $identifier)
+        ) {
+            return false;
+        }
+
+        return true;
     }
 }
 
