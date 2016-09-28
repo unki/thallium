@@ -500,7 +500,7 @@ class MessageModel extends DefaultModel
 
         return true;
     }
-   
+
     /**
      * returns the value of the in_processing field.
      *
