@@ -99,7 +99,7 @@ class MessageBusModel extends DefaultModel
             static::raiseError(get_class($db) .'::execute() failed!', false, $e);
             return false;
         };
-       
+
         while ($row = $sth->fetch()) {
             if (!isset($row->msg_idx) || empty($row->msg_idx) ||
                 !isset($row->msg_guid) || empty($row->msg_guid)
@@ -174,7 +174,7 @@ class MessageBusModel extends DefaultModel
             static::raiseError(get_class($db) .'::execute() failed!', false, $e);
             return false;
         };
- 
+
         while ($row = $sth->fetch()) {
             if (!isset($row->msg_idx) || empty($row->msg_idx) ||
                 !isset($row->msg_guid) || empty($row->msg_guid)
