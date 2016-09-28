@@ -573,7 +573,7 @@ class PagingController extends DefaultController
      * returns the number of pages.
      *
      * @param none
-     * @return int|bool
+     * @return array|bool
      * @throws \Thallium\Controllers\ExceptionController if an error occurs.
      * @todo is this duplicate to getNumberofPages()?
      */
@@ -851,6 +851,103 @@ class PagingController extends DefaultController
         }
 
         return true;
+    }
+
+    /**
+     * returns the page number that contains a specific item.
+     *
+     * @param string|object
+     * @return int|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    final public function getPageOfItem($item)
+    {
+        if (!isset($item) ||
+            empty($item) ||
+            (!is_string($item) &&
+            !is_object($item) &&
+            !is_a($item, 'Thallium\Models\DefaultModel'))
+        ) {
+            static::raiseError(__METHOD__ .'(), $item parameter is invalid!');
+            return false;
+        }
+
+        if (!$this->hasItemsLimit() || !$this->hasPagingData()) {
+            static::raiseError(__METHOD__ .'(), items-limit and paging-data needs to be set first!');
+            return false;
+        }
+
+        if (($items = $this->getPagingData(0, null)) === false) {
+            static::raiseError(__CLASS__ .'::getPagingData() returned false!');
+            return false;
+        }
+
+        if (($idx = array_search($item, $items)) === false) {
+            static::raiseError(__METHOD__ .'(), unable to locate requested item!');
+            return false;
+        }
+
+        if (is_null($idx)) {
+            static::raiseError(__METHOD__ .'(), internal error.');
+            return false;
+        }
+
+        if (($items_keys = array_keys($items)) === false) {
+            static::raiseError(__METHOD__ .'(), array_keys() returned false!');
+            return false;
+        }
+
+        if (($item_pos = array_search($idx, $items_keys)) === false) {
+            static::raiseError(__METHOD__ .'(), unable to locate requested item!');
+            return false;
+        }
+
+        if (($items_cnt = $this->getNumberOfItems()) === false) {
+            static::raiseError(__CLASS__ .'::getNumberOfItems() returned false!');
+            return false;
+        }
+
+        if (($items_limit = $this->getCurrentItemsLimit()) === false) {
+            static::raiseError(__CLASS__ .'::getCurrentItemsLimit() returned false!');
+            return false;
+        }
+
+        if (($pages = $this->getNumberOfPages()) === false) {
+            static::raiseError(__CLASS__ .'::getNumberOfPages() returned false!');
+            return false;
+        }
+
+        for ($page = 0; $page < $pages; $page++) {
+            $start = $page*$items_limit;
+            $end = $start+$items_limit;
+            if ($item_pos >= $start && $item_pos < $end) {
+                return ($page+1);
+            }
+        }
+
+        static::raiseError(__METHOD__ .'(), failed to find the page!');
+        return false;
+    }
+
+    /**
+     * returns the number of total items available in paging data.
+     *
+     * @params none
+     * @return int|bool
+     * @throws \Thallium\Controllers\ExceptionController
+     */
+    final public function getNumberOfItems()
+    {
+        if (!$this->hasPagingData()) {
+            static::raiseError(__CLASS__ .'::hasPagingData() returned false!');
+        }
+
+        if (($count = $this->pagingData->getItemsCount()) === false) {
+            static::raiseError(get_class($this->pagingData) .'::getItemsCount() returned false!');
+            return false;
+        }
+
+        return $count;
     }
 }
 
