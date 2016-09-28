@@ -750,6 +750,45 @@ class PagingController extends DefaultController
         return true;
     }
 
+    /**
+     * returns true if an items-per-page limit is set.
+     *
+     * @param none
+     * @return bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    final public function hasItemsLimit()
+    {
+        if (!isset($this->currentItemsLimit) ||
+            !is_numeric($this->currentItemsLimit)
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * returns the currently selected items-per-page limit if set.
+     * compared to getCurrentItemsLimit() method, this method will
+     * fail if items-per-page limit has not been set yet.
+     * getCurrentItemsLimit() will automatically choose the first
+     * available items-limit in that case and does not fail.
+     *
+     * @param none
+     * @return int|bool
+     * @throws \Thallium\Controllers\ExceptionController if an error occurs.
+     */
+    final public function getItemsLimit()
+    {
+        if (!$this->hasItemsLimit()) {
+            static::raiseError(__CLASS__ .'::hasItemsLimit() returned false!');
+            return false;
+        }
+
+        return $this->currentItemsLimit;
+    }
+
     final public function isValidItemsLimit($limit)
     {
         if (!isset($limit) || !is_numeric($limit)) {
