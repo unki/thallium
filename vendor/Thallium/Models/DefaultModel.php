@@ -3463,22 +3463,43 @@ abstract class DefaultModel
     /**
      * returns true if the provided item exists.
      *
-     * @param int $idx
+     * @param int|string $idx
      * @return bool
      * @throws \Thallium\Controllers\ExceptionController
      */
     public function hasItem($idx)
     {
+        global $thallium;
+
         if (!isset($idx) || (!is_string($idx) && !is_numeric($idx))) {
             static::raiseError(__METHOD__ .'(), $idx parameter is invalid!');
             return false;
         }
 
-        if (!array_key_exists($idx, $this->model_items)) {
+        if (is_numeric($idx)) {
+            return array_key_exists($idx, $this->model_items);
+        }
+
+        if (!$thallium->isModelIdentifier($idx)) {
             return false;
         }
 
-        return true;
+        if (!$this->hasItems()) {
+            return false;
+        }
+
+        if (($items = $this->getItems()) === false) {
+            static::raiseError(__CLASS__ .'::getItems() returned false!');
+            return false;
+        }
+
+        foreach ($items as $item) {
+            if (strval($item) === $idx) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
