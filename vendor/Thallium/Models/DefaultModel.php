@@ -4761,11 +4761,27 @@ abstract class DefaultModel
      *
      * @param bool $sorted
      * @param bool $unique
+     * @param bool $recursive
      * @return array|bool
      * @throws \Thallium\Controllers\ExceptionController
      */
-    public function getModelLinkedList($sorted = false, $unique = false)
+    public function getModelLinkedList($sorted = false, $unique = false, $recursive = false)
     {
+        if (!isset($sorted) || !is_bool($sorted)) {
+            static::raiseError(__METHOD__ .'(), $sorted parameter is invalid!');
+            return false;
+        }
+
+        if (!isset($unique) || !is_bool($unique)) {
+            static::raiseError(__METHOD__ .'(), $unique parameter is invalid!');
+            return false;
+        }
+
+        if (!isset($recursive) || !is_bool($recursive)) {
+            static::raiseError(__METHOD__ .'(), $recursive parameter is invalid!');
+            return false;
+        }
+
         if (($model_links = static::getModelLinks()) === false) {
             static::raiseError(__CLASS__ .'::getModelLinks() returned false!');
             return false;
@@ -4796,17 +4812,53 @@ abstract class DefaultModel
                 continue;
             }
 
-            if (is_object($link_target)) {
-                array_push($links, $link_target);
-                continue;
-            }
-
-            if (!is_array($link_target)) {
+            if (!is_object($link_target) && !is_array($link_target)) {
                 static::raiseError(__CLASS__ .'::getModelLinkTarget() returned unexpected data!');
                 return false;
             }
 
-            $links = array_merge($links, $link_target);
+            if ($recursive === false) {
+                if (is_object($link_target)) {
+                    $links[] = $link_target;
+                } elseif (is_array($link_target)) {
+                    $links = array_merge($links, $link_target);
+                }
+                continue;
+            }
+
+            if (is_object($link_target)) {
+                $link_targets = array($link_target);
+            } elseif (is_array($link_target)) {
+                $link_targets = $link_target;
+            }
+
+            foreach ($link_targets as $link_target) {
+                if ($this->getModelName(true) === $link_target->getModelName(true)) {
+                    continue;
+                }
+
+                if (!$link_target::isModelLinkModel()) {
+                    $links[] = $link_target;
+                    continue;
+                }
+
+                if (($link_list = $link_target->getModelLinkedList(false, false, true)) === false) {
+                    static::raiseError(get_class($link_target) .'::getModelLinkedList() returned false!');
+                    return false;
+                }
+
+                foreach ($link_list as $link_item) {
+                    if ($link_item->getModelName(true) === $this->getModelName(true)) {
+                        continue;
+                    }
+
+                    if (is_object($link_item)) {
+                        $links[] = $link_item;
+                    } elseif (is_array($link_item)) {
+                        $links = array_merge($links, $link_item);
+                    }
+                }
+            }
         }
 
         if (isset($sorted) && $sorted === true) {
