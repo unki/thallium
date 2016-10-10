@@ -4584,6 +4584,11 @@ abstract class DefaultModel
                 static::raiseError(get_class($mode) .'::setFieldValue() returned false!');
                 return false;
             }
+
+            if (!$model->save()) {
+                static::raiseError(get_class($model) .'::save() returned false!');
+                return false;
+            }
         }
 
         return true;
