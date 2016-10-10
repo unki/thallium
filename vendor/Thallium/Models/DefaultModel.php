@@ -4426,7 +4426,7 @@ abstract class DefaultModel
                     return false;
                 }
 
-                if (($items_model = static::getModelItemsModel()) === false) {
+                if (($items_model = static::getModelItemsModel(true)) === false) {
                     static::raiseError(__CLASS__ .'::getModelItemsModel() returned false!');
                     return false;
                 }
@@ -4996,12 +4996,19 @@ abstract class DefaultModel
     /**
      * returns the models items model (= type of item).
      *
-     * @param none
+     * @param bool $long
      * @return string|bool
      * @throws \Thallium\Controllers\ExceptionController
      */
-    final public static function getModelItemsModel()
+    final public static function getModelItemsModel($long = false)
     {
+        global $thallium;
+
+        if (!isset($long) || !is_bool($long)) {
+            static::raiseError(__METHOD__ .'(), $long parameter is invalid!');
+            return false;
+        }
+
         if (!static::hasModelItemsModel()) {
             static::raiseError(__CLASS__ .'::hasModelItemsModel() returned false!');
             return false;
@@ -5009,7 +5016,16 @@ abstract class DefaultModel
 
         $called_class = get_called_class();
 
-        return $called_class::$model_items_model;
+        if ($long === false || !isset($thallium)) {
+            return $called_class::$model_items_model;
+        }
+
+        if (($full_model = $thallium->getFullModelName($called_class::$model_items_model)) === false) {
+            static::raiseError(get_class($thallium) .'::getFullModelName() returned false!');
+            return false;
+        }
+
+        return $full_model;
     }
 
     /**
