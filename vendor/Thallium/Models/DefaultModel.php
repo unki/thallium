@@ -4553,7 +4553,17 @@ abstract class DefaultModel
             return true;
         }
 
-        foreach ($links as $target => $field) {
+        foreach ($links as $target => $my_field) {
+            if (!static::hasField($my_field)) {
+                static::raiseError(__CLASS__ .'::hasField() returned false!');
+                return false;
+            }
+
+            // skip that link, if our field has no value right now.
+            if (!$this->hasFieldValue($my_field)) {
+                continue;
+            }
+
             list($model, $field) = explode('/', $target);
 
             if (!isset($model) || empty($model) ||
@@ -4568,27 +4578,27 @@ abstract class DefaultModel
                 return false;
             }
 
-            if (($idx = $this->getIdx()) === false) {
-                static::raiseError(__CLASS__ .'::getIdx() returned false!');
+            if (($my_value = $this->getFieldValue($my_field)) === false) {
+                static::raiseError(__CLASS__ .'::getFieldValue() returned false!');
                 return false;
             }
 
             if (!$model_name::exists(array(
-                $field => $idx,
+                $field => $my_value,
             ))) {
                 return true;
             }
 
             try {
                 $model = new $model_name(array(
-                    $field => $idx,
+                    $field => $my_value,
                 ));
             } catch (\Exception $e) {
                 static::raiseError(__METHOD__ ."(), failed to load {$model_name}!", false, $e);
                 return false;
             }
 
-            if ($model::isModelLinkModel()) {
+            if ($model::isModelLinkModel() || $model::hasModelItems()) {
                 if (!$model->delete()) {
                     static::raiseError(get_class($model) .'::delete() returned false!');
                     return false;
@@ -4597,8 +4607,13 @@ abstract class DefaultModel
                 continue;
             }
 
+            if (!$model::hasModelFields()) {
+                static::raiseError(__METHOD__ .'(), got here of course model has no fields!');
+                return false;
+            }
+
             if (!$model->setFieldValue($field, null)) {
-                static::raiseError(get_class($mode) .'::setFieldValue() returned false!');
+                static::raiseError(get_class($model) .'::setFieldValue() returned false!');
                 return false;
             }
 
