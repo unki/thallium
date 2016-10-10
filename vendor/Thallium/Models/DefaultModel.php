@@ -4387,8 +4387,8 @@ abstract class DefaultModel
     }
 
     /**
-     * returns true, if the same object as specified by $load_by is already
-     * present in database.
+     * returns true, if the same object as specified by $load_by
+     * is already present in database.
      *
      * @param array $load_by
      * @return bool
@@ -4415,9 +4415,26 @@ abstract class DefaultModel
         $query_where = array();
 
         foreach ($load_by as $field => $value) {
-            if (!static::hasField($field)) {
-                static::raiseError(__CLASS__ .'::hasField() returned false!');
-                return false;
+            if (static::hasModelFields()) {
+                if (!static::hasField($field)) {
+                    static::raiseError(__CLASS__ .'::hasField() returned false!');
+                    return false;
+                }
+            } else {
+                if (!static::hasModelItems()) {
+                    static::raiseError(__CLASS__ .'::hasModelItems() returned false!');
+                    return false;
+                }
+
+                if (($items_model = static::getModelItemsModel()) === false) {
+                    static::raiseError(__CLASS__ .'::getModelItemsModel() returned false!');
+                    return false;
+                }
+
+                if (!$items_model::hasField($field)) {
+                    static::raiseError(get_class($items_model) .'::hasField() returned false!');
+                    return false;
+                }
             }
 
             if (($column = static::column($field)) === false) {
