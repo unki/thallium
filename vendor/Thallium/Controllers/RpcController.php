@@ -479,8 +479,8 @@ class RpcController extends DefaultController
         if (!isset($id) || empty($id) || (!is_numeric($id) && !is_string($id)) ||
             !isset($guid) || empty($guid) || ($guid !== 'new' && !$thallium->isValidGuidSyntax($guid)) ||
             !isset($key) || empty($key) || !is_string($key) ||
-            !isset($value) || empty($value) || !is_string($value) ||
-            !isset($model) || empty($model) || !is_string($model)
+            !isset($model) || empty($model) || !is_string($model) ||
+            !isset($value) || (!is_string($value) && !is_numeric)
         ) {
             static::raiseError(__METHOD__ .'(), request contains invalid parameters!');
             return false;
@@ -569,7 +569,8 @@ class RpcController extends DefaultController
             static::raiseError(__METHOD__ ."(), model {$model} denys RPC updates to field {$key}!");
             return false;
         }
-// sanitize input value
+
+        // sanitize input value
         $value = htmlentities($value, ENT_QUOTES);
         $obj->$key = stripslashes($value);
 
