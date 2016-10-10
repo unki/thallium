@@ -4588,7 +4588,7 @@ abstract class DefaultModel
                 return false;
             }
 
-            if (static::isModelLinkModel()) {
+            if ($model::isModelLinkModel()) {
                 if (!$model->delete()) {
                     static::raiseError(get_class($model) .'::delete() returned false!');
                     return false;
