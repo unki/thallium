@@ -917,6 +917,12 @@ class PagingController extends DefaultController
             return false;
         }
 
+        // if items limit is configured to something < 1, then
+        //  we can assume the item is on the first page.
+        if ($items_limit < 1) {
+            return 1;
+        }
+
         for ($page = 0; $page < $pages; $page++) {
             $start = $page*$items_limit;
             $end = $start+$items_limit;
