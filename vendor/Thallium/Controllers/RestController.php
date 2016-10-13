@@ -406,13 +406,6 @@ class RestController extends DefaultController
             return false;
         }
 
-        if (isset($request_field)) {
-            if (!$full_model::hasField($request_field)) {
-                static::raiseError(__METHOD__ .'(), requested model has no field like requested.');
-                return false;
-            }
-        }
-
         if ($full_model::hasModelItems()) {
             if (array_key_exists('filter', $this->request['params'])) {
                 $params = $this->request['params'];
@@ -538,8 +531,11 @@ class RestController extends DefaultController
         }
 
         if (isset($request_field)) {
-            if (!$full_model::hasField($request_field)) {
-                static::raiseError(get_class($model) .'::hasField() returned false!');
+            if (!$full_model::hasField($request_field) &&
+                (!$model->hasVirtualFields() ||
+                !$model->hasVirtualField($request_field))
+            ) {
+                static::raiseError(__METHOD__ .'(), requested model has no field like requested.');
                 return false;
             }
 
