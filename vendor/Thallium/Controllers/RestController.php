@@ -339,9 +339,17 @@ class RestController extends DefaultController
         return true;
     }
 
-    protected function readHandler()
+    protected function readHandler($load_by = null)
     {
         global $thallium;
+
+        if (isset($load_by) && (
+            empty($load_by) ||
+            !is_array($load_by)
+        )) {
+            static::raiseError(__METHOD__ .'(), $load_by parameter is invalid!');
+            return false;
+        }
 
         if (!$this->hasRequestData()) {
             static::raiseError(__CLASS__ .'::hasRequestData() returned false!');
@@ -508,11 +516,25 @@ class RestController extends DefaultController
             return false;
         }
 
+        if (!isset($load_by)) {
+            $load_by = array();
+        }
+
+        if (is_numeric($request_selector) and $request_selector >= 1) {
+            $load_by = array(
+                FIELD_IDX => $request_selector,
+            );
+        } elseif (is_string($request_selector) and $thallium->isValidGuidSyntax($request_selector)) {
+            $load_by = array(
+                FIELD_GUID => $request_selector,
+            );
+        }
+
         try {
-            $model = new $full_model;
+            $model = new $full_model($load_by);
         } catch (\Exception $e) {
             static::raiseError(__METHOD__ ."(), failed to load {$model_class}!");
-                return false;
+            return false;
         }
 
         if (isset($request_field)) {
@@ -526,7 +548,10 @@ class RestController extends DefaultController
                 return false;
             }
 
-            return array($request_field => $value);
+            return array(
+                'name' => $request_field,
+                'value' => $value,
+            );
         }
 
         if (($values = $model->getFieldValues()) === false) {
