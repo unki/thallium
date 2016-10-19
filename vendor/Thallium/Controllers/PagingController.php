@@ -288,10 +288,10 @@ class PagingController extends DefaultController
             return $totalPages;
         }
 
-        $totalPages = ($totalItems/$items_per_page);
+        $totalPages = ceil($totalItems/$items_per_page);
 
         if ($totalPages < 1) {
-            $totalPages = 1;
+            return 1;
         }
 
         if (!isset($totalPages) ||
@@ -303,7 +303,7 @@ class PagingController extends DefaultController
             return false;
         }
 
-        return (int) $totalPages;
+        return $totalPages;
     }
 
     /**
