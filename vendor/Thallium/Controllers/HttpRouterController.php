@@ -1228,6 +1228,13 @@ class HttpRouterController extends DefaultController
     protected function getRequestHeaders()
     {
         if (!function_exists("apache_request_headers")) {
+            /**
+             * in test mode, we silently drop back.
+             */
+            if (\Nox\Controllers\MainController::inTestMode()) {
+                return true;
+            }
+
             static::raiseError(__CLASS__ .', PHP does not provide apache_request_headers() function!');
             return false;
         }
@@ -1249,6 +1256,11 @@ class HttpRouterController extends DefaultController
      */
     public function getHttpHeaders($header = null)
     {
+        // in test mode we are going to fake a JSON content-type.
+        if (\Nox\Controllers\MainController::inTestMode() and $header === 'Content-Type') {
+            return 'application/json';
+        }
+
         if (!is_null($header) && !is_string($header)) {
             static::raiseError(__METHOD__ .'(), $header parameter is invalid!');
             return false;
