@@ -1491,7 +1491,7 @@ class MainController extends DefaultController
      */
     protected function setExceptionHandler()
     {
-        if ($this->inTestMode()) {
+        if (static::inTestMode()) {
             return true;
         }
 
