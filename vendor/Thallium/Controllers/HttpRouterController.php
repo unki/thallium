@@ -1227,13 +1227,13 @@ class HttpRouterController extends DefaultController
      */
     protected function getRequestHeaders()
     {
-        if (!function_exists("getallheaders")) {
-            static::raiseError(__CLASS__ .', PHP does not provide getallheaders() function!');
+        if (!function_exists("apache_request_headers")) {
+            static::raiseError(__CLASS__ .', PHP does not provide apache_request_headers() function!');
             return false;
         }
 
-        if (($this->httpRequestHeaders = getallheaders()) === false) {
-            static::raiseError(__CLASS__ .', getallheaders() returned false!');
+        if (($this->httpRequestHeaders = apache_request_headers()) === false) {
+            static::raiseError(__CLASS__ .', apache_request_headers() returned false!');
             return false;
         }
 
