@@ -158,7 +158,7 @@ class HttpRouterController extends DefaultController
         /**
          * in test mode, fake some HTTP request parameters.
          */
-        if ($thallium->inTestMode()) {
+        if (\Nox\Controllers\MainController::inTestMode()) {
             $filtered_server['REQUEST_URI'] = sprintf(
                 '/thallium/documents/show/%d-%s?testparam=foobar',
                 1,
@@ -321,7 +321,7 @@ class HttpRouterController extends DefaultController
         /**
          * in test mode, fake some POST data for RPC testing.
          */
-        if ($thallium->inTestMode()) {
+        if (\Nox\Controllers\MainController::inTestMode()) {
             $filtered_post = array(
                 'action' => 'get-content',
                 'view' => 'InternalTest',
