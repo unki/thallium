@@ -290,7 +290,7 @@ class RpcController extends DefaultController
             return false;
         }
 
-        if (!in_array($requested_view, $valid_view)) {
+        if (!in_array($requested_view, $valid_content)) {
             static::raiseError(__METHOD__ .'(), no valid view requested!');
             return false;
         }
