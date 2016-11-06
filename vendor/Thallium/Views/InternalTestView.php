@@ -46,7 +46,7 @@ class InternalTestView extends DefaultView
      */
     public function __construct()
     {
-        if (!\Nox\Controllers\MainController::inTestMode()) {
+        if (!\Thallium\Controllers\MainController::inTestMode()) {
             static::raiseError(__METHOD__ .'(), this view is only valid in test mode!', true);
             return;
         }

@@ -750,7 +750,7 @@ class RpcController extends DefaultController
             return false;
         }
 
-        if (\Nox\Controllers\MainController::inTestMode()) {
+        if (\Thallium\Controllers\MainController::inTestMode()) {
             return $content;
         }
 

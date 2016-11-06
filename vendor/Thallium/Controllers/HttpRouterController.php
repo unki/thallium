@@ -158,7 +158,7 @@ class HttpRouterController extends DefaultController
         /**
          * in test mode, fake some HTTP request parameters.
          */
-        if (\Nox\Controllers\MainController::inTestMode()) {
+        if (\Thallium\Controllers\MainController::inTestMode()) {
             $filtered_server['REQUEST_URI'] = sprintf(
                 '/thallium/documents/show/%d-%s?testparam=foobar',
                 1,
@@ -321,7 +321,7 @@ class HttpRouterController extends DefaultController
         /**
          * in test mode, fake some POST data for RPC testing.
          */
-        if (\Nox\Controllers\MainController::inTestMode()) {
+        if (\Thallium\Controllers\MainController::inTestMode()) {
             $filtered_post = array(
                 'action' => 'get-content',
                 'view' => 'InternalTest',
@@ -1223,7 +1223,7 @@ class HttpRouterController extends DefaultController
             /**
              * in test mode, we silently drop back.
              */
-            if (\Nox\Controllers\MainController::inTestMode()) {
+            if (\Thallium\Controllers\MainController::inTestMode()) {
                 return true;
             }
 
@@ -1249,7 +1249,7 @@ class HttpRouterController extends DefaultController
     public function getHttpHeaders($header = null)
     {
         // in test mode we are going to fake a JSON content-type.
-        if (\Nox\Controllers\MainController::inTestMode() and $header === 'Content-Type') {
+        if (\Thallium\Controllers\MainController::inTestMode() and $header === 'Content-Type') {
             return 'application/json';
         }
 
