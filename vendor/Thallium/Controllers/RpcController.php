@@ -32,6 +32,10 @@ namespace Thallium\Controllers;
  */
 class RpcController extends DefaultController
 {
+    protected static $valid_content = array(
+        'internaltestview',
+    );
+
     /**
      * class constructur
      *
@@ -277,11 +281,6 @@ class RpcController extends DefaultController
     {
         global $views, $router;
 
-        $valid_content = array(
-            'internaltestview',
-            'preview',
-        );
-
         if (!$router->hasQueryParam('view') ||
             ($requested_view = $router->getQueryParam('view')) === false ||
             empty($requested_view) || !is_string($requested_view)
@@ -290,7 +289,7 @@ class RpcController extends DefaultController
             return false;
         }
 
-        if (!in_array($requested_view, $valid_content)) {
+        if (!in_array($requested_view, static::$valid_content)) {
             static::raiseError(__METHOD__ .'(), no valid view requested!');
             return false;
         }
