@@ -112,6 +112,7 @@ class HttpRouterController extends DefaultController
         ),
         'data' => array(
             'filter' => FILTER_SANITIZE_STRING,
+            'flags' => FILTER_REQUIRE_ARRAY,
         ),
         'direction' => array(
             'filter' => FILTER_SANITIZE_STRING,
