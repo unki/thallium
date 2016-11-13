@@ -32,6 +32,7 @@ namespace Thallium\Controllers;
  */
 class RpcController extends DefaultController
 {
+    /** @var array $valid_content */
     protected static $valid_content = array(
         'internaltestview',
     );
@@ -690,7 +691,11 @@ class RpcController extends DefaultController
             return false;
         }
 
-        if (!isset($data['content']) || empty($data['content']) || !is_string($data['content'])) {
+        if (!array_key_exists('content', $data) ||
+            !isset($data['content']) ||
+            empty($data['content']) ||
+            !is_string($data['content'])
+        ) {
             static::raiseError(__METHOD__ .'(), $data["content"] is invalid!');
             return false;
         }
@@ -724,7 +729,7 @@ class RpcController extends DefaultController
         $view_name = sprintf(
             '\\%s\\Views\\%sView',
             $prefix,
-            $view
+            $view_name
         );
 
         try {
