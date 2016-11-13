@@ -105,7 +105,7 @@ class MessageBusController extends DefaultController
         try {
             $messages_raw = html_entity_decode($messages_raw);
         } catch (\Exception $e) {
-            static::raiseError(__METHOD__ .'8), html_entity_decode() failed!', false, $e);
+            static::raiseError(__METHOD__ .'(), html_entity_decode() failed!', false, $e);
             return false;
         }
 
