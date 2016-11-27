@@ -554,7 +554,9 @@ class RpcController extends DefaultController
             return false;
         }
 
-        if (!$obj->hasField($field_name)) {
+        if (!$obj->hasField($field_name) &&
+            (!$obj->hasVirtualFields() || !$obj->hasVirtualField($field_name))
+        ) {
             static::raiseError(get_class($obj) .'::hasField() returned false!');
             return false;
         }
@@ -565,14 +567,18 @@ class RpcController extends DefaultController
             return false;
         }
 
-        if (!$obj->permitsRpcUpdateToField($key)) {
+        if (!$obj->permitsRpcUpdateToField($field_name)) {
             static::raiseError(__METHOD__ ."(), model {$model} denys RPC updates to field {$key}!");
             return false;
         }
 
         // sanitize input value
-        $value = htmlentities($value, ENT_QUOTES);
-        $obj->$key = stripslashes($value);
+        $value = stripslashes(htmlentities($value, ENT_QUOTES));
+
+        if (!$obj->setFieldValue($field_name, $value)) {
+            static::raiseError(get_class($obj) ."::setFieldValue() returned false!");
+            return false;
+        }
 
         if (!$obj->save()) {
             static::raiseError(get_class($obj) ."::save() returned false!");
