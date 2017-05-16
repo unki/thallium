@@ -744,7 +744,7 @@ abstract class DefaultModel
             !array_key_exists('data', $query) ||
             !isset($query['data']) ||
             empty($query['data']) ||
-            !is_string($query['data']) ||
+            (!is_string($query['data']) && !is_numeric($query['data'])) ||
             !array_key_exists('type', $query) ||
             !isset($query['type']) ||
             empty($query['type']) ||
