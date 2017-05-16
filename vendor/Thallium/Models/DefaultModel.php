@@ -711,7 +711,6 @@ abstract class DefaultModel
         }
 
         return true;
-
     }
 
     /**
