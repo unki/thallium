@@ -338,7 +338,6 @@ class MainController extends DefaultController
 
         $this->verbosity_level = $level;
         return true;
-
     }
 
     /**
@@ -1514,13 +1513,17 @@ class MainController extends DefaultController
      */
     public static function exceptionHandler($e)
     {
-        print $e;
-
-        if (method_exists($e, 'printsJson') && $e->printsJson()) {
+        if (method_exists($e, 'getMessage')) {
+            $message =  $e->getMessage();
+        } elseif (method_exists($e, 'printsJson') && $e->printsJson()) {
             return;
+        } else {
+            $message = $e;
         }
 
-        trigger_error("Execution stopped.", E_USER_ERROR);
+        print $message;
+
+        trigger_error("Execution stopped: {$message}", E_USER_ERROR);
         return;
     }
 
