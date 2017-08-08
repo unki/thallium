@@ -377,18 +377,19 @@ class TemplatesController extends DefaultController
             return false;
         }
 
-        if (!isset($this->smarty->smarty->registered_plugins) ||
-            !is_array($this->smarty->smarty->registered_plugins) ||
-            empty($this->smarty->smarty->registered_plugins)
+        if (!isset($this->smarty) ||
+            !isset($this->smarty->registered_plugins) ||
+            !is_array($this->smarty->registered_plugins) ||
+            empty($this->smarty->registered_plugins)
         ) {
             return false;
         }
 
-        if (!array_key_exists($type, $this->smarty->smarty->registered_plugins)) {
+        if (!array_key_exists($type, $this->smarty->registered_plugins)) {
             return false;
         }
 
-        if (!array_key_exists($name, $this->smarty->smarty->registered_plugins[$type])) {
+        if (!array_key_exists($name, $this->smarty->registered_plugins[$type])) {
             return false;
         }
 
