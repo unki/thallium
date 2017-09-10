@@ -152,9 +152,9 @@ class RequirementsController extends DefaultController
                 break;
         }
 
-        if (!$db_class_name || !$db_pdo_name) {
-            $this->write("Error - unsupported database configuration, can not check requirements!", LOG_ERR);
-            $missing = true;
+        if (!isset($db_class_name) || !isset($db_pdo_name)) {
+            $this->write("Error - unsupported database (${dbtype}) configuration, can not check requirements!", LOG_ERR);
+            return false;
         }
 
         if (!class_exists($db_class_name)) {
